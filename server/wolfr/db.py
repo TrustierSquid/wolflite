@@ -5,6 +5,7 @@ import sqlite3
 from datetime import datetime
 
 
+# establishing the db connection
 def get_db():
    if 'db' not in g:
       g.db = sqlite3.connect(

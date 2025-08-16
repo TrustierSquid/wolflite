@@ -1,6 +1,8 @@
 import os
-from flask import Flask, request
+import sqlite3
+from flask import Flask, request, jsonify, g
 from werkzeug.security import generate_password_hash, check_password_hash
+from wolfr.db import get_db
 
 
 def create_app(test_config=None):
@@ -12,8 +14,8 @@ def create_app(test_config=None):
    )
 
    if test_config is None:
-        # load the instance config, if it exists, when not testing
-        app.config.from_pyfile('config.py', silent=True)
+      # load the instance config, if it exists, when not testing
+      app.config.from_pyfile('config.py', silent=True)
    else:
       # load the test config if passed in
       app.config.from_mapping(test_config)
@@ -28,16 +30,33 @@ def create_app(test_config=None):
    def init():
       return "OK", 200
 
+   # Creating a new user
    @app.route('/formSubmission', methods=(['POST']))
    def formSubmission():
+      db = get_db()
+
+      # in order to execute SQL statements and fetch results we need a db cursor
+      cursor = db.cursor()
       username = request.form['username']
       password = request.form['password']
       pw_hash = generate_password_hash(password)
 
+      try:
+         cursor.execute(
+            "INSERT INTO user (username, password) VALUES (?, ?)",
+            (username, pw_hash)
+         )
+
+         # saving changes to the db
+         db.commit()
+
+      except sqlite3.IntegrityError as error:
+         return jsonify({"errorMessage": "Username already exists"})
+
       print(f"Received username: {username}")
       print(f"Generated hash: {pw_hash}")
 
-      return "Received", 200
+      return jsonify({"message": "Received"}), 200
 
 
    from . import db

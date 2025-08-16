@@ -7,6 +7,7 @@ function Main() {
     const form = e.target;
     const formData = new FormData(form);
 
+
     try {
       const request = await fetch("/formSubmission", {
         method: "POST",
@@ -16,6 +17,13 @@ function Main() {
       // parse the response as json
       const response = await request.json();
       console.log(response);
+
+
+      if (Object.keys(response).includes("errorMessage")) {
+        console.log("The username exists already")
+        formData.username = ''
+      }
+
     } catch (error) {
       console.log(error);
     }
