@@ -1,7 +1,12 @@
 import React from "react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 function Main() {
+  const [errorMessage, setErrorMessage] = useState('')
+  const usernameRef = useRef()
+  const passwordRef = useRef()
+
+
   async function receieveData(e) {
     e.preventDefault();
     const form = e.target;
@@ -18,10 +23,14 @@ function Main() {
       const response = await request.json();
       console.log(response);
 
+      usernameRef.current.value = ''
+      passwordRef.current.value = ''
 
       if (Object.keys(response).includes("errorMessage")) {
-        console.log("The username exists already")
-        formData.username = ''
+        setErrorMessage('The username exists already')
+
+      } else if (Object.keys(response).includes("message")) {
+        setErrorMessage('')
       }
 
     } catch (error) {
@@ -37,26 +46,46 @@ function Main() {
           <input
             className="textBox"
             type="text"
+            ref={usernameRef}
             name="username"
             placeholder="Username"
             required
           />
           <br />
           <input
+            ref={passwordRef}
             className="textBox"
             type="password"
             name="password"
             placeholder="Password"
             required
           />
-          <div id="submitBtnGroup">
-            <button type="submit" className="submitBtn">
-              Create User
-            </button>
-            <button type="submit" className="submitBtn">
-              Login
-            </button>
-          </div>
+
+          {
+            window.location.pathname == '/login' ? (
+              <>
+                <p id="errorMessage" className="informationText">{errorMessage}</p>
+                <span className="informationText">Not a user? <a href="/">Create one!</a></span>
+                <div id="submitBtnGroup">
+                  <button type="submit" className="submitBtn">
+                    Login
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p id="errorMessage" className="informationText">{errorMessage}</p>
+                <span className="informationText">Already a user? <a href="/login">Login</a></span>
+                <div id="submitBtnGroup">
+                  <button type="submit" className="submitBtn">
+                    Create User
+                  </button>
+                </div>
+
+              </>
+            )
+          }
+
         </form>
       </main>
     </>
