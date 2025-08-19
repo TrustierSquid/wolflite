@@ -39,6 +39,7 @@ function LoginCreate() {
     }
   }
 
+
   async function loginUser(e) {
     e.preventDefault();
     const form = e.target;
@@ -54,12 +55,12 @@ function LoginCreate() {
       passwordRef.current.value = ''
 
       const response = await request.json()
-      console.log(response)
 
       if (Object.keys(response).includes("message")) {
         setErrorMessage(response.message)
       } else {
         setErrorMessage('')
+        window.location.href = '/blog'
       }
 
     } catch (error) {
