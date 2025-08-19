@@ -1,6 +1,7 @@
 :root {
   --primary: #FC1E1E;
   --secondary: #861EFC;
+  --background: #F2F2F2;
 }
 
 * {
@@ -15,11 +16,16 @@ html, body, #root {
   max-width: 100vw;
 }
 
+/* For all react page roots */
+
 #root {
   position: relative;
+  background-color: var(--background);
   /* display: grid;
   place-content: center; */
 }
+
+/* LOGIN/SIGNUP */
 
 #loginContainer {
   font-family: cursive;
@@ -29,22 +35,28 @@ html, body, #root {
   position: absolute;
   width: clamp(50%, 500px, 90%);
   /* max-width: 500px; */
-  padding: 1rem;
+  padding: 3rem;
   border-radius: 1rem;
   top: 50%;
   left: 50%;
+  gap: 2.5rem;
   transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   justify-content: space-around;
-
+  background-color: white;
 }
 
 .loginTextContainer {
   display: flex;
-  justify-content: center;
+  justify-content: left;
   align-items: center;
   gap: 1rem;
+  font-size: 1.7rem;
+}
+
+.loginTextContainer > img {
+  width: 10%;
 }
 
 .loginText {
@@ -58,16 +70,16 @@ html, body, #root {
 }
 
 #loginForm > #submitBtnGroup {
-  padding: 1rem;
-  display: flex;
-  justify-content: center;
+  /* display: flex; */
+  /* justify-content: center; */
   gap: 1rem;
 }
 
 #loginForm > #submitBtnGroup > .submitBtn {
   font-size: 1rem;
   padding: 0.5rem;
-  min-width: 100px;
+  margin-top: 1rem;
+  width: 100%;
   border: none;
   border-radius: 0.3rem;
   background-color: var(--secondary);
@@ -95,5 +107,5 @@ html, body, #root {
 }
 
 .informationText {
-  text-align: center;
+  text-align: left;
 }

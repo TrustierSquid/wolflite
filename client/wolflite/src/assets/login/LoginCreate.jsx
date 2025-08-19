@@ -1,7 +1,7 @@
 import React from "react";
 import { useState, useRef } from "react";
 
-function Main() {
+function LoginCreate() {
   const [errorMessage, setErrorMessage] = useState('')
   const usernameRef = useRef()
   const passwordRef = useRef()
@@ -46,12 +46,12 @@ function Main() {
           window.location.pathname == '/login' ? (
               <span className="loginTextContainer" >
                 <img src="./src/assets/imgs/wolfLogo.png" alt="Pic" />
-                <h1 className="loginText">Wolf Lite Login</h1>
+                <p className="loginText">Wolf Lite Login</p>
               </span>
           ) : (
               <span className="loginTextContainer">
                 <img src="./src/assets/imgs/wolfLogo.png" alt="Pic" />
-                <h1 className="loginText">Wolf Lite</h1>
+                <p className="loginText">WOLF Lite</p>
               </span>
           )
         }
@@ -61,7 +61,7 @@ function Main() {
             type="text"
             ref={usernameRef}
             name="username"
-            placeholder="Username"
+            placeholder="Enter your username"
             required
           />
           <br />
@@ -70,14 +70,15 @@ function Main() {
             className="textBox"
             type="password"
             name="password"
-            placeholder="Password"
+            placeholder="Enter your password"
             required
           />
+
+          <p id="errorMessage" className="informationText">{errorMessage}</p>
 
           {
             window.location.pathname == '/login' ? (
               <>
-                <p id="errorMessage" className="informationText">{errorMessage}</p>
                 <span className="informationText">Not a user? <a href="/">Create one!</a></span>
                 <div id="submitBtnGroup">
                   <button type="submit" className="submitBtn">
@@ -105,4 +106,4 @@ function Main() {
   );
 }
 
-export default Main;
+export default LoginCreate;
