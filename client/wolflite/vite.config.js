@@ -7,6 +7,15 @@ export default defineConfig({
   server: {
     proxy: {
       '/formSubmission': 'http://localhost:5000',
+      '/loginUser': 'http://localhost:5000'
+    }
+  },
+
+  build: {
+    rollupOptions: {
+      input: {
+
+      }
     }
   }
 })

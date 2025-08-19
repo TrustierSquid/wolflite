@@ -7,7 +7,7 @@ function LoginCreate() {
   const passwordRef = useRef()
 
 
-  async function receieveData(e) {
+  async function createUser(e) {
     e.preventDefault();
     const form = e.target;
     const formData = new FormData(form);
@@ -39,56 +39,107 @@ function LoginCreate() {
     }
   }
 
+  async function loginUser(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+
+    try {
+      const request = await fetch("/loginUser", {
+        method: 'POST',
+        body: formData
+      })
+
+      usernameRef.current.value = ''
+      passwordRef.current.value = ''
+
+      const response = await request.json()
+      console.log(response)
+
+      if (Object.keys(response).includes("message")) {
+        setErrorMessage(response.message)
+      } else {
+        setErrorMessage('')
+      }
+
+    } catch (error) {
+      console.log(error)
+    }
+
+
+  }
+
   return (
     <>
       <main id="loginContainer">
         {
+          // LOGIN ENDPOINT
           window.location.pathname == '/login' ? (
+            <>
               <span className="loginTextContainer" >
                 <img src="./src/assets/imgs/wolfLogo.png" alt="Pic" />
                 <p className="loginText">Wolf Lite Login</p>
               </span>
-          ) : (
-              <span className="loginTextContainer">
-                <img src="./src/assets/imgs/wolfLogo.png" alt="Pic" />
-                <p className="loginText">WOLF Lite</p>
-              </span>
-          )
-        }
-        <form method="post" id="loginForm" onSubmit={receieveData}>
-          <input
-            className="textBox"
-            type="text"
-            ref={usernameRef}
-            name="username"
-            placeholder="Enter your username"
-            required
-          />
-          <br />
-          <input
-            ref={passwordRef}
-            className="textBox"
-            type="password"
-            name="password"
-            placeholder="Enter your password"
-            required
-          />
+              <form method="post" id="loginForm" onSubmit={loginUser}>
+                <input
+                  className="textBox"
+                  type="text"
+                  ref={usernameRef}
+                  name="username"
+                  placeholder="Enter your username"
+                  required
+                />
+                <br />
+                <input
+                  ref={passwordRef}
+                  className="textBox"
+                  type="password"
+                  name="password"
+                  placeholder="Enter your password"
+                  required
+                />
 
-          <p id="errorMessage" className="informationText">{errorMessage}</p>
+                <p id="errorMessage" className="informationText">{errorMessage}</p>
 
-          {
-            window.location.pathname == '/login' ? (
-              <>
                 <span className="informationText">Not a user? <a href="/">Create one!</a></span>
                 <div id="submitBtnGroup">
                   <button type="submit" className="submitBtn">
                     Login
                   </button>
                 </div>
-              </>
-            ) : (
-              <>
+
+              </form>
+            </>
+
+          ) : (
+            // CREATE USER ENDPOINT
+            <>
+              <span className="loginTextContainer">
+                <img src="./src/assets/imgs/wolfLogo.png" alt="Pic" />
+                <p className="loginText">WOLF Lite</p>
+              </span>
+              <form method="post" id="loginForm" onSubmit={createUser}>
+                <input
+                  className="textBox"
+                  type="text"
+                  ref={usernameRef}
+                  name="username"
+                  placeholder="Enter your username"
+                  required
+                />
+                <br />
+                <input
+                  ref={passwordRef}
+                  className="textBox"
+                  type="password"
+                  name="password"
+                  placeholder="Enter your password"
+                  required
+                />
+
+
                 <p id="errorMessage" className="informationText">{errorMessage}</p>
+
                 <span className="informationText">Already a user? <a href="/login">Login</a></span>
                 <div id="submitBtnGroup">
                   <button type="submit" className="submitBtn">
@@ -96,11 +147,12 @@ function LoginCreate() {
                   </button>
                 </div>
 
-              </>
-            )
-          }
+              </form>
+            </>
+          )
+        }
 
-        </form>
+
       </main>
     </>
   );
