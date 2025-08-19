@@ -17,3 +17,26 @@ body,
   background-color: var(--background);
   position: relative;
 }
+
+/* For BlogFeed */
+#blogFeedContainer {
+  font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+  margin: 4rem auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 1rem;
+  width: clamp(600px, 70%, 900px);
+}
+
+#blogFeedContainer > .postContainer {
+  line-height: 1.5;
+  background-color: white;
+  box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+  border-radius: 1rem;
+  padding: 1rem;
+}
+
+#blogFeedContainer > .postContainer > .postAuthor {
+  font-weight: 800;
+}
