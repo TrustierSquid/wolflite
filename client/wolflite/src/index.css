@@ -40,7 +40,14 @@ html, body, #root {
 
 }
 
-.loginTitle {
+.loginTextContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+.loginText {
   text-align: center;
 }
 

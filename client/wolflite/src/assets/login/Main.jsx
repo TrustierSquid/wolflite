@@ -21,10 +21,11 @@ function Main() {
 
       // parse the response as json
       const response = await request.json();
-      console.log(response);
 
       usernameRef.current.value = ''
       passwordRef.current.value = ''
+
+      window.location.href = '/login'
 
       if (Object.keys(response).includes("errorMessage")) {
         setErrorMessage('The username exists already')
@@ -41,7 +42,19 @@ function Main() {
   return (
     <>
       <main id="loginContainer">
-        <h1 className="loginTitle">Wolf Lite</h1>
+        {
+          window.location.pathname == '/login' ? (
+              <span className="loginTextContainer" >
+                <img src="./src/assets/imgs/wolfLogo.png" alt="Pic" />
+                <h1 className="loginText">Wolf Lite Login</h1>
+              </span>
+          ) : (
+              <span className="loginTextContainer">
+                <img src="./src/assets/imgs/wolfLogo.png" alt="Pic" />
+                <h1 className="loginText">Wolf Lite</h1>
+              </span>
+          )
+        }
         <form method="post" id="loginForm" onSubmit={receieveData}>
           <input
             className="textBox"
