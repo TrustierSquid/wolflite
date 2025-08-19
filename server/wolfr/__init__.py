@@ -1,12 +1,12 @@
 import os
 import sqlite3
-from flask import Flask, request, jsonify, g
+from flask import Flask, request, jsonify, g, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from wolfr.db import get_db
 
 
 def create_app(test_config=None):
-   app = Flask(__name__)
+   app = Flask(__name__ , static_folder="../dist", static_url_path="")
 
    app.config.from_mapping(
         SECRET_KEY='dev',
@@ -29,6 +29,35 @@ def create_app(test_config=None):
    @app.route('/')
    def init():
       return "OK", 200
+
+   # LOGIN/CREATE USER
+
+   @app.route('/loginUser', methods=(['POST']))
+   def login():
+      db = get_db()
+
+      # in order to execute SQL statements and fetch results we need a db cursor
+      cursor = db.cursor()
+      username = request.form['username']
+      password = request.form['password']
+      # pw_hash = generate_password_hash(password)
+
+      cursor.execute("SELECT password FROM user WHERE username = ?", (username,))
+      user = cursor.fetchone()
+
+      if user is None:
+         return jsonify({"message": "username not found"})
+
+      storedhash = user[0]
+
+      if check_password_hash(storedhash, password):
+         return jsonify({"success": "Welcome"}), 200
+      else:
+         return jsonify({"message": "Incorrect password"}), 200
+
+      # return 200
+
+
 
    # Creating a new user
    @app.route('/formSubmission', methods=(['POST']))
@@ -56,7 +85,7 @@ def create_app(test_config=None):
       print(f"Received username: {username}")
       print(f"Generated hash: {pw_hash}")
 
-      return jsonify({"message": "Received"}), 200
+      return jsonify({"message": "Received"}), 201
 
 
    from . import db
