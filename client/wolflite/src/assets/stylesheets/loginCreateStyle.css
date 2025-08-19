@@ -1,28 +1,7 @@
 :root {
-  --primary: #FC1E1E;
-  --secondary: #861EFC;
-  --background: #F2F2F2;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-/* For login page */
-html, body, #root {
-  min-height: 100vh;
-  max-width: 100vw;
-}
-
-/* For all react page roots */
-
-#root {
-  position: relative;
-  background-color: var(--background);
-  /* display: grid;
-  place-content: center; */
+  --primary: #fc1e1e;
+  --secondary: #861efc;
+  --background: #f2f2f2;
 }
 
 /* LOGIN/SIGNUP */
@@ -85,7 +64,6 @@ html, body, #root {
   background-color: var(--secondary);
   color: white;
   font-weight: bold;
-
 }
 
 #loginForm > #submitBtnGroup > .submitBtn:hover {
