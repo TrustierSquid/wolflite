@@ -1,94 +1,128 @@
 import os
 import sqlite3
-from flask import Flask, request, jsonify, g, session
+from flask import (
+    Flask,
+    request,
+    jsonify,
+    g,
+    session,
+    redirect,
+    url_for,
+    send_from_directory,
+)
 from werkzeug.security import generate_password_hash, check_password_hash
 from wolfr.db import get_db
 
 
 def create_app(test_config=None):
-   app = Flask(__name__ , static_folder="../dist", static_url_path="")
+    app = Flask(__name__, static_folder="../dist", static_url_path="")
 
-   app.config.from_mapping(
-        SECRET_KEY='dev',
-        DATABASE=os.path.join(app.instance_path, 'wolfr.sqlite'),
-   )
+    app.config.from_mapping(
+        SECRET_KEY="dev",
+        DATABASE=os.path.join(app.instance_path, "wolfr.sqlite"),
+    )
 
-   if test_config is None:
-      # load the instance config, if it exists, when not testing
-      app.config.from_pyfile('config.py', silent=True)
-   else:
-      # load the test config if passed in
-      app.config.from_mapping(test_config)
+    if test_config is None:
+        # load the instance config, if it exists, when not testing
+        app.config.from_pyfile("config.py", silent=True)
+    else:
+        # load the test config if passed in
+        app.config.from_mapping(test_config)
 
-   # ensure the instance folder exists
-   try:
-      os.makedirs(app.instance_path)
-   except OSError:
-      pass
+    # ensure the instance folder exists
+    try:
+        os.makedirs(app.instance_path)
+    except OSError:
+        pass
 
-   @app.route('/')
-   def init():
-      return "OK", 200
+    @app.route("/")
+    def init():
+        return "OK", 200
 
-   # LOGIN/CREATE USER
+    # LOGIN/CREATE USER
 
-   @app.route('/loginUser', methods=(['POST']))
-   def login():
-      db = get_db()
+    # middleware. Having quick access to the logged in users data
+    @app.before_request
+    def load_user():
+        user_id = session.get("user_id")
 
-      # in order to execute SQL statements and fetch results we need a db cursor
-      cursor = db.cursor()
-      username = request.form['username']
-      password = request.form['password']
-      # pw_hash = generate_password_hash(password)
+        if user_id is None:
+            g.user = None
+            print("redirecting.. no session")
+        else:
+            g.user = (
+                get_db()
+                .execute("SELECT * FROM user WHERE id = ?", (user_id,))
+                .fetchone()
+            )
 
-      cursor.execute("SELECT password FROM user WHERE username = ?", (username,))
-      user = cursor.fetchone()
+            print(dict(g.user))
 
-      if user is None:
-         return jsonify({"message": "username not found"})
+        return
 
-      storedhash = user[0]
+    @app.route("/loginUser", methods=(["POST"]))
+    def login():
+        db = get_db()
 
-      if check_password_hash(storedhash, password):
-         return jsonify({"success": "Welcome"}), 200
-      else:
-         return jsonify({"message": "Incorrect password"}), 200
+        # in order to execute SQL statements and fetch results we need a db cursor
+        cursor = db.cursor()
+        username = request.form["username"]
+        password = request.form["password"]
 
-      # return 200
+        try:
+            cursor.execute(
+                "SELECT password, id FROM user WHERE username = ?", (username,)
+            )
+            user = cursor.fetchone()
 
+            if user is None:
+                return jsonify({"message": "username not found"})
 
+            storedhash = user[0]
 
-   # Creating a new user
-   @app.route('/formSubmission', methods=(['POST']))
-   def formSubmission():
-      db = get_db()
+            if check_password_hash(storedhash, password):
+                session["user_id"] = user[1]
+                return jsonify({"success": "Welcome"}), 200
+            else:
+                return jsonify({"message": "Incorrect password"}), 200
 
-      # in order to execute SQL statements and fetch results we need a db cursor
-      cursor = db.cursor()
-      username = request.form['username']
-      password = request.form['password']
-      pw_hash = generate_password_hash(password)
+        except sqlite3.IntegrityError as error:
+            return jsonify({"errorMessage": "Username doesnt exist"})
 
-      try:
-         cursor.execute(
-            "INSERT INTO user (username, password) VALUES (?, ?)",
-            (username, pw_hash)
-         )
+    # Creating a new user
+    @app.route("/formSubmission", methods=(["POST"]))
+    def formSubmission():
+        db = get_db()
 
-         # saving changes to the db
-         db.commit()
+        # in order to execute SQL statements and fetch results we need a db cursor
+        cursor = db.cursor()
+        username = request.form["username"]
+        password = request.form["password"]
+        pw_hash = generate_password_hash(password)
 
-      except sqlite3.IntegrityError as error:
-         return jsonify({"errorMessage": "Username already exists"})
+        try:
+            cursor.execute(
+                "INSERT INTO user (username, password) VALUES (?, ?)",
+                (username, pw_hash),
+            )
 
-      print(f"Received username: {username}")
-      print(f"Generated hash: {pw_hash}")
+            # saving changes to the db
+            db.commit()
 
-      return jsonify({"message": "Received"}), 201
+        except sqlite3.IntegrityError as error:
+            return jsonify({"errorMessage": "Username already exists"})
 
+        print(f"Received username: {username}")
+        print(f"Generated hash: {pw_hash}")
 
-   from . import db
-   db.init_app(app)
+        return jsonify({"message": "Received"}), 201
 
-   return app
+    from . import db
+
+    db.init_app(app)
+
+    from .routes import blog
+
+    app.register_blueprint(blog.blog_page)
+
+    return app
