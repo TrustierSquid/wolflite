@@ -1,11 +1,10 @@
 import sqlite3
-from flask import Blueprint, g, request, jsonify, session
+from flask import Blueprint, g, request, jsonify
 from wolfr.db import get_db
-from datetime import datetime
 
 blog_page = Blueprint("post", __name__, url_prefix="/post")
 
-
+# Creates a new post
 @blog_page.route("/create", methods=["POST"])
 def createPost():
     db = get_db()
@@ -25,3 +24,30 @@ def createPost():
         return jsonify({"message": "something went wrong"})
 
     return "Post sent", 200
+
+
+# Retireves existing Posts
+@blog_page.route("/fetch", methods=["GET"])
+def retrievePosts():
+   db = get_db()
+   cursor = db.cursor()
+
+   try:
+      posts = cursor.execute(
+         'SELECT * FROM posts'
+      ).fetchall()
+
+      results = []
+      for row in posts:
+         results.append({
+            "id": row["id"],
+            "author_id": row["author_id"],
+            "created": row["created"],
+            "title": row["title"],
+            "body": row["body"]
+         })
+
+      return jsonify({"posts": results}), 200
+
+   except sqlite3.IntegrityError:
+      return jsonify({"message": "Table or column doesnt exist"})
