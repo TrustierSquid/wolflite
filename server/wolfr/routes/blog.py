@@ -35,7 +35,10 @@ def retrievePosts():
    try:
       posts = cursor.execute(
          'SELECT * FROM posts'
+         ' JOIN user ON posts.author_id = user.id'
       ).fetchall()
+
+
 
       results = []
       for row in posts:
@@ -44,7 +47,8 @@ def retrievePosts():
             "author_id": row["author_id"],
             "created": row["created"],
             "title": row["title"],
-            "body": row["body"]
+            "body": row["body"],
+            "username": row["username"]
          })
 
       return jsonify({"posts": results}), 200
