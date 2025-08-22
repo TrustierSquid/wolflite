@@ -7,7 +7,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/formSubmission': 'http://localhost:5000',
-      '/loginUser': 'http://localhost:5000'
+      '/loginUser': 'http://localhost:5000',
+      '/post': 'http://localhost:5000'
     }
   },
 
