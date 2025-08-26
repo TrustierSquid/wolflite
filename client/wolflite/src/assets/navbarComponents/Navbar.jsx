@@ -5,7 +5,7 @@ function Navbar() {
     <nav id="navContainer">
       <section className="navContainerSection">
         <img id="navImg" src="./src/assets/imgs/wolfLogo.png" alt="" />
-        <h2>WOLF</h2>
+        <h2>WOLFLITE</h2>
       </section>
 
       <ul className="navContainerSectionLinks">
