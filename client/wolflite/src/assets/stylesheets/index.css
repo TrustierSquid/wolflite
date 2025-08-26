@@ -24,19 +24,22 @@ body,
   margin: 4rem auto;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1rem;
   padding: 1rem;
-  width: clamp(600px, 70%, 900px);
+  width: clamp(300px, 80%, 700px);
 }
 
 #blogFeedContainer > .postContainer {
   line-height: 1.5;
   background-color: white;
   box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
-  border-radius: 1rem;
+  border-radius: 0.5rem;
   padding: 1rem;
 }
 
 #blogFeedContainer > .postContainer > .postAuthor {
-  font-weight: 800;
+  font-weight: 100;
+  color: rgb(86, 86, 86);
+  display: flex;
+  justify-content: space-between;
 }
