@@ -35,7 +35,7 @@ export default function BlogFeed() {
             <>
               <section className="postContainer">
                 <span className="postAuthor">{post.username}</span>
-                <h1>{post.title}</h1>
+                <h2>{post.title}</h2>
                 <p>{post.body}</p>
               </section>
             </>
