@@ -1,10 +1,11 @@
 import React from 'react';
 import {render, fireEvent, screen} from '@testing-library/react'
-import Main from '../src/assets/login/Main';
+import userEvent from '@testing-library/user-event'
+import LoginCreate from "../src/assets/loginComponents/LoginCreate"
 import '@testing-library/jest-dom';
 
 test('renders login form and hyperlinks inside', ()=> {
-   render(<Main/>);
+   render(<LoginCreate/>);
    expect(screen.getByPlaceholderText(/Username/i)).toBeInTheDocument()
    expect(screen.getByPlaceholderText(/Password/i)).toBeInTheDocument()
 

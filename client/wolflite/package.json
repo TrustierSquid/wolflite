@@ -8,9 +8,10 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "jest --config ./config/jest.config.cjs"
+    "test": "jest"
   },
   "dependencies": {
+    "@testing-library/user-event": "^14.6.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
