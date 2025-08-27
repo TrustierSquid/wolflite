@@ -1,18 +1,18 @@
 :root {
   --primary: #fc1e1e;
   --secondary: #861efc;
-  --background: #f2f2f2;
+  --background: #fffefe;
 }
 
 /* LOGIN/SIGNUP */
 
 #loginContainer {
   font-family: cursive;
-  box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
   min-height: 400px;
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
   /* max-width: 90%; */
   position: absolute;
-  width: clamp(50%, 500px, 90%);
+  width: clamp(30%, 500px, 90%);
   /* max-width: 500px; */
   padding: 3rem;
   border-radius: 1rem;
@@ -24,6 +24,7 @@
   flex-direction: column;
   justify-content: space-around;
   background-color: white;
+  font-family: "Comfortaa";
 }
 
 .loginTextContainer {
