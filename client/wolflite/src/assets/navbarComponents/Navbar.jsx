@@ -15,6 +15,9 @@ function Navbar() {
         <li>
           <a href="#">Changelog</a>
         </li>
+        <li>
+          <a href="/blog">Feed</a>
+        </li>
       </ul>
     </nav>
   );
