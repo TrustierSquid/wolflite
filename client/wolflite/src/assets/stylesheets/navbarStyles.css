@@ -26,6 +26,7 @@
   display: flex;
   justify-content: space-around;
   font-family: "Comfortaa";
+  cursor: pointer;
 }
 
 .navContainerSection {

@@ -49,3 +49,89 @@ body,
   display: flex;
   justify-content: space-between;
 }
+
+
+
+/* CREATE POST MENU */
+
+#elementContainer {
+  width: clamp(300px, 60%, 700px);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: "Comfortaa";
+}
+
+.postTitle {
+  padding: 0 0 1rem 0rem;
+}
+
+#createMenuContainer {
+  background-color: white;
+  padding: 1rem;
+  /* gap: 15rem; */
+  display: flex;
+  border-radius: 1rem;
+}
+
+
+
+#createMenuOptions {
+  list-style-type: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+#createMenuOptions > li {
+  font-weight: 800;
+  padding: 0.5rem;
+  cursor: pointer;
+  border-radius: 0.5rem;
+}
+
+#createMenuOptions > li:hover {
+  background-color: whitesmoke;
+}
+
+#createMenuContent {
+  padding: 2rem;
+}
+
+
+@media (max-width: 768px) {
+  #createMenuContainer {
+    background-color: white;
+    padding: 1rem;
+    /* gap: 15rem; */
+    display: flex;
+    flex-direction: column;
+    border-radius: 1rem;
+  }
+}
+
+
+/* POPUP FORM */
+
+#createPostForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* .createPostFormLabel {
+
+}
+
+.createPostFormInputTitle {
+
+} */
+
+.createPostFormInput {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid grey;
+  max-width: 350px;
+  max-height: 400px;
+}
