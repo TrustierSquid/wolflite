@@ -15,7 +15,8 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        blog: 'blog.html'
+        blog: 'blog.html',
+        create: 'create.html'
       }
     }
   }
