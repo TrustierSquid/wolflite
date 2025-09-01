@@ -56,27 +56,37 @@ def handleImages():
       try:
          postTitle = request.form["postTitle"]
          postContent = request.form["postContent"]
+         print(len(request.files))
 
          if postContent is None:
             postContent = None
 
-         # Image handling
-         file = request.files['file']
-
-         if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-            file_url = f"/static/uploads/{filename}"
-
-            file.save(filepath)
-
-            # Cursor for sqlite so we can make SQL commands
+         # If no photo was uploaded, then just post what data was given
+         if len(request.files) == 0:
             cursor = db.cursor()
-            cursor.execute("INSERT INTO posts (author_id, title, body, filename) VALUES (?, ?, ?, ?)", (g.user[0], postTitle, postContent, file_url))
+
+            cursor.execute("INSERT INTO posts (author_id, title, body) VALUES (?, ?, ?)", (g.user[0], postTitle, postContent))
             db.commit()
 
+            return {"success": True}, 201
+         else:
+            # Image handling
+            file = request.files['file']
 
-            return {"url": file_url}, 201
+            if file and allowed_file(file.filename):
+               filename = secure_filename(file.filename)
+               filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+               file_url = f"/static/uploads/{filename}"
+
+               file.save(filepath)
+
+               # Cursor for sqlite so we can make SQL commands
+               cursor = db.cursor()
+               cursor.execute("INSERT INTO posts (author_id, title, body, filename) VALUES (?, ?, ?, ?)", (g.user[0], postTitle, postContent, file_url))
+               db.commit()
+
+
+               return {"url": file_url}, 201
 
       except sqlite3.IntegrityError:
          return jsonify({"message": "something went wrong"})

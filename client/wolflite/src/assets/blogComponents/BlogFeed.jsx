@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 
 export default function BlogFeed() {
   const [allPosts, setAllPosts] = useState(null);
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   useEffect(() => {
     async function fetchAllPosts() {
@@ -31,9 +32,11 @@ export default function BlogFeed() {
         // Loading condition for fetching the posts from the server
         allPosts ? (
           // Show all posts if there are any - otherwise show a 'no posts' message
-          allPosts?.posts.length > 0 ? (
+          allPosts?.posts?.length > 0 ? (
             allPosts?.posts
-              .map((post) => {
+              ?.map((post) => {
+
+
                 // Post date formatting
                 const date = new Date(post.created);
                 const today = new Date();
@@ -61,28 +64,38 @@ export default function BlogFeed() {
                   <>
                     <section
                       className="postContainer"
-                      key={post.id}
+                      key={post?.id}
                     >
                       <h5 className="postAuthor">
-                        {post.username} <span>posted {timeAgo()}</span>
+                        {post?.username} <span>posted {timeAgo()}</span>
                       </h5>
-                      <h3>{post.title}</h3>
-                      <img
-                        id="postImage"
-                        src={`http://localhost:5000/${post.filename}`}
-                        alt=""
-                      />
-                      <p>{post.body}</p>
+                      <h3>{post?.title}</h3>
+
+                      {post.filename && (
+                        <>
+                          {!imgLoaded && <span className="loader"></span>}
+                          <img
+                            id="postImage"
+                            src={`http://localhost:5000/${post.filename}`}
+                            alt="Post"
+                            style={imgLoaded ? {} : { display: "none" }}
+                            onLoad={() => setImgLoaded(true)}
+                            onError={() => setImgLoaded(true)} // hide loader if fails
+                          />
+                        </>
+                      )}
+
+                      <p>{post?.body}</p>
                     </section>
                   </>
                 );
               })
-              .reverse()
+              .reverse().slice()
           ) : (
             <span>No Posts yet!</span>
           )
         ) : (
-          <span class="loader"></span>
+          <span className="loader"></span>
         )
       }
     </main>

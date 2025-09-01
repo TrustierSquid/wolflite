@@ -9,8 +9,14 @@ export default function PopupForm() {
 
   async function handleUpload(e) {
     e.preventDefault();
-    console.log(formRef.current);
     const formData = new FormData(formRef.current);
+    console.log(formData);
+    const file = formData.get('file')
+
+    // If no photo was uploaded then send the data as is
+    if (!file || file.size === 0) {
+      formData.delete('file')
+    }
 
     const response = await fetch("/post/create", {
       method: "POST",
@@ -19,6 +25,7 @@ export default function PopupForm() {
 
     if (!response.ok) {
       alert("Upload failed");
+      console.log(response)
       return;
     }
 
@@ -31,6 +38,8 @@ export default function PopupForm() {
     if (data.url) {
       setImageUrl(data.url);
     }
+
+
   }
 
   return (
@@ -62,7 +71,6 @@ export default function PopupForm() {
                   <input
                     type="file"
                     name="file"
-                    required
                   />
                   {imageUrl && (
                     <img

@@ -25,17 +25,16 @@ body,
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  width: clamp(355px, 80%, 600px);
   padding: 0.5rem;
-  width: clamp(300px, 80%, 600px);
+  padding-inline: 2rem;
 }
 
 #blogFeedContainer > .postContainer {
   line-height: 1.5;
   background-color: white;
-  /* box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px; */
-  /* box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px; */
-  box-shadow: rgba(0, 0, 0, 0.02) 0px 1px 3px 0px,
-    rgba(27, 31, 35, 0.15) 0px 0px 0px 1px;
+  /* box-shadow: rgba(0, 0, 0, 0.02) 0px 1px 3px 0px,
+    rgba(27, 31, 35, 0.15) 0px 0px 0px 1px; */
   border-radius: 0.5rem;
   padding: 1rem;
   text-wrap: wrap;
@@ -45,8 +44,11 @@ body,
 }
 
 #blogFeedContainer > .postContainer > #postImage {
-  width: 500px;
-  margin: 0 auto;
+  max-width: 100%;
+  background: #ffffff;
+  background: linear-gradient(90deg, rgb(206, 206, 206) 0%, rgba(235, 235, 235, 1) 50%, rgb(224, 224, 224) 100%);
+  border-radius: 0.5rem;
+
 }
 
 #blogFeedContainer > .postContainer > .postAuthor {
