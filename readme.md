@@ -1,4 +1,4 @@
-# Wolflite
+# Wolflite Docs
 
 - Wolflite is a smaller version of wolf, made with python/flask
 - Just a simple blog site for experiments
@@ -7,8 +7,9 @@
 
 ## Features
 
-- Simple blog posts
-- User creation
+- Blog posts
+- User creation and authentication
+- Lighter version of the 'Den' System from the original WOLF
 
 
 # Getting Started
