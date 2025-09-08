@@ -18,26 +18,31 @@ export default function PopupForm() {
       formData.delete('file')
     }
 
-    const response = await fetch("/post/create", {
-      method: "POST",
-      body: formData,
-    });
+    try {
+      const response = await fetch("/post/create", {
+        method: "POST",
+        body: formData,
+      });
 
-    if (!response.ok) {
-      alert("Upload failed");
-      console.log(response)
-      return;
+      if (!response.ok) {
+        alert("Upload failed");
+        console.log(response)
+        return;
+      }
+
+      const data = await response.json();
+      setSuccessMessage("Upload Successful");
+      setTimeout(() => {
+        window.location.href = "/blog";
+      }, 1000);
+
+      if (data.url) {
+        setImageUrl(data.url);
+      }
+    } catch (error) {
+      console.log(error)
     }
 
-    const data = await response.json();
-    setSuccessMessage("Upload Successful");
-    setTimeout(() => {
-      window.location.href = "/blog";
-    }, 1000);
-
-    if (data.url) {
-      setImageUrl(data.url);
-    }
 
   }
 
@@ -105,7 +110,7 @@ export default function PopupForm() {
   return (
     <>
       <main id="elementContainer">
-        <h2 className="moodleTitle">Create Post</h2>
+        <h2 className="moodleTitle">Create</h2>
 
         <div id="createMenuContainer">
           <ul id="createMenuOptions">
@@ -190,74 +195,79 @@ export default function PopupForm() {
               <form
                 method="POST"
                 ref={pollForm}
-                id="createPostForm"
                 onSubmit={handlePollUploads}
               >
+                <main id="createPostForm">
+                  {/* POLL QUESTION */}
+                  <div className="formPostTitleSection">
 
-                {/* POLL QUESTION */}
-                <div className="formPostTitleSection">
+
+                    <label
+                      className="createPostFormLabel"
+                      for="pollQuestion"
+                    >
+                      Poll Question:
+                    </label>
+                    <br />
+                    <input
+                      className="createPostFormInputTitle"
+                      name="pollQuestion"
+                      type="text"
+                      onChange={handleQuestionChange}
+                      required
+                      placeholder="Enter a post title"
+                    />
+                  </div>
+
+                  {/* POLL OPTIONS */}
+                  {
+                    options.map((option, index) => (
+                      <div key={index} className="formPostBodySection">
+                        <br />
+                        <label
+                          className="createPostFormLabel"
+                          for="pollOption"
+                        >
+                          Poll Option:
+                        </label>
+                        <br />
+
+                        <input
+                          className="createPostFormInput"
+                          type="text"
+                          name="pollOption"
+                          value={option}
+                          placeholder={`Option ${index + 1}`}
+                          onChange={(e)=> handleOptionChange(index, e.target.value)}
+                          required
+                        />
+
+                        {
+                          option.length < 1 && (
+                            <button type="button" id="removePollOptionButton" onClick={()=> removeOption(index)}>Remove</button>
+                          )
+                        }
+                      </div>
+                    ))
+                  }
+                </main>
 
 
-                  <label
-                    className="createPostFormLabel"
-                    for="pollQuestion"
+                <span className="successMessage">{successMessage}</span>
+                <section id="functionBtns">
+                  {/* Add Option Button */}
+                  <button type="button" onClick={addOption} id="addPollOptionButton" >
+                    Add Answer
+                  </button>
+
+                  <button
+                    onClick={(e)=> handlePollUploads}
+                    id="submitTextBtn"
                   >
-                    Poll Question:
-                  </label>
-                  <br />
-                  <input
-                    className="createPostFormInputTitle"
-                    name="pollQuestion"
-                    type="text"
-                    onChange={handleQuestionChange}
-                    required
-                    placeholder="Enter a post title"
-                  />
-                </div>
+                    Create Post
+                  </button>
+                </section>
 
-                {/* POLL OPTIONS */}
-                {
-                  options.map((option, index) => (
-                    <div key={index} className="formPostBodySection">
-                      <br />
-                      <label
-                        className="createPostFormLabel"
-                        for="pollOption"
-                      >
-                        Poll Option:
-                      </label>
-                      <br />
-
-                      <input
-                        className="createPostFormInput"
-                        type="text"
-                        name="pollOption"
-                        value={option}
-                        placeholder={`Option ${index + 1}`}
-                        onChange={(e)=> handleOptionChange(index, e.target.value)}
-                        required
-                      />
-
-                      {
-                        option.length < 1 && (
-                          <button type="button" onClick={()=> removeOption(index)}>Remove Option</button>
-                        )
-                      }
-                    </div>
-                  ))
-                }
-
-                {/* Add Option Button */}
-                <button type="button" onClick={addOption}>
-                  + Add Option
-                </button>
-
-                <button
-                  onClick={(e) =>handlePollUploads}
-                  id="submitTextBtn"
-                >
-                  Create Post
-                </button>
               </form>
             </section>
           )}
