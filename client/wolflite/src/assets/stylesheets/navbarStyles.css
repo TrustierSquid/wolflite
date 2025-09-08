@@ -22,11 +22,12 @@
   position: sticky;
   top: 0;
   border-bottom: 1px solid var(--primaryFaded);
-  padding: 0.5rem;
+  padding: 0.2rem;
   display: flex;
   justify-content: space-around;
   font-family: "Comfortaa";
   cursor: pointer;
+  z-index: 1000;
 }
 
 .navContainerSection {
