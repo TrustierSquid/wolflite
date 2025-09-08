@@ -6,11 +6,11 @@ export default function PopupForm() {
   const [imageUrl, setImageUrl] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const formRef = useRef(null);
+  const pollForm = useRef(null);
 
   async function handleUpload(e) {
     e.preventDefault();
     const formData = new FormData(formRef.current);
-    console.log(formData);
     const file = formData.get('file')
 
     // If no photo was uploaded then send the data as is
@@ -37,6 +37,66 @@ export default function PopupForm() {
 
     if (data.url) {
       setImageUrl(data.url);
+    }
+
+  }
+
+
+  const [question, setQuestion] = useState('')
+  const [options, setOptions] = useState([''])
+
+  // handle question change
+  const handleQuestionChange = (e) => setQuestion(e.target.value)
+
+  // Handle change for an option
+  const handleOptionChange = (index, value) => {
+    const newOptions = [...options]
+    newOptions[index] = value
+    setOptions(newOptions)
+  }
+
+  // Add a new option
+  const addOption = ()=> setOptions([...options, ""])
+
+
+  // Remove an option
+  const removeOption = (index)=> {
+    setOptions(options.filter((_, i) => i !== index))
+  }
+
+  async function handlePollUploads(e) {
+    e.preventDefault()
+    const payload = {
+      question,
+      options: options.filter((opt)=> opt.trim() !== ""),
+    }
+
+    console.log(payload)
+
+    console.log("Submitting poll:", payload);
+
+    try {
+      const response = await fetch('/post/poll/create', {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        alert("Poll Upload Failed")
+        console.log(response)
+        return
+      }
+
+      const data = await response.json()
+      setSuccessMessage("Upload Successful");
+      // setQuestion("");
+      // setOptions([""]);
+      setTimeout(() => {
+        window.location.href = "/blog";
+      }, 1000);
+    } catch (error){
+      console.log(error)
     }
 
 
@@ -125,49 +185,78 @@ export default function PopupForm() {
             </section>
           ) : (
             <section id="createMenuContent">
-              <h2>Text Post</h2>
+              <h2>Create Poll</h2>
               <br />
               <form
-                action="/post/create"
                 method="POST"
+                ref={pollForm}
                 id="createPostForm"
+                onSubmit={handlePollUploads}
               >
+
+                {/* POLL QUESTION */}
                 <div className="formPostTitleSection">
+
+
                   <label
                     className="createPostFormLabel"
-                    for="postTitle"
+                    for="pollQuestion"
                   >
-                    Post Title:
+                    Poll Question:
                   </label>
                   <br />
                   <input
                     className="createPostFormInputTitle"
-                    name="postTitle"
+                    name="pollQuestion"
                     type="text"
+                    onChange={handleQuestionChange}
+                    required
                     placeholder="Enter a post title"
                   />
                 </div>
 
-                <div className="formPostBodySection">
-                  <label
-                    className="createPostFormLabel"
-                    for="postContent"
-                  >
-                    Post Body:
-                  </label>
-                  <br />
-                  <textarea
-                    className="createPostFormInput"
-                    type="text"
-                    name="postContent"
-                    placeholder="Enter a post Body"
-                  />
-                </div>
+                {/* POLL OPTIONS */}
+                {
+                  options.map((option, index) => (
+                    <div key={index} className="formPostBodySection">
+                      <br />
+                      <label
+                        className="createPostFormLabel"
+                        for="pollOption"
+                      >
+                        Poll Option:
+                      </label>
+                      <br />
+
+                      <input
+                        className="createPostFormInput"
+                        type="text"
+                        name="pollOption"
+                        value={option}
+                        placeholder={`Option ${index + 1}`}
+                        onChange={(e)=> handleOptionChange(index, e.target.value)}
+                        required
+                      />
+
+                      {
+                        option.length < 1 && (
+                          <button type="button" onClick={()=> removeOption(index)}>Remove Option</button>
+                        )
+                      }
+                    </div>
+                  ))
+                }
+
+                {/* Add Option Button */}
+                <button type="button" onClick={addOption}>
+                  + Add Option
+                </button>
+
                 <button
-                  type="submit"
+                  onClick={(e) =>handlePollUploads}
                   id="submitTextBtn"
                 >
-                  Post
+                  Create Post
                 </button>
               </form>
             </section>
