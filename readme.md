@@ -26,7 +26,7 @@ $ python -m venv .venv
 $ sudo apt install python3-venv
 ```
 
-## installing Wolflite dependencies
+## Installing Wolflite dependencies
 
 - The repository already has a 'requirements.txt'. Install all dependancies using
 ```
@@ -40,7 +40,7 @@ $ pip freeze > requirements.txt
 
 ## Database Instances
 
-- To setup a database development instance
+- To setup a database development instance (make sure you are inside the /server directory)
 ```
 $ flask --app wolfr init-db
 ```
@@ -53,7 +53,7 @@ $ flask --app wolfr init-db
 - If you want to modify the schema, be sure to first delete the wolfr.sqilte file that is created when you first initialize an instance. That way, when you run the 'init-db' command again, you can have your updated schema ready for use.
 
 
-## To run the development server
+## To run the development server (make sure you are inside the /server directory)
 ```
 $ flask --app wolfr run --debug
 ```
