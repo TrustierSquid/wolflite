@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import SideNav from "../navbarComponents/SideNav";
 
 export default function BlogFeed() {
   const [allPosts, setAllPosts] = useState({posts: [], polls: []});
@@ -111,19 +112,7 @@ export default function BlogFeed() {
   return (
     <>
       <main id="homeContainer">
-        <section id="profileSection">
-          <div id="userInformation">
-            <h3>Welcome back <span style={{color: "crimson"}}>{currentLoggedInUserName}!</span></h3>
-            <h5 style={{color: "grey", textAlign: "center"}}>UserID#: {currentLoggedInUserId}</h5>
-            <br />
-            <article id="sideNavButtonContainer">
-              <button className="sideNavButton" onClick={()=> window.location.href = '/blog'}>Home</button>
-              <button className="sideNavButton" onClick={()=> window.location.href = '/'}>Logout <i className="fa-light fa-left-from-bracket" style={{color: "#ffffff;"}}></i></button>
-            </article>
-            <button className="sideNavButton" onClick={()=> window.location.href = '/create'}>Create Post +</button>
-            <button className="sideNavButton" onClick={()=> window.location.href = '/create'}>Changelog</button>
-          </div>
-        </section>
+        <SideNav loggedInUserId={currentLoggedInUserId} loggedInUsername={currentLoggedInUserName}/>
         <section id="blogFeedContainer">
           {
             // Loading condition for fetching the posts from the server
