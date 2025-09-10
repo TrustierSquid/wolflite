@@ -26,7 +26,6 @@
   display: flex;
   justify-content: space-around;
   font-family: "Comfortaa";
-  cursor: pointer;
   z-index: 1000;
 }
 
@@ -46,6 +45,10 @@
 .navContainerSectionLinks > li > a {
   text-decoration: none;
   color: var(--primaryFaded);
+}
+
+.navContainerSectionLinks > li > a:hover {
+  color: var(--secondary);
 }
 
 /* Responsive Design for mobile devices */

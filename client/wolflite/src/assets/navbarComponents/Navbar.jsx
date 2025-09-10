@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useState } from "react";
 
 function Navbar() {
+
   return (
     <nav id="navContainer">
       <section className="navContainerSection" onClick={()=> window.location.href = '/'}>
@@ -10,13 +12,13 @@ function Navbar() {
 
       <ul className="navContainerSectionLinks">
         <li>
-          <a href="#" onClick={()=> {window.location.href = '/create'; console.log("hello")}}>Post</a>
+          <a href="/blog">Home</a>
+        </li>
+        <li>
+          <a href="#" onClick={()=> {window.location.href = '/create'}}>Post</a>
         </li>
         <li>
           <a href="#">Changelog</a>
-        </li>
-        <li>
-          <a href="/blog">Feed</a>
         </li>
       </ul>
     </nav>
