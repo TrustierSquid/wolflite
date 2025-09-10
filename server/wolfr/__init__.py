@@ -74,6 +74,22 @@ def create_app(test_config=None):
                 .fetchone()
             )
 
+    @app.route("/getUserData", methods=(["GET"]))
+    def fetchUserData():
+        user_id = session.get("user_id")
+        db = get_db()
+        cursor = db.cursor()
+        currentUser = cursor.execute(
+            "SELECT username FROM user WHERE id = ?", (user_id,)
+        ).fetchone()
+
+        return jsonify(
+            {"currentUserName": dict(currentUser)},
+            # (User In Action)
+            {"currentUserID": g.user[0]}
+        )
+
+
     @app.route("/loginUser", methods=(["POST"]))
     def login():
         db = get_db()
@@ -126,9 +142,7 @@ def create_app(test_config=None):
         except sqlite3.IntegrityError as error:
             return jsonify({"errorMessage": "Username already exists"})
 
-        print(f"Received username: {username}")
-        print(f"Generated hash: {pw_hash}")
-
+        print(f"New User Created!: {username}")
         return jsonify({"message": "Received"}), 201
 
     from . import db

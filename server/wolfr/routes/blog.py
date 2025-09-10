@@ -10,54 +10,89 @@ blog_page = Blueprint("post", __name__, url_prefix="/post")
 # Retireves existing Posts and polls
 @blog_page.route("/fetch", methods=["GET"])
 def retrievePosts():
-    db = get_db()
-    cursor = db.cursor()
+   db = get_db()
+   cursor = db.cursor()
 
-    try:
-        posts = cursor.execute(
-            "SELECT * FROM posts" " JOIN user ON posts.author_id = user.id"
-        ).fetchall()
+   try:
+      # selecting all regular posts
+      posts = cursor.execute(
+         "SELECT * FROM posts" " JOIN user ON posts.author_id = user.id"
+      ).fetchall()
 
-        polls = cursor.execute(
-            "SELECT * FROM polls, poll_options"
-            " JOIN user ON polls.author_id = user.id"
-        ).fetchall()
+      # Selecting all polls
+      polls = cursor.execute(
+         "SELECT * FROM polls"
+         " JOIN user ON polls.author_id = user.id"
+      ).fetchall()
 
-        postResults = []
-        pollResults = []
-        for row in posts:
-            postResults.append(
-                {
-                  "id": row["id"],
-                  "author_id": row["author_id"],
-                  "created": row["created"],
-                  "filename": row["filename"],
-                  "title": row["title"],
-                  "body": row["body"],
-                  "username": row["username"],
-                }
-            )
 
-        for poll in polls:
-            pollResults.append(
-               {
-                  "id": poll["id"],
-                  "author_id": poll["author_id"],
-                  "created": poll["created"],
-                  "question": poll["question"],
-                  "option_text": poll["option_text"],
-                  "username": poll["username"],
-               }
-            )
+      # Selecting all poll options
+      options = cursor.execute(
+         "SELECT * FROM poll_options"
+      ).fetchall()
 
-        return (
-            jsonify(
-               {"posts": postResults, "polls": pollResults},
-            ),
-            200,
-        )
-    except sqlite3.IntegrityError:
-        return jsonify({"message": "Table or column doesnt exist"})
+      # Blueprint for post results
+      postResults = []
+      for row in posts:
+         postResults.append(
+            {
+               "id": row["id"],
+               "author_id": row["author_id"],
+               "created": row["created"],
+               "filename": row["filename"],
+               "title": row["title"],
+               "body": row["body"],
+               "username": row["username"],
+            }
+         )
+
+
+      option_map = {}
+      for opt in options:
+         # Fetch user IDs who voted for this option
+         voters = cursor.execute(
+         "SELECT user_id FROM votes WHERE option_id = ?", (opt["id"],)
+         ).fetchall()
+         voter_ids = [v["user_id"] for v in voters]
+
+         option_map.setdefault(opt["poll_id"], []).append({
+            "id": opt["id"],
+            "option_text": opt["option_text"],
+            "user_voted": opt["users_voted"],
+            "voters": voter_ids,
+         })
+
+      # Selecting each poll and sending back a blueprint of each poll and their data
+      pollResults = []
+      for poll in polls:
+
+         # Getting total votes for each poll
+         result = cursor.execute("""
+            SELECT SUM(users_voted) AS total_votes FROM poll_options WHERE poll_id = ? """, (poll["id"],)
+         ).fetchone()
+
+         total_votes = result["total_votes"] if result and result["total_votes"] is not None else 0
+
+         pollResults.append({
+            "id": poll["id"],
+            "author_id": poll["author_id"],
+            "created": poll["created"],
+            "question": poll["question"],
+            "username": poll["username"],
+            # appended the blueprint of the options map
+            "options": option_map.get(poll["id"], []),
+            "totalVotes": total_votes
+         })
+
+
+      return (
+         jsonify(
+            {"posts": postResults, "polls": pollResults},
+         ),
+         200,
+      )
+   except sqlite3.IntegrityError:
+      return jsonify({"message": "Table or column doesnt exist"})
 
 
 # Allowed file extensions to be uploaded to the server
@@ -78,7 +113,6 @@ def handleImages():
         try:
             postTitle = request.form["postTitle"]
             postContent = request.form["postContent"]
-            print(len(request.files))
 
             if postContent is None:
                 postContent = None
@@ -134,10 +168,9 @@ def submitPoll():
             data = request.get_json()
             question = data["question"]
             options = data["options"]
-
-            print(data)
-
             cursor = db.cursor()
+
+
             cursor.execute(
                 "INSERT INTO polls (author_id, question) VALUES (?, ?)",
                 (g.user[0], question),
@@ -149,8 +182,8 @@ def submitPoll():
             db.commit()
             for option in options:
                 cursor.execute(
-                    "INSERT INTO poll_options (poll_id, option_text, users_voted) VALUES (?, ?, ?)",
-                    (poll_id, option, 0),
+                  "INSERT INTO poll_options (poll_id, option_text, users_voted) VALUES (?, ?, ?)",
+                  (poll_id, option, 0),
                 )
 
             db.commit()
@@ -160,3 +193,34 @@ def submitPoll():
             return jsonify({"message": "something went wrong"})
 
     return {"success": 200}
+
+
+# Marking an answer that a user selected
+@blog_page.route("/poll/userStats", methods=(['POST', "GET"]))
+def trackUserFeedback():
+   db = get_db()
+
+   if request.method == "POST":
+      try:
+         data = request.get_json()
+         poll_ID = data["pollID"]
+         option_ID = data["optionID"]
+         cursor = db.cursor()
+
+         cursor.execute("""
+            INSERT INTO votes (user_id, poll_id, option_id)
+            VALUES (?, ?, ?)
+         """, (g.user[0], poll_ID, option_ID))
+
+         cursor.execute(
+            "UPDATE poll_options SET users_voted = users_voted + 1 WHERE id = ?;", (option_ID,)
+         )
+
+         db.commit()
+
+
+      except sqlite3.IntegrityError:
+         return jsonify({"error": "You already voted in this poll"})
+
+
+   return {"success": 200}

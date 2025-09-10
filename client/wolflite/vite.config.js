@@ -9,7 +9,8 @@ export default defineConfig({
       '/formSubmission': 'http://localhost:5000',
       '/loginUser': 'http://localhost:5000',
       '/post': 'http://localhost:5000',
-      '/uploadImg': 'http://localhost:5000'
+      '/uploadImg': 'http://localhost:5000',
+      '/getUserData': 'http://localhost:5000',
     }
   },
 
