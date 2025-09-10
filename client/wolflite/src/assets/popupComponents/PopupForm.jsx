@@ -158,6 +158,7 @@ export default function PopupForm() {
                     name="postTitle"
                     type="text"
                     placeholder="Enter a post title"
+                    maxLength={65}
                     required
                   />
                 </div>
@@ -175,6 +176,7 @@ export default function PopupForm() {
                     type="text"
                     name="postContent"
                     placeholder="Enter a post Body"
+                    maxLength={300}
                     required
                   />
                 </div>
