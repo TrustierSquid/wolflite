@@ -16,7 +16,7 @@ function Navbar() {
           <a href="#" >Home <i className="fa-solid fa-house"></i></a>
         </li>
         <li>
-          <a href="/blog">Profile <i className="fa-solid fa-user"></i></a>
+          <a href="/profile">Profile <i className="fa-solid fa-user"></i></a>
         </li>
         <li id="navCreatePost" onClick={()=> {window.location.href = '/create'}}>
           <a href="#" >Create <i className="fa-solid fa-plus"></i></a>
