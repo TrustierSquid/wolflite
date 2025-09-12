@@ -83,11 +83,11 @@ def create_app(test_config=None):
             "SELECT username, filename FROM user WHERE id = ?", (user_id,)
         ).fetchone()
 
-        print({
+        """ print({
             "currentUserName": currentUser['username'],
             "currentUserPfPicture": currentUser["filename"],
             "currentUserID": g.user[0]
-        })
+        }) """
 
         return jsonify({
             "currentUserName": currentUser['username'],
@@ -154,11 +154,12 @@ def create_app(test_config=None):
         return jsonify({"message": "Received"}), 201
 
     from . import db
-
     db.init_app(app)
 
     from .routes import blog
-
     app.register_blueprint(blog.blog_page)
+
+    from .routes import profileInfo
+    app.register_blueprint(profileInfo.profile_page)
 
     return app
