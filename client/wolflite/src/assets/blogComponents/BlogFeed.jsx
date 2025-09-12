@@ -2,11 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import SideNav from "../navbarComponents/SideNav";
 
 export default function BlogFeed() {
-  const [allPosts, setAllPosts] = useState({posts: [], polls: []});
+  const [allPosts, setAllPosts] = useState({ posts: [], polls: [] });
   const [imgLoaded, setImgLoaded] = useState(false);
   const pollRef = useRef(null);
-  const [currentLoggedInUserName, setCurrentLoggedInUserName] = useState([])
-  const [currentLoggedInUserId, setCurrentLoggedInUserId] = useState([])
+  const [currentLoggedInUserName, setCurrentLoggedInUserName] = useState([]);
+  const [currentLoggedInUserId, setCurrentLoggedInUserId] = useState([]);
+  const [currentLoggedInUserProfilePic, setCurrentLoggedInUserProfilePic] =
+    useState([]);
 
   // Fetches Posts and polls
   async function fetchAllPosts() {
@@ -30,60 +32,61 @@ export default function BlogFeed() {
   // Run initially after component mount
   useEffect(() => {
     fetchAllPosts();
-    getUserData()
+    getUserData();
   }, []);
 
   // Fetches the Username and UID for the logged in user
-  async function getUserData(){
+  async function getUserData() {
     try {
-      const response = await fetch('/getUserData', {
+      const response = await fetch("/getUserData", {
         method: "GET",
         headers: { "Content-Type": "application/json" },
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! ${response.status}`);
-      }
-
-      const data = await response.json()
-      setCurrentLoggedInUserName(data[0].currentUserName.username)
-      setCurrentLoggedInUserId(data[1].currentUserID)
-    } catch (error) {
-      console.log(error)
-    }
-  }
-
-
-  // Calculates the poll numbers (total votes, total votes for each option in a poll)
-  async function trackPollNumber(pollID, optionID){
-    try {
-      // Sends the poll id and calculates the percentage of users that have selected an answer for each poll
-      const response = await fetch('/post/poll/userStats', {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({"pollID": pollID, "optionID": optionID})
       });
 
       if (!response.ok) {
         throw new Error(`HTTP error! ${response.status}`);
       }
 
-      const data = await response.json()
+      const data = await response.json();
+      setCurrentLoggedInUserName(data.currentUserName);
+      setCurrentLoggedInUserId(data.currentUserID);
+      setCurrentLoggedInUserProfilePic(data.currentUserPfPicture);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  // Calculates the poll numbers (total votes, total votes for each option in a poll)
+  async function trackPollNumber(pollID, optionID) {
+    try {
+      // Sends the poll id and calculates the percentage of users that have selected an answer for each poll
+      const response = await fetch("/post/poll/userStats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pollID: pollID, optionID: optionID }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! ${response.status}`);
+      }
+
+      const data = await response.json();
 
       /*
         If the user tries to vote again and the client receives an error from the server
         Preventing the User from spamming the api endpoint and voting more than once.
        */
       if (data.error) {
-        alert(data.error + ". Start a new Poll or wait for this one to expire.")
+        alert(
+          data.error + ". Start a new Poll or wait for this one to expire."
+        );
       }
 
-      fetchAllPosts()
+      fetchAllPosts();
     } catch (err) {
-      console.log(err)
+      console.log(err);
     }
   }
-
 
   // Post date formatting for post and poll timestamps
   function timeAgo(time) {
@@ -107,65 +110,79 @@ export default function BlogFeed() {
     });
   }
 
-
-
   return (
     <>
       <main id="homeContainer">
-        <SideNav loggedInUserId={currentLoggedInUserId} loggedInUsername={currentLoggedInUserName}/>
+        <SideNav
+          loggedInUserId={currentLoggedInUserId}
+          loggedInUsername={currentLoggedInUserName}
+          currentLoggedInUserProfilePic={currentLoggedInUserProfilePic}
+        />
         <section id="blogFeedContainer">
           {
             // Loading condition for fetching the posts from the server
             allPosts ? (
               <>
+                {/* For Polls */}
                 {allPosts?.polls?.length > 0 &&
-                  allPosts?.polls?.map((poll, index) => {
+                  allPosts?.polls
+                    ?.map((poll, index) => {
+                      return (
+                        <section
+                          className="postContainer"
+                          key={poll?.id}
+                        >
+                          <h5 className="postAuthor">
+                            {poll?.username}{" "}
+                            <span>posted a poll {timeAgo(poll.created)}</span>
+                          </h5>
+                          <h3>{poll?.question}</h3>
 
-
-                    return (
-                      <section
-                        className="postContainer"
-                        key={poll?.id}
-                      >
-                        <h5 className="postAuthor">
-                          {poll?.username} <span>posted a poll {timeAgo(poll.created)}</span>
-                        </h5>
-                        <h3>{poll?.question}</h3>
-
-                        {poll?.options?.map((option)=> {
-                          return (
-                            <>
-                              <button onClick={()=> {trackPollNumber(poll?.id, option.id)}}
-                              // If the user votes, the class changes reflecting that user voted
-                              // If not, the class remains the same
-                              className={option.voters.includes(currentLoggedInUserId) ? "hasVoted" : "pollOption"}
-                              >
-                                 {
-                                  option.voters.includes(currentLoggedInUserId) ? (
+                          {poll?.options?.map((option) => {
+                            return (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    trackPollNumber(poll?.id, option.id);
+                                  }}
+                                  // If the user votes, the class changes reflecting that user voted
+                                  // If not, the class remains the same
+                                  className={
+                                    option.voters.includes(
+                                      currentLoggedInUserId
+                                    )
+                                      ? "hasVoted"
+                                      : "pollOption"
+                                  }
+                                >
+                                  {option.voters.includes(
+                                    currentLoggedInUserId
+                                  ) ? (
                                     <>
-                                      {option?.option_text} <span>Voted <i class="fa-solid fa-check-double fa-xl"></i></span>
+                                      {option?.option_text}{" "}
+                                      <span>
+                                        Voted{" "}
+                                        <i class="fa-solid fa-check-double fa-xl"></i>
+                                      </span>
                                     </>
                                   ) : (
-                                    <span>
-                                      {option?.option_text}
-                                    </span>
-                                  )
-                                }
-                                {option.user_voted} votes
-                              </button>
-                            </>
-                          )
-                        })}
+                                    <span>{option?.option_text}</span>
+                                  )}
+                                  {option.user_voted} votes
+                                </button>
+                              </>
+                            );
+                          })}
 
+                          <span className="checkAnswers">
+                            <h4>{poll.totalVotes} votes</h4>
+                          </span>
+                        </section>
+                      );
+                    })
+                    .reverse()}
 
-                        <span className="checkAnswers">
-                          <h4>{poll.totalVotes} votes</h4>
-                        </span>
-                      </section>
-                    )
-                  }).reverse()
-                }
-
+                {/* For Regular Posts */}
                 {allPosts?.posts?.length > 0 ? (
                   allPosts.posts
                     .slice()
@@ -176,7 +193,8 @@ export default function BlogFeed() {
                         key={post?.id}
                       >
                         <h5 className="postAuthor">
-                          {post?.username} <span>posted {timeAgo(post.created)}</span>
+                          {post?.username}{" "}
+                          <span>posted {timeAgo(post.created)}</span>
                         </h5>
                         <h3>{post?.title}</h3>
 
@@ -198,7 +216,7 @@ export default function BlogFeed() {
                       </section>
                     ))
                 ) : (
-                  <span>No Posts yet!</span>
+                  <span className="emptyPostContainer">No Posts yet!</span>
                 )}
               </>
             ) : (

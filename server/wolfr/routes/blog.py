@@ -99,9 +99,44 @@ def retrievePosts():
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 
-# FILE/IMAGE UPLOAD HANDLING
+# FILE/IMAGE UPLOAD HANDLING: When a filename is passed in from the client, this checks if its a valid img file.
 def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+   return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@blog_page.route('/updateProfilePicture/<int:user_id>', methods=(["PUT"]))
+def updateProfilePicture(user_id):
+   db = get_db()
+   cursor = db.cursor()
+
+   if request.method == "PUT":
+      try:
+         if len(request.files) == 0 or None:
+            return {"error": "No file uploaded"}
+
+         file = request.files["file"]
+
+         if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(
+               current_app.config["UPLOAD_FOLDER"], filename
+            )
+
+            file_url = f"/static/uploads/{filename}"
+
+            file.save(filepath)
+            cursor.execute("""
+               UPDATE user
+               SET filename = ?
+               WHERE id = ?
+            """, (file_url, user_id))
+
+            db.commit()
+
+            return jsonify({"profileImg": file_url}), 201
+      except sqlite3.IntegrityError:
+         return jsonify({"error": "user does not exist"})
+
 
 
 # Creates a new post

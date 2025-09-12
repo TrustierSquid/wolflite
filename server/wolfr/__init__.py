@@ -80,14 +80,22 @@ def create_app(test_config=None):
         db = get_db()
         cursor = db.cursor()
         currentUser = cursor.execute(
-            "SELECT username FROM user WHERE id = ?", (user_id,)
+            "SELECT username, filename FROM user WHERE id = ?", (user_id,)
         ).fetchone()
 
-        return jsonify(
-            {"currentUserName": dict(currentUser)},
-            # (User In Action)
-            {"currentUserID": g.user[0]}
-        )
+        print({
+            "currentUserName": currentUser['username'],
+            "currentUserPfPicture": currentUser["filename"],
+            "currentUserID": g.user[0]
+        })
+
+        return jsonify({
+            "currentUserName": currentUser['username'],
+            "currentUserPfPicture": currentUser["filename"],
+            "currentUserID": g.user[0]
+        })
+
+
 
 
     @app.route("/loginUser", methods=(["POST"]))
