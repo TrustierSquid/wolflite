@@ -8,7 +8,9 @@ CREATE TABLE user (
    id INTEGER PRIMARY KEY AUTOINCREMENT,
    username TEXT UNIQUE NOT NULL,
    password TEXT NOT NULL,
-   filename TEXT NULL --profile picture
+   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+   filename TEXT NULL, --profile picture
+   profileBackground TEXT NULL
 );
 
 
