@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useState } from "react";
 
+
 function Navbar() {
 
   return (
@@ -11,14 +12,14 @@ function Navbar() {
       </section>
 
       <ul className="navContainerSectionLinks">
-        <li>
-          <a href="/blog">Home</a>
+        <li onClick={()=> {window.location.href = '/blog'}}>
+          <a href="#" >Home <i className="fa-solid fa-house"></i></a>
         </li>
         <li>
-          <a href="#" onClick={()=> {window.location.href = '/create'}}>Post</a>
+          <a href="/blog">Profile <i className="fa-solid fa-user"></i></a>
         </li>
-        <li>
-          <a href="#">Changelog</a>
+        <li id="navCreatePost" onClick={()=> {window.location.href = '/create'}}>
+          <a href="#" >Create <i className="fa-solid fa-plus"></i></a>
         </li>
       </ul>
     </nav>

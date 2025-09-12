@@ -39,16 +39,31 @@
   display: flex;
   align-items: center;
   list-style-type: none;
-  gap: 1rem;
+  gap: 2rem;
 }
 
 .navContainerSectionLinks > li > a {
   text-decoration: none;
-  color: var(--primaryFaded);
 }
 
 .navContainerSectionLinks > li > a:hover {
   color: var(--secondary);
+}
+
+#navCreatePost {
+  background-color: var(--primary);
+  padding: 0.5rem;
+  transition: 150ms;
+  border-radius: 0.5rem;
+}
+
+#navCreatePost:hover {
+  background-color: var(--secondary);
+  cursor: pointer;
+}
+
+#navCreatePost > a {
+  color: white;
 }
 
 /* Responsive Design for mobile devices */

@@ -35,38 +35,43 @@ export default function SideNav(props) {
 
     console.log(formData);
 
-    const response = await fetch(
-      `/post/updateProfilePicture/${props.loggedInUserId}`,
-      {
-        method: "PUT",
-        body: formData,
+    try {
+      const response = await fetch(
+        `/post/updateProfilePicture/${props.loggedInUserId}`,
+        {
+          method: "PUT",
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        alert("Upload failed");
+        console.log(response);
+        return;
       }
-    );
 
-    if (!response.ok) {
-      alert("Upload failed");
-      console.log(response);
-      return;
+      setSuccessMessage("Profile Picture Changed!");
+      setTimeout(() => {
+        window.location.href = "/blog";
+      }, 1000);
+
+      const data = await response.json();
+
+      if (data.profileImg) {
+        console.log("Change");
+      }
+    } catch (error) {
+      console.log(error)
     }
 
-    setSuccessMessage("Profile Picture Changed!");
-    setTimeout(() => {
-      window.location.href = "/blog";
-    }, 1000);
-
-    const data = await response.json();
-
-    if (data.profileImg) {
-      console.log("Change");
-    }
   }
 
   return (
     <section id="profileSection">
       <div id="userInformation">
-        <h4 style={{ color: "white", textAlign: "center" }}>
-          ID: #{props?.loggedInUserId}
-        </h4>
+        {/* <h4 style={{ color: "white", textAlign: "center" }}>
+          ID: #UIA25{props?.loggedInUserId}
+        </h4> */}
         <br />
         <div id="pictureSelectorContainer">
           <form
@@ -91,6 +96,8 @@ export default function SideNav(props) {
           </form>
           <h3 style={{ color: "white", textAlign: "center" }}>
             {props?.loggedInUsername}
+            <br />
+
           </h3>
         </div>
         <h4 style={{ textAlign: "center", color: "lime" }}>{successMessage}</h4>
@@ -103,22 +110,22 @@ export default function SideNav(props) {
           </button>
           <button
             className="sideNavButton"
-            onClick={() => (window.location.href = "/")}
+            onClick={() => (window.location.href = "/create")}
           >
-            Logout <i className="fa-solid fa-right-from-bracket"></i>
+            Create Post <i className="fa-solid fa-plus"></i>
           </button>
         </article>
         <button
           className="sideNavButton"
           onClick={() => (window.location.href = "/create")}
         >
-          Create Post <i className="fa-solid fa-plus"></i>
+          My profile <i className="fa-solid fa-user"></i>
         </button>
         <button
           className="sideNavButton"
-          onClick={() => (window.location.href = "/create")}
+          onClick={() => (window.location.href = "/login")}
         >
-          Changelog <i className="fa-solid fa-list-ul"></i>
+          Logout <i className="fa-solid fa-right-from-bracket"></i>
         </button>
       </div>
     </section>
