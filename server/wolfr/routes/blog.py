@@ -16,15 +16,13 @@ def retrievePosts():
    try:
       # selecting all regular posts
       posts = cursor.execute(
-         "SELECT * FROM posts" " JOIN user ON posts.author_id = user.id"
+         "SELECT posts.*, user.username, user.filename AS userProfilePic FROM posts JOIN user ON posts.author_id = user.id"
       ).fetchall()
 
       # Selecting all polls
       polls = cursor.execute(
-         "SELECT * FROM polls"
-         " JOIN user ON polls.author_id = user.id"
+         "SELECT polls.*, user.username, user.filename AS userProfilePic FROM polls JOIN user ON polls.author_id = user.id"
       ).fetchall()
-
 
       # Selecting all poll options
       options = cursor.execute(
@@ -43,6 +41,7 @@ def retrievePosts():
                "title": row["title"],
                "body": row["body"],
                "username": row["username"],
+               "profilePic": row["userProfilePic"]
             }
          )
 
@@ -81,7 +80,8 @@ def retrievePosts():
             "username": poll["username"],
             # appended the blueprint of the options map
             "options": option_map.get(poll["id"], []),
-            "totalVotes": total_votes
+            "totalVotes": total_votes,
+            "profilePic": poll["userProfilePic"]
          })
 
 
