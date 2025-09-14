@@ -10,7 +10,7 @@ CREATE TABLE user (
    password TEXT NOT NULL,
    created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
    filename TEXT NULL, --profile picture
-   profileBackground TEXT NULL
+   profileBackground TEXT NULL --coming soon
 );
 
 
@@ -50,4 +50,15 @@ CREATE TABLE votes (
    UNIQUE(user_id, poll_id),
    FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE CASCADE,
    FOREIGN KEY (option_id) REFERENCES poll_options(id) ON DELETE CASCADE
+);
+
+-- post comments
+CREATE TABLE comments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  author_id INTEGER NOT NULL,
+  poll_id INTEGER NULL,
+  post_id INTEGER NOT NULL,
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (author_id) REFERENCES user(id),
+  FOREIGN KEY (post_id) REFERENCES posts(id)
 );
