@@ -4,6 +4,7 @@ import './assets/stylesheets/navbarStyles.css'
 import './assets/stylesheets/index.css'
 import './assets/stylesheets/sideNav.css'
 import './assets/stylesheets/profile.css'
+import './assets/stylesheets/customAnimations.css'
 import Navbar from "./assets/navbarComponents/Navbar.jsx";
 import BlogFeed from "./assets/blogComponents/BlogFeed.jsx";
 

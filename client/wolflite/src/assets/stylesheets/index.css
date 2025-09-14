@@ -68,6 +68,7 @@ body,
   box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
   animation: onLoad 0.5s ease-in-out;
   object-fit: contain;
+  position: relative;
 }
 
 #blogFeedContainer > .postContainer > p {
@@ -103,7 +104,50 @@ body,
 }
 
 
+/* LIKING AND COMMENTING */
+.postFunctions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 1rem;
+}
 
+.postFunctionBtn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  font-family: "Comfortaa";
+  color: white;
+  background-color: var(--primary);
+  padding: 0.3rem;
+  border-radius: 0.5rem;
+  transition: 150ms;
+}
+
+.postFunctionBtn:hover {
+  transform: translateY(-3px);
+}
+
+.postFunctionBtn:nth-of-type(even) {
+
+}
+
+.postFunctionBtn:nth-of-type(odd) {
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* POLLS */
 .pollOption,
 .hasVoted {
   border: none;
@@ -270,6 +314,8 @@ body,
   border-radius: 1rem;
   color: white;
   padding: 1rem;
+  font-family: "Comfortaa";
+  font-weight: bold;
 }
 
 /* Submit button */

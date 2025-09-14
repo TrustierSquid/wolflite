@@ -7,8 +7,9 @@ export default function BlogFeed() {
   const pollRef = useRef(null);
   const [currentLoggedInUserName, setCurrentLoggedInUserName] = useState([]);
   const [currentLoggedInUserId, setCurrentLoggedInUserId] = useState([]);
-  const [currentLoggedInUserProfilePic, setCurrentLoggedInUserProfilePic] =
-    useState([]);
+  const [currentLoggedInUserProfilePic, setCurrentLoggedInUserProfilePic] = useState([]);
+  const [isAnimating, setIsAnimating] = useState(false)
+
 
   // Fetches Posts and polls
   async function fetchAllPosts() {
@@ -112,6 +113,9 @@ export default function BlogFeed() {
 
   console.log(allPosts);
 
+  // Track which post is animating
+  const [animatingPostId, setAnimatingPostId] = useState(null);
+
   return (
     <>
       <main id="homeContainer">
@@ -162,8 +166,6 @@ export default function BlogFeed() {
                                   onClick={() => {
                                     trackPollNumber(poll?.id, option.id);
                                   }}
-                                  // If the user votes, the class changes reflecting that user voted
-                                  // If not, the class remains the same
                                   className={
                                     option.voters.includes(
                                       currentLoggedInUserId
@@ -241,6 +243,26 @@ export default function BlogFeed() {
                             />
                           </>
                         )}
+
+                        {/* Likes and Comments */}
+                        <div className="postFunctions">
+                          <button
+                            className="postFunctionBtn"
+                            onClick={() => {
+                              setAnimatingPostId(post.id);
+                              setTimeout(() => setAnimatingPostId(null), 900); // duration of animation
+                            }}
+                          >
+                            <i className="fa-solid fa-heart-circle-plus"></i> Like
+                          </button>
+                          <button className="postFunctionBtn">
+                            <i className="fa-solid fa-message"></i> Comment
+                          </button>
+                        </div>
+
+                        <span className={`${animatingPostId === post.id ? "animationHeart" : "static"}`}>
+                          <i className="fa-solid fa-heart-circle-check"></i>
+                        </span>
                       </section>
                     ))
                 ) : (

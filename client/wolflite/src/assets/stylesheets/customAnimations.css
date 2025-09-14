@@ -1,0 +1,36 @@
+.animationHeart {
+  display: block;
+  position: absolute;
+  color: var(--primary);
+  bottom: 0%;
+  left: 35%;
+  opacity: 0;
+  /* transform: translate(50%, -50%); */
+  animation: likeAnimation 0.8s ease-out ;
+  padding: 1rem;
+}
+
+.static {
+  opacity: 0;
+  display: none;
+}
+
+
+@keyframes likeAnimation {
+  0% {
+    opacity: 0;
+    /* top: 100%; */
+  }
+
+  94% {
+    font-size: 2.3rem;
+    /* top: 50%;
+    left: 30%; */
+  }
+
+  100% {
+    /* font-size: 2.3rem; */
+    left: 40%;
+    opacity: 100%;
+  }
+}
