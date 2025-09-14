@@ -27,6 +27,8 @@
   border-radius: 1rem ;
   padding: 1rem;
   animation: onLoad 0.5s ease-in-out;
+  background-color: var(--primary);
+  color: white;
 }
 
 .profileInformationItem {
@@ -36,28 +38,75 @@
 }
 
 #userIDDisplay {
-  color: grey;
+  color: whitesmoke;
 }
+
+
+.postHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.postContainer > img {
+  border-radius: 0.5rem;
+}
+
+.nameAndProfilePicContainer > .profilePictures {
+  height: 40px;
+  width: 40px;
+  border-radius: 50%;
+  transition: 300ms;
+  cursor: pointer;
+  box-shadow: rgba(0, 0, 0, 0.45) 0px 25px 20px -20px;
+  object-fit: cover;
+}
+
+
+.profilePictureSelectorLabel {
+  border: none;
+  cursor: pointer;
+  z-index: 100;
+  background-color: #e1e6f9;
+  color: #6c2eb7;
+  font-weight: bold;
+  font-family: "Comfortaa", sans-serif;
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  box-shadow: rgba(0, 0, 0, 0.07) 0px 1px 2px, rgba(0, 0, 0, 0.07) 0px 2px 4px;
+  transition: background 150ms, color 150ms, transform 150ms;
+}
+
+.profilePictureSelectorLabel:hover {
+  background-color: var(--secondary);
+  color: white;
+  transform: translateY(-3px);
+}
+
+.postTimestamp {
+  color: grey;
+  font-size: 0.8em;
+}
+
 
 .profileInformationItem > button {
   border: none;
   padding: 0.5rem;
   border-radius: 0.5rem;
-  color: white;
+  background-color: #e1e6f9; /* Soft light blue for contrast */
+  color: #6c2eb7;
   font-weight: bold;
   font-family: "Comfortaa";
   cursor: pointer;
+  box-shadow: rgba(0, 0, 0, 0.07) 0px 1px 2px, rgba(0, 0, 0, 0.07) 0px 2px 4px, rgba(0, 0, 0, 0.07) 0px 4px 8px, rgba(0, 0, 0, 0.07) 0px 8px 16px, rgba(0, 0, 0, 0.07) 0px 16px 32px, rgba(0, 0, 0, 0.07) 0px 32px 64px;
   transition: 150ms;
 }
 
-.profileInformationItem > button:nth-of-type(even) {
-  background-color: var(--secondary);
-}
-.profileInformationItem > button:nth-of-type(odd) {
-  background-color: var(--primary);
-}
 
 .profileInformationItem > button:hover {
-  background-color:  #511d66;
+  background-color:  var(--secondary);
+  color: white;
   transform: translateY(-3px);
 }

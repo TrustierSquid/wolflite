@@ -87,7 +87,7 @@ export default function SideNav(props) {
             <img
               id="defaultPfPic"
               src={
-                `http://localhost:5000/${props?.currentLoggedInUserProfilePic}`
+                props?.currentLoggedInUserProfilePic
                   ? `http://localhost:5000/${props?.currentLoggedInUserProfilePic}`
                   : "/src/assets/imgs/defaultUser.jpg"
               }
@@ -117,7 +117,7 @@ export default function SideNav(props) {
         </article>
         <button
           className="sideNavButton"
-          onClick={() => (window.location.href = "/create")}
+          onClick={() => (window.location.href = "/profile")}
         >
           My profile <i className="fa-solid fa-user"></i>
         </button>

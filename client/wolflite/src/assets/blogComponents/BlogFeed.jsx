@@ -110,6 +110,8 @@ export default function BlogFeed() {
     });
   }
 
+  console.log(allPosts);
+
   return (
     <>
       <main id="homeContainer">
@@ -130,12 +132,27 @@ export default function BlogFeed() {
                       return (
                         <section
                           className="postContainer"
-                          key={poll?.id}
+                          key={poll?.id || index}
                         >
-                          <h5 className="postAuthor">
-                            {poll?.username}{" "}
-                            <span>posted a poll {timeAgo(poll.created)}</span>
-                          </h5>
+                          <div className="postHeader">
+                            <span className="nameAndProfilePicContainer">
+                              <img
+                                className="profilePictures"
+                                src={
+                                  poll.profilePic
+                                    ? `http://localhost:5000${poll.profilePic}`
+                                    : "/src/assets/imgs/defaultUser.jpg"
+                                }
+                                alt=""
+                              />
+                              <h5 className="postAuthor">{poll.username}</h5>
+                            </span>
+
+                            <span className="postTimestamp">
+                              posted a poll {timeAgo(poll.created)}
+                            </span>
+                          </div>
+
                           <h3>{poll?.question}</h3>
 
                           {poll?.options?.map((option) => {
@@ -192,12 +209,25 @@ export default function BlogFeed() {
                         className="postContainer"
                         key={post?.id}
                       >
-                        <h5 className="postAuthor">
-                          {post?.username}{" "}
-                          <span>posted {timeAgo(post.created)}</span>
-                        </h5>
+                        <div className="postHeader">
+                          <span className="nameAndProfilePicContainer">
+                            <img
+                              className="profilePictures"
+                              src={
+                                post.profilePic
+                                  ? `http://localhost:5000${post.profilePic}`
+                                  : `/src/assets/imgs/defaultUser.jpg`
+                              }
+                              alt=""
+                            />
+                            <h5 className="postAuthor">{post?.username} </h5>
+                          </span>
+                          <span className="postTimestamp">
+                            posted {timeAgo(post.created)}
+                          </span>
+                        </div>
                         <h3>{post?.title}</h3>
-
+                        <p>{post?.body}</p>
                         {post.filename && (
                           <>
                             {!imgLoaded && <span className="loader"></span>}
@@ -211,8 +241,6 @@ export default function BlogFeed() {
                             />
                           </>
                         )}
-
-                        <p>{post?.body}</p>
                       </section>
                     ))
                 ) : (
