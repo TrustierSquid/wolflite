@@ -141,9 +141,6 @@ export default function BlogFeed() {
     });
   }
 
-
-  console.log(allPosts)
-
   return (
     <>
       <main id="homeContainer">
