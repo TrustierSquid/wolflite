@@ -1,5 +1,9 @@
 .heartIcon {
-  color: red;
+  color: var(--primary);
+}
+
+.emptyHeartIcon {
+  color: white
 }
 
 .messageIcon {

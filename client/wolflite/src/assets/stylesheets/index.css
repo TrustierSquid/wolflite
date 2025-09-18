@@ -125,17 +125,17 @@ body,
   cursor: pointer;
   font-family: "Comfortaa";
   color: white;
-  border-radius: 0.5rem;
+  border-radius: 1rem;
   transition: 150ms;
-  background-color: var(--regBtn);
-  padding: 0.4rem;
+  background-color: #333;
+  padding: 0.5rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
 .postFunctionBtn:hover {
-  transform: translateY(-3px);
+  background-color: maroon;
 }
 
 .postFunctionBtn:nth-of-type(even) {

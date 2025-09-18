@@ -9,6 +9,7 @@ export default function BlogFeed() {
   const [currentLoggedInUserId, setCurrentLoggedInUserId] = useState([]);
   const [currentLoggedInUserProfilePic, setCurrentLoggedInUserProfilePic] = useState([]);
   const buttonRefs = useRef([]);
+  const [animateIndex, setAnimateIndex] = useState(null);
 
 
 
@@ -91,7 +92,9 @@ export default function BlogFeed() {
   }
 
 
-  async function addLikeToPost(userId, postID) {
+  async function addLikeToPost(userId, postID, index) {
+    // Selecting which button to animate
+    setAnimateIndex(index)
 
     try {
       const response = await fetch(`/post/addLike/${userId}/${postID}`, {
@@ -106,16 +109,14 @@ export default function BlogFeed() {
 
       const data = await response.json()
       fetchAllPosts()
+      setTimeout(() => setAnimateIndex(null), 700);
     } catch (error) {
       console.log(error)
     }
 
   }
 
-  // Accurately display if a user is liking a post
-  function isLikingPost(){
 
-  }
 
   // Post date formatting for post and poll timestamps
   function timeAgo(time) {
@@ -274,10 +275,10 @@ export default function BlogFeed() {
                           {/* Likes and Comments */}
                           <div className="postFunctions">
                             <button
-                              className={`postFunctionBtn `}
+                              className={`postFunctionBtn ${post?.likesByPost?.some(like => like.author_id === currentLoggedInUserId) ? "heartIcon" : "emptyHeartIcon"}${animateIndex === index ? " animate__animated animate__bounce" : ""}`}
                               ref={(el) => (buttonRefs.current[index] = el)}
                               onClick={() => {
-                                addLikeToPost(currentLoggedInUserId, post.id);
+                                addLikeToPost(currentLoggedInUserId, post.id, index);
                               }}
                             >
                               <i className="fa-solid fa-heart-circle-plus" ></i>
