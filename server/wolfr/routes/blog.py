@@ -16,7 +16,12 @@ def retrievePosts():
    try:
       # selecting all regular posts
       posts = cursor.execute(
-         "SELECT posts.*, user.username, user.filename AS userProfilePic FROM posts JOIN user ON posts.author_id = user.id"
+         "SELECT posts.*, user.username, user.filename AS userProfilePic, "
+         "COUNT(likes.id) AS likeCount "
+         "FROM posts "
+         "JOIN user ON posts.author_id = user.id "
+         "LEFT JOIN likes ON likes.post_id = posts.id "
+         "GROUP BY posts.id "
       ).fetchall()
 
       # Selecting all polls
@@ -24,13 +29,33 @@ def retrievePosts():
          "SELECT polls.*, user.username, user.filename AS userProfilePic FROM polls JOIN user ON polls.author_id = user.id"
       ).fetchall()
 
+      # Get all likes per post with like author id and username
+      likesMembers = cursor.execute("""
+         SELECT likes.post_id, likes.author_id, user.username
+         FROM likes
+         JOIN user ON likes.author_id = user.id
+      """).fetchall()
+
+      # map for likes (lists all users by id and username who liked a post)
+      likes_by_post = {}
+      for like in likesMembers:
+         post_id = like["post_id"]
+
+         if post_id not in likes_by_post:
+            likes_by_post[post_id] = []
+         likes_by_post[post_id].append({
+            "author_id": like["author_id"],
+            "username": like["username"]
+         })
+
       # Selecting all poll options
       options = cursor.execute(
          "SELECT * FROM poll_options"
       ).fetchall()
 
-      # Blueprint for post results
+      # Blueprint for POST results
       postResults = []
+
       for row in posts:
          postResults.append(
             {
@@ -41,11 +66,14 @@ def retrievePosts():
                "title": row["title"],
                "body": row["body"],
                "username": row["username"],
-               "profilePic": row["userProfilePic"]
+               "profilePic": row["userProfilePic"],
+               "likeCount": row["likeCount"],
+               "likesByPost": likes_by_post.get(row["id"], [])
             }
          )
 
 
+      # Blueprint FOR POLLS Results
       option_map = {}
       for opt in options:
          # Fetch user IDs who voted for this option
@@ -136,6 +164,41 @@ def updateProfilePicture(user_id):
             return jsonify({"profileImg": file_url}), 201
       except sqlite3.IntegrityError:
          return jsonify({"error": "user does not exist"})
+
+
+
+@blog_page.route("/addLike/<int:user_id>/<int:postID>", methods=(["POST"]))
+def addLikeToPost(user_id, postID):
+   db = get_db()
+   cursor = db.cursor()
+
+   # Checking if the user has already liked the post
+   existing_like = cursor.execute("""
+      SELECT 1 FROM likes WHERE author_id = ? AND post_id = ?
+   """, (user_id, postID)).fetchone()
+
+   if existing_like:
+      cursor.execute("""
+         DELETE FROM likes WHERE author_id = ? AND post_id = ?
+      """, (user_id, postID))
+      db.commit()
+
+      return jsonify({"success": 200})
+
+   if request.method == "POST":
+      cursor.execute("""
+         INSERT INTO likes (author_id, post_id) VALUES (?, ?)
+      """, (user_id, postID))
+
+      # map for likes (lists all users by id and username who liked a post)
+      likeMap = []
+
+      db.commit()
+      return jsonify({"success": 200})
+
+   return 200
+
+
 
 
 

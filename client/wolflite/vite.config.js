@@ -12,7 +12,8 @@ export default defineConfig({
       '/uploadImg': 'http://localhost:5000',
       '/getUserData': 'http://localhost:5000',
       '/updateProfilePicture': 'http://localhost:5000',
-      '/profileInfo': 'http://localhost:5000'
+      '/profileInfo': 'http://localhost:5000',
+      '/addLike': 'http://localhost:5000'
     }
   },
 
