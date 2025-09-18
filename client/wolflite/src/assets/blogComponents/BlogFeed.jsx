@@ -8,7 +8,8 @@ export default function BlogFeed() {
   const [currentLoggedInUserName, setCurrentLoggedInUserName] = useState([]);
   const [currentLoggedInUserId, setCurrentLoggedInUserId] = useState([]);
   const [currentLoggedInUserProfilePic, setCurrentLoggedInUserProfilePic] = useState([]);
-  const [isAnimating, setIsAnimating] = useState(false)
+  const buttonRefs = useRef([]);
+
 
 
   // Fetches Posts and polls
@@ -89,6 +90,33 @@ export default function BlogFeed() {
     }
   }
 
+
+  async function addLikeToPost(userId, postID) {
+
+    try {
+      const response = await fetch(`/post/addLike/${userId}/${postID}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json"},
+        body: JSON.stringify({"authorOfLike": userId})
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to send like");
+      }
+
+      const data = await response.json()
+      fetchAllPosts()
+    } catch (error) {
+      console.log(error)
+    }
+
+  }
+
+  // Accurately display if a user is liking a post
+  function isLikingPost(){
+
+  }
+
   // Post date formatting for post and poll timestamps
   function timeAgo(time) {
     const date = new Date(time);
@@ -111,10 +139,8 @@ export default function BlogFeed() {
     });
   }
 
-  console.log(allPosts);
 
-  // Track which post is animating
-  const [animatingPostId, setAnimatingPostId] = useState(null);
+  console.log(allPosts)
 
   return (
     <>
@@ -206,7 +232,7 @@ export default function BlogFeed() {
                   allPosts.posts
                     .slice()
                     .reverse()
-                    .map((post) => (
+                    .map((post, index) => (
                       <section
                         className="postContainer"
                         key={post?.id}
@@ -244,25 +270,29 @@ export default function BlogFeed() {
                           </>
                         )}
 
-                        {/* Likes and Comments */}
-                        <div className="postFunctions">
-                          <button
-                            className="postFunctionBtn"
-                            onClick={() => {
-                              setAnimatingPostId(post.id);
-                              setTimeout(() => setAnimatingPostId(null), 900); // duration of animation
-                            }}
-                          >
-                            <i className="fa-solid fa-heart-circle-plus"></i> Like
-                          </button>
-                          <button className="postFunctionBtn">
-                            <i className="fa-solid fa-message"></i> Comment
-                          </button>
-                        </div>
+                        <section className="postInformation">
+                          {/* Likes and Comments */}
+                          <div className="postFunctions">
+                            <button
+                              className={`postFunctionBtn `}
+                              ref={(el) => (buttonRefs.current[index] = el)}
+                              onClick={() => {
+                                addLikeToPost(currentLoggedInUserId, post.id);
+                              }}
+                            >
+                              <i className="fa-solid fa-heart-circle-plus" ></i>
+                              {post?.likeCount}
+                            </button>
+                            <button className="postFunctionBtn">
+                              <i className="fa-solid fa-message"></i>
+                              0
+                            </button>
+                          </div>
 
-                        <span className={`${animatingPostId === post.id ? "animationHeart" : "static"}`}>
-                          <i className="fa-solid fa-heart-circle-check"></i>
-                        </span>
+
+
+                        </section>
+
                       </section>
                     ))
                 ) : (

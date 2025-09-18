@@ -105,10 +105,17 @@ body,
 
 
 /* LIKING AND COMMENTING */
-.postFunctions {
-  margin-top: 1rem;
+
+.postInformation {
   display: flex;
-  gap: 1rem;
+  align-items: center;
+  margin-top: 0.5rem;
+  justify-content: space-between;
+}
+
+.postFunctions {
+  display: flex;
+  gap: 0.5rem;
 }
 
 .postFunctionBtn {
@@ -118,10 +125,13 @@ body,
   cursor: pointer;
   font-family: "Comfortaa";
   color: white;
-  background-color: var(--primary);
-  padding: 0.3rem;
   border-radius: 0.5rem;
   transition: 150ms;
+  background-color: var(--regBtn);
+  padding: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .postFunctionBtn:hover {

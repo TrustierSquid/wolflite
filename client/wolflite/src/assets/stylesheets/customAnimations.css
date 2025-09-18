@@ -1,13 +1,9 @@
-.animationHeart {
-  display: block;
-  position: absolute;
-  color: var(--primary);
-  bottom: 0%;
-  left: 35%;
-  opacity: 0;
-  /* transform: translate(50%, -50%); */
-  animation: likeAnimation 0.8s ease-out ;
-  padding: 1rem;
+.heartIcon {
+  color: red;
+}
+
+.messageIcon {
+  color: var(--secondary);
 }
 
 .static {
