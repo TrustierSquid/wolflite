@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import SideNav from "../navbarComponents/SideNav";
+import LikeAndComment from "../popupComponents/LikeAndComment";
 
 export default function BlogFeed() {
   const [allPosts, setAllPosts] = useState({ posts: [], polls: [] });
@@ -8,8 +9,8 @@ export default function BlogFeed() {
   const [currentLoggedInUserName, setCurrentLoggedInUserName] = useState([]);
   const [currentLoggedInUserId, setCurrentLoggedInUserId] = useState([]);
   const [currentLoggedInUserProfilePic, setCurrentLoggedInUserProfilePic] = useState([]);
-  const buttonRefs = useRef([]);
-  const [animateIndex, setAnimateIndex] = useState(null);
+  const [animateIndex, setAnimateIndex] = useState(null)
+
 
 
 
@@ -271,29 +272,13 @@ export default function BlogFeed() {
                           </>
                         )}
 
-                        <section className="postInformation">
-                          {/* Likes and Comments */}
-                          <div className="postFunctions">
-                            <button
-                              className={`postFunctionBtn ${post?.likesByPost?.some(like => like.author_id === currentLoggedInUserId) ? "heartIcon" : "emptyHeartIcon"}${animateIndex === index ? " animate__animated animate__jello" : ""}`}
-                              ref={(el) => (buttonRefs.current[index] = el)}
-                              onClick={() => {
-                                addLikeToPost(currentLoggedInUserId, post.id, index);
-                              }}
-                              id="likeBtn"
-                            >
-                              <i className="fa-solid fa-heart-circle-plus" ></i>
-                              {post?.likeCount}
-                            </button>
-                            <button className="postFunctionBtn">
-                              <i className="fa-solid fa-message"></i>
-                              0
-                            </button>
-                          </div>
-
-
-
-                        </section>
+                        {/* Like and Comment sections */}
+                        <LikeAndComment currentLoggedInUserId={currentLoggedInUserId}
+                          postInformation={post}
+                          postID={post.id}
+                          postIndex={index}
+                          addLikeToPost={addLikeToPost}
+                        />
 
                       </section>
                     ))
