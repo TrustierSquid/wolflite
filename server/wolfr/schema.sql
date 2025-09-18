@@ -3,6 +3,8 @@ DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS polls;
 DROP TABLE IF EXISTS poll_options;
 DROP TABLE IF EXISTS votes;
+DROP TABLE IF EXISTS comments;
+DROP TABLE IF EXISTS likes;
 
 CREATE TABLE user (
    id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -55,10 +57,21 @@ CREATE TABLE votes (
 -- post comments
 CREATE TABLE comments (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  author_id INTEGER NOT NULL, --who made the comment
+  poll_id INTEGER NULL, -- what poll was it on
+  post_id INTEGER NOT NULL, -- what post was it on
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (author_id) REFERENCES user(id),
+  FOREIGN KEY (post_id) REFERENCES posts(id)
+);
+
+CREATE TABLE likes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   author_id INTEGER NOT NULL,
   poll_id INTEGER NULL,
   post_id INTEGER NOT NULL,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (author_id) REFERENCES user(id),
-  FOREIGN KEY (post_id) REFERENCES posts(id)
+  FOREIGN KEY (post_id) REFERENCES posts(id),
+  UNIQUE(author_id, poll_id, post_id)
 );
