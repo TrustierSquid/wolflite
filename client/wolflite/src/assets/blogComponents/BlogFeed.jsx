@@ -275,11 +275,12 @@ export default function BlogFeed() {
                           {/* Likes and Comments */}
                           <div className="postFunctions">
                             <button
-                              className={`postFunctionBtn ${post?.likesByPost?.some(like => like.author_id === currentLoggedInUserId) ? "heartIcon" : "emptyHeartIcon"}${animateIndex === index ? " animate__animated animate__bounce" : ""}`}
+                              className={`postFunctionBtn ${post?.likesByPost?.some(like => like.author_id === currentLoggedInUserId) ? "heartIcon" : "emptyHeartIcon"}${animateIndex === index ? " animate__animated animate__jello" : ""}`}
                               ref={(el) => (buttonRefs.current[index] = el)}
                               onClick={() => {
                                 addLikeToPost(currentLoggedInUserId, post.id, index);
                               }}
+                              id="likeBtn"
                             >
                               <i className="fa-solid fa-heart-circle-plus" ></i>
                               {post?.likeCount}
