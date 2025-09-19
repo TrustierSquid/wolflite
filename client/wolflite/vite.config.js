@@ -13,7 +13,8 @@ export default defineConfig({
       '/getUserData': 'http://localhost:5000',
       '/updateProfilePicture': 'http://localhost:5000',
       '/profileInfo': 'http://localhost:5000',
-      '/addLike': 'http://localhost:5000'
+      '/addLike': 'http://localhost:5000',
+      '/addComment': 'http://localhost:5000'
     }
   },
 
