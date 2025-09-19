@@ -2,12 +2,30 @@ import { useState, useRef } from "react";
 
 export default function LikeAndComment(props){
   const [animateIndex, setAnimateIndex] = useState(null);
+  const [commentAnimationIndex, setCommentAnimationIndex] = useState(null)
   const buttonRefs = useRef([]);
+  const [openComments, setOpenComments] = useState({});
 
-  async function addCommentToPost() {
+  /* async function addCommentToPost() {
     // const response = await fetch('/addCommentToPost', {
 
     // })
+  } */
+
+
+  // COMMENT SECTIONS
+  function openAndCloseCommentSection(postIndex) {
+    setCommentAnimationIndex(postIndex)
+    const commentSection = props.commentSectionRef?.current[postIndex];
+    const isOpen = openComments[postIndex] || false;
+
+    if (commentSection) {
+      commentSection.style.display = !isOpen ? 'flex' : 'none';
+      setOpenComments(prev => ({
+        ...prev,
+        [postIndex]: !isOpen
+      }));
+    }
   }
 
 
@@ -31,10 +49,13 @@ export default function LikeAndComment(props){
           {props?.postInformation?.likeCount}
         </button>
         <button
-          className="postFunctionBtn"
+          className={`postFunctionBtn ${commentAnimationIndex === props?.postIndex ? " animate__animated animate__rubberBand" : ""}`}
           ref={(el)=> (buttonRefs.current[props?.postIndex] = el)}
           onClick={()=> {
-            addCommentToPost()
+            openAndCloseCommentSection(props?.postIndex)
+            setTimeout(() => {
+              setCommentAnimationIndex(null)
+            }, 600);
           }}
         >
           <i className="fa-solid fa-message"></i>

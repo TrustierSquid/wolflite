@@ -6,10 +6,12 @@ export default function BlogFeed() {
   const [allPosts, setAllPosts] = useState({ posts: [], polls: [] });
   const [imgLoaded, setImgLoaded] = useState(false);
   const pollRef = useRef(null);
+  const commentContainerRef = useRef([])
   const [currentLoggedInUserName, setCurrentLoggedInUserName] = useState([]);
   const [currentLoggedInUserId, setCurrentLoggedInUserId] = useState([]);
   const [currentLoggedInUserProfilePic, setCurrentLoggedInUserProfilePic] = useState([]);
   const [animateIndex, setAnimateIndex] = useState(null)
+
 
 
 
@@ -115,6 +117,20 @@ export default function BlogFeed() {
       console.log(error)
     }
 
+  }
+
+
+  // Example: addCommentToPost(postIndex)
+  function addCommentToPost(e, postIndex) {
+    e.preventDefault()
+    const commentSection = commentContainerRef.current[postIndex];
+    console.log(commentSection)
+    if (commentSection) {
+      commentSection.scrollIntoView({ behavior: "smooth", block: "center" });
+      // You can also focus an input inside the section if needed:
+      const input = commentSection.querySelector('input[name="userComment"]');
+      if (input) input.focus();
+    }
   }
 
 
@@ -276,7 +292,24 @@ export default function BlogFeed() {
                           postID={post.id}
                           postIndex={index}
                           addLikeToPost={addLikeToPost}
+                          commentSectionRef={commentContainerRef}
                         />
+
+                        <section className="commentsElementContainer" ref={(el)=> (commentContainerRef.current[index] = el)} >
+                          <div className="commentContainer">
+
+                            <span className="comment">
+                              <h3>Sam</h3>
+                              <p>Hello there, this is a comment</p>
+                            </span>
+                          </div>
+
+                          <form className="commentFunctions">
+                            <input type="text" name="userComment" id="" />
+                            <button className="postCommentBtn" onClick={(e)=> addCommentToPost(e, index)}>Post <i class="fa-solid fa-paper-plane"></i></button>
+                          </form>
+                        </section>
+
 
                       </section>
                     ))
