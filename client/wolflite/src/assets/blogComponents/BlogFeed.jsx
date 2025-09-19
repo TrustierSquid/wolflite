@@ -269,6 +269,7 @@ export default function BlogFeed() {
                           </>
                         )}
 
+
                         {/* Like and Comment sections */}
                         <LikeAndComment currentLoggedInUserId={currentLoggedInUserId}
                           postInformation={post}

@@ -1,37 +1,62 @@
 import { useEffect, useState, useRef } from "react";
 import SideNav from "../navbarComponents/SideNav";
+import LikeAndComment from "../popupComponents/LikeAndComment";
 
 export default function ProfileUI(props) {
-  // console.log(props)
+  console.log(props)
   const [allUserPosts, setAllUserPosts] = useState([]);
   const [postImgLoaded, setpostImgLoaded] = useState(null);
   const formRef = useRef(null);
   const [successMessage, setSuccessMessage] = useState("");
+  const [animateIndex, setAnimateIndex] = useState(null);
 
-  console.log(props);
+
+  // Fetches profile posts from the current logged in user
+  async function fetchProfilePosts() {
+    const response = await fetch("/profileInfo/fetch", {
+      method: "GET",
+    });
+
+    if (!response.ok) {
+      throw new Error("Tried and failed getting the user's posts.");
+    }
+
+    const data = await response.json();
+    setAllUserPosts(data);
+  }
 
   useEffect(() => {
     try {
-      // Fetches profile posts from the current logged in user
-      async function fetchProfilePosts() {
-        const response = await fetch("/profileInfo/fetch", {
-          method: "GET",
-          // headers: {"Content-Type": "application/json"}
-        });
-
-        if (!response.ok) {
-          throw new Error("Tried and failed getting the user's posts.");
-        }
-
-        const data = await response.json();
-        setAllUserPosts(data);
-      }
-
       fetchProfilePosts();
     } catch (error) {
       console.log(error);
     }
   }, []);
+
+
+  async function addLikeToPost(userId, postID, index) {
+    // Selecting which button to animate
+    setAnimateIndex(index)
+
+    try {
+      const response = await fetch(`/post/addLike/${userId}/${postID}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json"},
+        body: JSON.stringify({"authorOfLike": userId})
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to send like");
+      }
+
+      const data = await response.json()
+      fetchProfilePosts()
+      setTimeout(() => setAnimateIndex(null), 700);
+    } catch (error) {
+      console.log(error)
+    }
+
+  }
 
   // Changing profile Picture
   async function changeProfilePicture() {
@@ -61,8 +86,6 @@ export default function ProfileUI(props) {
     }
     const formData = new FormData();
     formData.append("file", file);
-
-    console.log(formData);
 
     try {
       const response = await fetch(
@@ -216,6 +239,13 @@ export default function ProfileUI(props) {
                           />
                         </>
                       )}
+
+                      <LikeAndComment currentLoggedInUserId={props?.currentLoggedInUserId}
+                        postInformation={post}
+                        postID={post?.id}
+                        postIndex={idx}
+                        addLikeToPost={addLikeToPost}
+                      />
                     </section>
                   );
                 })

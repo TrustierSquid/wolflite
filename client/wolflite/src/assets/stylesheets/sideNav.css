@@ -22,15 +22,11 @@
 .sideNavButton {
   width: 100%;
   border: none;
-  padding: 0.5rem;
+  padding: 0.5rem 1rem;
   border-radius: 0.5rem;
-  font-weight: bold;
-  background-color: #333; /* Soft light blue for contrast */
-  color: white;
   cursor: pointer;
-  box-shadow: rgba(0, 0, 0, 0.07) 0px 1px 2px, rgba(0, 0, 0, 0.07) 0px 2px 4px, rgba(0, 0, 0, 0.07) 0px 4px 8px, rgba(0, 0, 0, 0.07) 0px 8px 16px, rgba(0, 0, 0, 0.07) 0px 16px 32px, rgba(0, 0, 0, 0.07) 0px 32px 64px;
+  font-weight: bold;
   margin-top: 0.5rem;
-  /* transition: background 0.2s, color 0.2s; */
   transition: 0.1s;
   text-align: center;
   display: flex;
@@ -38,6 +34,8 @@
   justify-content: space-between;
   font-family: "Comfortaa";
   font-size: 0.9rem;
+  background: #ffffff;
+  color: #ff4167;
 }
 
 .sideNavButton:hover {
@@ -99,8 +97,8 @@
 
 
 
-.postFunctionBtn {
+/* .postFunctionBtn {
 
 }
-
+ */
 /* From Uiverse.io by zjssun */

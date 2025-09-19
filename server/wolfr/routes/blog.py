@@ -200,8 +200,6 @@ def addLikeToPost(user_id, postID):
 
 
 
-
-
 # Creates a new post
 @blog_page.route("/create", methods=(["GET", "POST"]))
 def handleImages():
