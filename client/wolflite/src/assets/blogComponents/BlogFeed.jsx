@@ -5,13 +5,11 @@ import LikeAndComment from "../popupComponents/LikeAndComment";
 export default function BlogFeed() {
   const [allPosts, setAllPosts] = useState({ posts: [], polls: [] });
   const [imgLoaded, setImgLoaded] = useState(false);
-  const pollRef = useRef(null);
-  const commentContainerRef = useRef([])
   const [currentLoggedInUserName, setCurrentLoggedInUserName] = useState([]);
   const [currentLoggedInUserId, setCurrentLoggedInUserId] = useState([]);
   const [currentLoggedInUserProfilePic, setCurrentLoggedInUserProfilePic] = useState([]);
   const [animateIndex, setAnimateIndex] = useState(null)
-
+  const commentContainerRef = useRef([])
 
 
 
@@ -61,6 +59,7 @@ export default function BlogFeed() {
       console.log(error);
     }
   }
+
 
   // Calculates the poll numbers (total votes, total votes for each option in a poll)
   async function trackPollNumber(pollID, optionID) {
@@ -121,16 +120,27 @@ export default function BlogFeed() {
 
 
   // Example: addCommentToPost(postIndex)
-  function addCommentToPost(e, postIndex) {
+  async function addCommentToPost(e, postIndex) {
     e.preventDefault()
-    const commentSection = commentContainerRef.current[postIndex];
-    console.log(commentSection)
-    if (commentSection) {
-      commentSection.scrollIntoView({ behavior: "smooth", block: "center" });
-      // You can also focus an input inside the section if needed:
-      const input = commentSection.querySelector('input[name="userComment"]');
-      if (input) input.focus();
-    }
+
+    const commentForm = new FormData(e.target)
+    const commentBody = commentForm.get("userComment")
+
+
+    const response = await fetch("/post/postComment", {
+      method: "POST",
+      headers: {"Content-type": "application/json"},
+      body: JSON.stringify(
+        {
+          commentBody: commentBody,
+          commentAuthor: currentLoggedInUserId,
+          postID: postIndex
+        }
+      )
+    })
+
+    fetchAllPosts()
+    const data = await response.json()
   }
 
 
@@ -295,18 +305,35 @@ export default function BlogFeed() {
                           commentSectionRef={commentContainerRef}
                         />
 
+
+
                         <section className="commentsElementContainer" ref={(el)=> (commentContainerRef.current[index] = el)} >
                           <div className="commentContainer">
 
+                            {console.log(post)}
+
                             <span className="comment">
-                              <h3>Sam</h3>
-                              <p>Hello there, this is a comment</p>
+                              {
+                                post.comments.map((comment)=> {
+                                  return (
+                                    <>
+                                      <div className="commentBlock">
+                                        <h4>{comment.author_username}</h4>
+                                        <div className="commentText">
+                                          <p>{comment.commentBody}</p>
+                                        </div>
+                                      </div>
+
+                                    </>
+                                  )
+                                })
+                              }
                             </span>
                           </div>
 
-                          <form className="commentFunctions">
-                            <input type="text" name="userComment" id="" />
-                            <button className="postCommentBtn" onClick={(e)=> addCommentToPost(e, index)}>Post <i class="fa-solid fa-paper-plane"></i></button>
+                          <form className="commentFunctions" onSubmit={(e) => addCommentToPost(e, post.id)}>
+                            <input type="text" required name="userComment" id="" placeholder="Leave a comment...  "/>
+                            <button type="submit" className="postCommentBtn">Post <i className="fa-solid fa-paper-plane"></i></button>
                           </form>
                         </section>
 

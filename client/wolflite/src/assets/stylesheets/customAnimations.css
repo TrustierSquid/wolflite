@@ -21,24 +21,55 @@
 
   /* init display */
   display: none;
+
   flex-direction: column;
-  background-color: rgb(247, 247, 247);
+  background-color: rgb(220, 220, 220);
+  box-shadow: rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em;
   border-radius: 0.5rem;
   width: 100%;
   height: 400px;
   padding: 1rem;
   justify-content: space-between;
+  gap: 1rem;
 }
 
 
-/* .commentContainer {
-} */
+.commentContainer {
+  overflow-y: scroll;
+  padding: 0.5rem;
+}
 
 .commentFunctions {
   /* width: 100%; */
   display: flex;
   gap: 0.5rem
 }
+
+.comment {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.comment > .commentBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0em;
+}
+
+
+.comment > .commentBlock > .commentText {
+  color: black;
+  border-radius: 1rem;
+  word-break: break-word;
+  white-space: pre-wrap;
+  padding: 0.5rem;
+  padding-left: 1rem;
+  color: white;
+  background: #FF4167;
+  background: linear-gradient(171deg, rgba(255, 65, 103, 1) 0%, rgba(164, 84, 255, 1) 100%);
+}
+
 
 /* input field for comments */
 .commentFunctions > input {

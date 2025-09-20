@@ -6,14 +6,9 @@ export default function LikeAndComment(props){
   const buttonRefs = useRef([]);
   const [openComments, setOpenComments] = useState({});
 
-  /* async function addCommentToPost() {
-    // const response = await fetch('/addCommentToPost', {
-
-    // })
-  } */
 
 
-  // COMMENT SECTIONS
+  // OPENING COMMENT SECTIONS
   function openAndCloseCommentSection(postIndex) {
     setCommentAnimationIndex(postIndex)
     const commentSection = props.commentSectionRef?.current[postIndex];
@@ -21,12 +16,15 @@ export default function LikeAndComment(props){
 
     if (commentSection) {
       commentSection.style.display = !isOpen ? 'flex' : 'none';
+      commentSection.scrollIntoView({ behavior: "smooth", block: "center" })
       setOpenComments(prev => ({
         ...prev,
         [postIndex]: !isOpen
       }));
     }
   }
+
+
 
 
   return (
@@ -59,7 +57,7 @@ export default function LikeAndComment(props){
           }}
         >
           <i className="fa-solid fa-message"></i>
-          0
+          {props?.postInformation?.comments?.length}
         </button>
       </div>
     </section>

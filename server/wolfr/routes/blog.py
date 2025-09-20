@@ -48,6 +48,23 @@ def retrievePosts():
             "username": like["username"]
          })
 
+      comments = cursor.execute("""
+         SELECT comments.author_id, comments.post_id, comments.commentBody, user.username
+         FROM comments
+         JOIN user ON comments.author_id = user.id
+      """).fetchall()
+
+      # Organize comments by post_id
+      comments_by_post = {}
+      for comment in comments:
+         post_id = comment["post_id"]
+         comments_by_post.setdefault(post_id, []).append({
+            "author_id": comment["author_id"],
+            "author_username": comment["username"],
+            "post_id": comment["post_id"],
+            "commentBody": comment["commentBody"]
+         })
+
       # Selecting all poll options
       options = cursor.execute(
          "SELECT * FROM poll_options"
@@ -68,7 +85,8 @@ def retrievePosts():
                "username": row["username"],
                "profilePic": row["userProfilePic"],
                "likeCount": row["likeCount"],
-               "likesByPost": likes_by_post.get(row["id"], [])
+               "likesByPost": likes_by_post.get(row["id"], []),
+               "comments": comments_by_post.get(row["id"], [])
             }
          )
 
@@ -318,5 +336,36 @@ def trackUserFeedback():
       except sqlite3.IntegrityError:
          return jsonify({"error": "You already voted in this poll"})
 
+
+   return {"success": 200}
+
+
+
+
+@blog_page.route("/postComment", methods=(["POST"]))
+def postComment():
+   db = get_db()
+   cursor = db.cursor()
+
+   if request.method == "POST":
+      try:
+         data = request.get_json()
+
+         # Information about the user and the post the comment was made on
+         commentBody = data["commentBody"]
+         commentAuthor = data["commentAuthor"]
+         postID = data["postID"]
+
+
+         cursor.execute("""
+            INSERT INTO comments (author_id, post_id, commentBody)
+            VALUES (?, ?, ?)
+         """, (commentAuthor, postID, commentBody))
+
+         db.commit()
+
+         print(data)
+      except sqlite3.IntegrityError:
+         return jsonify({"error": "failed to save comment"})
 
    return {"success": 200}

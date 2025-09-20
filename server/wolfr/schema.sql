@@ -60,6 +60,7 @@ CREATE TABLE comments (
   author_id INTEGER NOT NULL, --who made the comment
   poll_id INTEGER NULL, -- what poll was it on
   post_id INTEGER NOT NULL, -- what post was it on
+  commentBody TEXT NOT NULL,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (author_id) REFERENCES user(id),
   FOREIGN KEY (post_id) REFERENCES posts(id)
