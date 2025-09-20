@@ -318,7 +318,13 @@ export default function BlogFeed() {
                                   return (
                                     <>
                                       <div className="commentBlock">
-                                        <h4>{comment.author_username}</h4>
+                                        <div className="commentHeader">
+                                          <section className="commentWhoPostedContainer">
+                                            <img className="commentProfilePic" src={comment.profilePic ? `http://localhost:5000${comment.profilePic}` : "/src/assets/imgs/defaultUser.jpg"} alt="" />
+                                            <h4>{comment.author_username}</h4>
+                                          </section>
+                                          <h5>{timeAgo(comment.created)}</h5>
+                                        </div>
                                         <div className="commentText">
                                           <p>{comment.commentBody}</p>
                                         </div>
@@ -326,7 +332,7 @@ export default function BlogFeed() {
 
                                     </>
                                   )
-                                })
+                                }).reverse()
                               }
                             </span>
                           </div>

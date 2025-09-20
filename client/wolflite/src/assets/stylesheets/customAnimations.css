@@ -54,7 +54,24 @@
 .comment > .commentBlock {
   display: flex;
   flex-direction: column;
-  gap: 0em;
+  gap: 0.5rem;
+}
+
+.comment > .commentBlock > .commentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.comment > .commentBlock > .commentHeader > .commentWhoPostedContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.comment > .commentBlock > .commentHeader > .commentWhoPostedContainer > .commentProfilePic {
+  height: 30px;
+  border-radius: 50%;
 }
 
 
