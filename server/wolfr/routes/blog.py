@@ -49,7 +49,7 @@ def retrievePosts():
          })
 
       comments = cursor.execute("""
-         SELECT comments.author_id, comments.post_id, comments.commentBody, user.username
+         SELECT comments.author_id, comments.post_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
          FROM comments
          JOIN user ON comments.author_id = user.id
       """).fetchall()
@@ -61,7 +61,9 @@ def retrievePosts():
          comments_by_post.setdefault(post_id, []).append({
             "author_id": comment["author_id"],
             "author_username": comment["username"],
+            "profilePic": comment["userProfilePic"],
             "post_id": comment["post_id"],
+            "created": comment["created"],
             "commentBody": comment["commentBody"]
          })
 
