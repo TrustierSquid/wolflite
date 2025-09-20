@@ -175,7 +175,7 @@ export default function BlogFeed() {
           loggedInUsername={currentLoggedInUserName}
           currentLoggedInUserProfilePic={currentLoggedInUserProfilePic}
         />
-        <section id="blogFeedContainer">
+        <section id="blogFeedContainer" className="animate__animated animate__fadeInRight">
           {
             // Loading condition for fetching the posts from the server
             allPosts ? (
@@ -251,7 +251,7 @@ export default function BlogFeed() {
                       );
                     })
                     .reverse()}
-
+                <h2 className="universalHeader">Posts</h2>
                 {/* For Regular Posts */}
                 {allPosts?.posts?.length > 0 ? (
                   allPosts.posts

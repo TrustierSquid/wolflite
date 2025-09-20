@@ -27,7 +27,7 @@
 }
 
 #navContainer {
-  background-color: white;
+  background-color: #333;
   position: sticky;
   top: 0;
   border-bottom: 1px solid var(--primaryFaded);
@@ -43,6 +43,8 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  color: var(--primary);
+  color: white;
 }
 
 .navContainerSectionLinks {
@@ -54,6 +56,7 @@
 
 .navContainerSectionLinks > li > a {
   text-decoration: none;
+  color: var(--primary);
 }
 
 .navContainerSectionLinks > li > a:hover {

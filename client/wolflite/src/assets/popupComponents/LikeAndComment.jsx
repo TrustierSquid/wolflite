@@ -32,7 +32,7 @@ export default function LikeAndComment(props){
       {/* Likes and Comments */}
       <div className="postFunctions">
         <button
-          className={`postFunctionBtn ${props?.postInformation?.likesByPost?.some(like => like.author_id === props?.currentLoggedInUserId) ? "heartIcon" : "emptyHeartIcon"}${animateIndex === props?.postIndex ? " animate__animated animate__jello" : ""}`}
+          className={`postFunctionBtn ${props?.postInformation?.likesByPost?.some(like => like.author_id === props?.currentLoggedInUserId) ? "heartIcon" : "emptyHeartIcon"}${animateIndex === props?.postIndex ? " animate__animated animate__rubberBand" : ""}`}
           ref={(el) => (buttonRefs.current[props?.postIndex] = el)}
           onClick={() => {
             props.addLikeToPost(props?.currentLoggedInUserId, props?.postID, props?.postIndex);
@@ -47,7 +47,7 @@ export default function LikeAndComment(props){
           {props?.postInformation?.likeCount}
         </button>
         <button
-          className={`postFunctionBtn ${commentAnimationIndex === props?.postIndex ? " animate__animated animate__rubberBand" : ""}`}
+          className={`postFunctionBtn ${commentAnimationIndex === props?.postIndex ? " animate__animated animate__jello" : ""}`}
           ref={(el)=> (buttonRefs.current[props?.postIndex] = el)}
           onClick={()=> {
             openAndCloseCommentSection(props?.postIndex)

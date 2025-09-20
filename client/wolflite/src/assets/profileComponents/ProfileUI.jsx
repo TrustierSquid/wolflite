@@ -149,7 +149,7 @@ export default function ProfileUI(props) {
         />
 
         <section id="blogFeedContainer">
-          <h2 className="text-gradient">Your Profile</h2>
+          <h2 className="universalHeader">Your Profile</h2>
           <article id="profileInformation">
             <section className="profileInformationItem">
               <img
@@ -195,7 +195,7 @@ export default function ProfileUI(props) {
             </h4>
           </article>
 
-          <h2 className="text-gradient">Your Posts</h2>
+          <h2 className="universalHeader">Your Posts</h2>
           {allUserPosts ? (
             allUserPosts?.allUserPosts?.length > 0 ? (
               allUserPosts?.allUserPosts
@@ -203,7 +203,7 @@ export default function ProfileUI(props) {
                   return (
                     <section
                       key={post?._id || idx}
-                      className="postContainer"
+                      className="postContainer animate__animated  animate__fadeInBottomRight"
                     >
                       <div className="postHeader">
                         <span className="nameAndProfilePicContainer">

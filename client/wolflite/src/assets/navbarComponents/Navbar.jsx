@@ -30,10 +30,10 @@ function Navbar() {
 
         <ul className="navContainerSectionLinks">
           <li onClick={()=> {window.location.href = '/blog'}}>
-            <a href="#" >Home <i className="fa-solid fa-house"></i></a>
+            <a href="#" >Home</a>
           </li>
           <li onClick={()=> {window.location.href = '/profile'}}>
-            <a href="#">Profile <i className="fa-solid fa-user"></i></a>
+            <a href="#">Profile </a>
           </li>
           <li id="navCreatePost" onClick={()=> {window.location.href = '/create'}}>
             <a href="#" >Create <i className="fa-solid fa-plus"></i></a>
