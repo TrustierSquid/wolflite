@@ -14,7 +14,8 @@ export default defineConfig({
       '/updateProfilePicture': 'http://localhost:5000',
       '/profileInfo': 'http://localhost:5000',
       '/addLike': 'http://localhost:5000',
-      '/addComment': 'http://localhost:5000'
+      '/addComment': 'http://localhost:5000',
+      '/postComment': 'http://localhost:5000'
     }
   },
 
