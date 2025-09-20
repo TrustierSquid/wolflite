@@ -3,16 +3,16 @@
 /* SideNav */
 #profileSection {
   margin: 1rem;
-  height: 400px;
+  max-height: 60%;
   max-width: 500px;
   width: 300px;
-  background-color: var(--primary);
+  background-color: white;
   border-radius: 1.5rem;
   padding: 1rem;
   position: sticky;
   align-self: flex-start;
   top: 6rem;
-  box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
   /* transition: 150ms; */
   /* animation: onLoad 0.5s ease-in-out; */
 }
@@ -20,6 +20,7 @@
 
 
 .sideNavButton {
+  background: none;
   width: 100%;
   border: none;
   padding: 1rem;
@@ -28,17 +29,32 @@
   transition: 0.1s;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: left;
+  gap: 0.5rem;
   font-family: "Comfortaa";
   font-size: 0.9rem;
-  color: white;
-  background-color: var(--primary);
+  color: black;
+  border-radius: 0.5rem;
+}
+
+#sideNavTitle {
+  font-family: "Comfortaa";
+  color: grey;
+}
+
+.sideNavButton > i {
+box-shadow: rgba(249, 5, 5, 0.05) 3px 3px 3px 2px;
+  color: var(--primary);
+  font-size: 1.5rem;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
 }
 
 .sideNavButton:hover {
-  background-color: #3c06ff4e; /* Slightly blue-tinted for hover */
-  color: white; /* Dark text for readability */
+  background-color: rgb(255, 240, 240);
 }
+
+
 
 #sideNavButtonContainer {
   display: flex;
@@ -52,8 +68,9 @@
 #pictureSelectorContainer {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  justify-content: center;
+  gap: 0.5rem;
+  padding-left: 1rem;
+  justify-content: left;
   margin-bottom: 1rem;
 }
 

@@ -94,7 +94,7 @@ export default function SideNav(props) {
               alt=""
             />
           </form>
-          <h3 style={{ color: "white", textAlign: "center" }}>
+          <h3 style={{ color: "black", textAlign: "center" }}>
             {props?.loggedInUsername}
             <br />
 
@@ -102,29 +102,34 @@ export default function SideNav(props) {
         </div>
         <h4 style={{ textAlign: "center", color: "lime" }}>{successMessage}</h4>
         <article id="sideNavButtonContainer">
+          <h3 id="sideNavTitle">🗺️Menu</h3>
           <button
             className="sideNavButton"
             onClick={() => (window.location.href = "/blog")}
           >
-            Home <i className="fa-solid fa-house"></i>
+            <i className="fa-solid fa-house"></i>
+             <h3>Home</h3>
           </button>
           <button
             className="sideNavButton"
             onClick={() => (window.location.href = "/create")}
           >
-            Create Post <i className="fa-solid fa-plus"></i>
+            <i className="fa-solid fa-plus"></i>
+            <h3>Create</h3>
           </button>
           <button
             className="sideNavButton"
             onClick={() => (window.location.href = "/profile")}
           >
-            My profile <i className="fa-solid fa-user"></i>
+            <i className="fa-solid fa-user"></i>
+            <h3>My Profile</h3>
           </button>
           <button
             className="sideNavButton"
             onClick={() => (window.location.href = "/login")}
           >
-            Logout <i className="fa-solid fa-right-from-bracket"></i>
+            <i className="fa-solid fa-right-from-bracket"></i>
+            <h3>Logout</h3>
           </button>
         </article>
       </div>
