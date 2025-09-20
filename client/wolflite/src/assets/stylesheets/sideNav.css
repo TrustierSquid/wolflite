@@ -7,7 +7,7 @@
   max-width: 500px;
   width: 300px;
   background-color: var(--primary);
-  border-radius: 0.5rem;
+  border-radius: 1.5rem;
   padding: 1rem;
   position: sticky;
   align-self: flex-start;
@@ -22,31 +22,28 @@
 .sideNavButton {
   width: 100%;
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
+  padding: 1rem;
   cursor: pointer;
   font-weight: bold;
-  margin-top: 0.5rem;
   transition: 0.1s;
-  text-align: center;
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-family: "Comfortaa";
   font-size: 0.9rem;
-  background: #ffffff;
-  color: #ff4167;
+  color: white;
+  background-color: var(--primary);
 }
 
 .sideNavButton:hover {
-  background-color: var(--secondary); /* Slightly blue-tinted for hover */
+  background-color: #3c06ff4e; /* Slightly blue-tinted for hover */
   color: white; /* Dark text for readability */
 }
 
 #sideNavButtonContainer {
   display: flex;
   flex-direction: column;
-  margin-top: 2rem;
+  /* margin-top: 2rem; */
 
 }
 

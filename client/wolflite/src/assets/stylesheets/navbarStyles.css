@@ -17,12 +17,22 @@
   cursor: pointer;
 }
 
+#mobileNavButton {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 2rem;
+  cursor: pointer;
+}
+
 #navContainer {
   background-color: white;
   position: sticky;
   top: 0;
   border-bottom: 1px solid var(--primaryFaded);
   padding: 0.2rem;
+  padding-inline: 1rem;
   display: flex;
   justify-content: space-around;
   font-family: "Comfortaa";
@@ -66,6 +76,69 @@
   color: white;
 }
 
+
+/* Mobile nav menu */
+.navMobileMenu {
+  opacity: 0;
+  pointer-events: none;
+  display: none;
+}
+
+.navBarOpen {
+  display: block;
+  font-family: "Comfortaa";
+  color: white;
+  padding: 1rem;
+  position: fixed;
+  opacity: 1;
+  pointer-events: all;
+  background-color: #333;
+  top: 0;
+  width: 70%;
+  height: 100%;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 2rem;
+  /* animation tweaks */
+  animation-duration: 500ms;
+}
+
+
+#mobileNavTitle {
+}
+
+#mobileNavList {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: 1rem;
+  flex-direction: column;
+  list-style-type: none;
+}
+
+#mobileNavList > li {
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+}
+#mobileNavList > li:hover {
+  background-color: #7575758e;
+}
+
+#mobileNavList > li > a {
+  text-decoration: none;
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+#mobileNavList > li > a > i {
+  color: var(--primary);
+  background-color: #75757539;
+  padding: 1rem;
+  border-radius: 1rem;
+}
+
 /* Responsive Design for mobile devices */
 @media (max-width: 768px) {
   #navContainer {
@@ -73,6 +146,6 @@
   }
 
   #navContainer > .navContainerSection > h2 {
-    display: none;
+    /* display: none; */
   }
 }

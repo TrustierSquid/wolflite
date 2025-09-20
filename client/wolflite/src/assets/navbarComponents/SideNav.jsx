@@ -114,19 +114,19 @@ export default function SideNav(props) {
           >
             Create Post <i className="fa-solid fa-plus"></i>
           </button>
+          <button
+            className="sideNavButton"
+            onClick={() => (window.location.href = "/profile")}
+          >
+            My profile <i className="fa-solid fa-user"></i>
+          </button>
+          <button
+            className="sideNavButton"
+            onClick={() => (window.location.href = "/login")}
+          >
+            Logout <i className="fa-solid fa-right-from-bracket"></i>
+          </button>
         </article>
-        <button
-          className="sideNavButton"
-          onClick={() => (window.location.href = "/profile")}
-        >
-          My profile <i className="fa-solid fa-user"></i>
-        </button>
-        <button
-          className="sideNavButton"
-          onClick={() => (window.location.href = "/login")}
-        >
-          Logout <i className="fa-solid fa-right-from-bracket"></i>
-        </button>
       </div>
     </section>
   );
