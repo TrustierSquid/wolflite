@@ -5,6 +5,8 @@ function LoginCreate() {
   const [errorMessage, setErrorMessage] = useState('')
   const usernameRef = useRef()
   const passwordRef = useRef()
+  const [revealPassword, setRevealPassword] = useState(false)
+
 
 
   async function createUser(e) {
@@ -22,17 +24,29 @@ function LoginCreate() {
       // parse the response as json
       const response = await request.json();
 
+
+
+
+      if (Object.keys(response).includes("sanitationError")){
+        setErrorMessage(response.sanitationError)
+        usernameRef.current.value = `${usernameRef.current.value}`
+        passwordRef.current.value = `${usernameRef.current.value}`
+        return
+      }
+
+      if (Object.keys(response).includes("errorMessage")) {
+        usernameRef.current.value = `${usernameRef.current.value}`
+        passwordRef.current.value = `${usernameRef.current.value}`
+        setErrorMessage('The username exists already')
+        return
+      } else if (Object.keys(response).includes("message")) {
+        setErrorMessage('')
+      }
+
       usernameRef.current.value = ''
       passwordRef.current.value = ''
 
       window.location.href = '/login'
-
-      if (Object.keys(response).includes("errorMessage")) {
-        setErrorMessage('The username exists already')
-
-      } else if (Object.keys(response).includes("message")) {
-        setErrorMessage('')
-      }
 
     } catch (error) {
       console.log(error);
@@ -70,91 +84,107 @@ function LoginCreate() {
 
   }
 
+  function reveal() {
+    setRevealPassword((prev)=> !prev)
+  }
+
   return (
     <>
-      <main id="loginContainer">
-        {
-          // LOGIN ENDPOINT
-          window.location.pathname == '/login' ? (
-            <>
-              <span className="loginTextContainer" >
-                <img src="./src/assets/imgs/wolfLogo.png" alt="Pic" />
-                <p className="loginText">Wolf Lite Login</p>
-              </span>
-              <form method="post" id="loginForm" onSubmit={loginUser}>
-                <input
-                  className="textBox"
-                  type="text"
-                  ref={usernameRef}
-                  name="username"
-                  placeholder="Enter your username"
-                  required
-                />
-                <br />
-                <input
-                  ref={passwordRef}
-                  className="textBox"
-                  type="password"
-                  name="password"
-                  placeholder="Enter your password"
-                  required
-                />
+      <section id="loginBox">
+        <main id="loginContainer" className="animate__bounceInLeft animate__animated">
+          {
+            // LOGIN ENDPOINT
+            window.location.pathname == '/login' ? (
+              <>
+                <section id="loginSection1">
+                  <span className="loginTextContainer" >
+                    <img src="./src/assets/imgs/wolfLogo.png" alt="Pic" />
+                    <p className="loginText">Login</p>
+                  </span>
+                  <form method="post" id="loginForm" onSubmit={loginUser}>
+                    <input
+                      className="textBox"
+                      type="text"
+                      ref={usernameRef}
+                      name="username"
+                      placeholder="Username"
+                      required
+                    />
+                    <br />
+                    <input
+                      ref={passwordRef}
+                      className="textBox"
+                      type={revealPassword ? "text" : "password"}
+                      name="password"
+                      placeholder="Password"
+                      required
+                    />
 
-                <p id="errorMessage" className="informationText">{errorMessage}</p>
+                    <div id="submitBtnGroup">
+                      <input type="checkbox" onClick={()=> reveal()}/> {revealPassword ? "Hide password 🚫" : "Reveal password 👁️"}
+                      <p id="errorMessage" className="informationText">{errorMessage}</p>
+                      <button type="submit" className="submitBtn">
+                        Login
+                      </button>
+                    </div>
 
-                <span className="informationText">Not a user? <a href="/">Create one!</a></span>
-                <div id="submitBtnGroup">
-                  <button type="submit" className="submitBtn">
-                    Login
-                  </button>
-                </div>
+                  </form>
+                </section>
+                <section id="loginSection2">
+                  <h1>Welcome! 👋 </h1>
+                  <h3>Create a new user and begin this journey with us!</h3>
+                  <button className="submitBtn" onClick={()=> window.location.href = '/'}>Create user</button>
+                </section>
+              </>
 
-              </form>
-            </>
+            ) : (
+              // CREATE USER ENDPOINT
+              <>
+                <section id="loginSection1">
+                  <span className="loginTextContainer" >
+                    <img src="./src/assets/imgs/wolfLogo.png" alt="Pic" />
+                    <p className="loginText">Create User</p>
+                  </span>
+                  <form method="post" id="loginForm" onSubmit={createUser}>
+                    <input
+                      className="textBox"
+                      type="text"
+                      ref={usernameRef}
+                      name="username"
+                      placeholder="Enter a username"
+                      required
+                    />
+                    <br />
+                    <input
+                      ref={passwordRef}
+                      className="textBox"
+                      type={revealPassword ? "text" : "password"}
+                      name="password"
+                      placeholder="Enter a password"
+                      required
+                    />
 
-          ) : (
-            // CREATE USER ENDPOINT
-            <>
-              <span className="loginTextContainer">
-                <img src="./src/assets/imgs/wolfLogo.png" alt="Pic" />
-                <p className="loginText">WOLF Lite</p>
-              </span>
-              <form method="post" id="loginForm" onSubmit={createUser}>
-                <input
-                  className="textBox"
-                  type="text"
-                  ref={usernameRef}
-                  name="username"
-                  placeholder="Enter your username"
-                  required
-                />
-                <br />
-                <input
-                  ref={passwordRef}
-                  className="textBox"
-                  type="password"
-                  name="password"
-                  placeholder="Enter your password"
-                  required
-                />
+                    <div id="submitBtnGroup">
+                      <input type="checkbox" onClick={()=> reveal()}/> {revealPassword ? "Hide password 🚫" : "Reveal password 👁️"}
+                      <p id="errorMessage" className="informationText">{errorMessage}</p>
+                      <button type="submit" className="submitBtn">
+                        Create User
+                      </button>
+                    </div>
 
+                  </form>
+                </section>
+                <section id="loginSection2">
+                  <h1>Hey There! 👋 </h1>
+                  <h3>Welcome back! Let’s pick up right where you left off.</h3>
+                  <button className="submitBtn" onClick={()=> window.location.href = '/login'}>Login</button>
+                </section>
+              </>
+            )
+          }
 
-                <p id="errorMessage" className="informationText">{errorMessage}</p>
-
-                <span className="informationText">Already a user? <a href="/login">Login</a></span>
-                <div id="submitBtnGroup">
-                  <button type="submit" className="submitBtn">
-                    Create User
-                  </button>
-                </div>
-
-              </form>
-            </>
-          )
-        }
-
-
-      </main>
+        </main>
+      </section>
     </>
   );
 }

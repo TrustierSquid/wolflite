@@ -1,4 +1,5 @@
 import os
+import re
 import sqlite3
 from flask import (
     Flask,
@@ -141,7 +142,7 @@ def create_app(test_config=None):
             user = cursor.fetchone()
 
             if user is None:
-                return jsonify({"message": "username not found"})
+                return jsonify({"message": "Username or Password Incorrect!"})
 
             storedhash = user[0]
 
@@ -149,7 +150,7 @@ def create_app(test_config=None):
                 session["user_id"] = user[1]
                 return jsonify({"success": "Welcome"}), 200
             else:
-                return jsonify({"message": "Incorrect password"}), 200
+                return jsonify({"message": "Incorrect password!"}), 200
 
         except sqlite3.IntegrityError as error:
             return jsonify({"errorMessage": "Username doesnt exist"})
@@ -158,12 +159,46 @@ def create_app(test_config=None):
     @app.route("/formSubmission", methods=(["POST"]))
     def formSubmission():
         db = get_db()
+        # special characters
+        specialPasswordCharacters = ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_', '=', '+', '[', ']', '{', '}', '|', '\\', ':', ';', '"', "'", '<', '>', ',', '.', '?', '/']
+        USERNAME_RE = re.compile(r'^[A-Za-z0-9._-]{5,30}$')  # whitelist: letters, numbers, dot, underscore, hyphen
+        SPECIAL_RE = re.compile(r'[!@#\$%\^&\*\(\)\-\_\=\+\[\]\{\}\|\\:;\"\'<>,\.\?\/]')
+
 
         # in order to execute SQL statements and fetch results we need a db cursor
         cursor = db.cursor()
-        username = request.form["username"]
-        password = request.form["password"]
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
         pw_hash = generate_password_hash(password)
+
+
+
+        # Username and password sanitation
+        if not USERNAME_RE.fullmatch(username):
+            return jsonify({"sanitationError": "Username may only contain letters, numbers, dots, underscores, and hyphens."}), 400
+
+        if len(username) < 5 or len(username) > 20:
+            return jsonify({"sanitationError": "Username must be more than 5-30 Characters long."}), 400
+
+
+        # Password policy
+        if len(password) < 8:
+            return jsonify({"sanitationError": "Password must be at least 8 characters."}), 400
+
+        if not re.search(r'[A-Z]', password):
+            return jsonify({"sanitationError": "Password must include an uppercase letter."}), 400
+
+        if not re.search(r'[a-z]', password):
+            return jsonify({"sanitationError": "Password must include a lowercase letter."}), 400
+
+        if not re.search(r'\d', password):
+            return jsonify({"sanitationError": "Password must include a digit."}), 400
+
+        if not SPECIAL_RE.search(password):
+            return jsonify({"sanitationError": "Password must include at least one special character (e.g. !@#$%)."}), 400
+
+        if specialPasswordCharacters not in password:
+            return jsonify({"sanitationError": "Password must contain a special character (e.g !@#$%)"})
 
         try:
             cursor.execute(
@@ -175,14 +210,11 @@ def create_app(test_config=None):
             db.commit()
 
         except sqlite3.IntegrityError as error:
-            return jsonify({"errorMessage": "Username already exists"})
+            return jsonify({"errorMessage": "Username already exists"}), 400
 
         print(f"New User Created!: {username}")
         return jsonify({"message": "Received"}), 201
 
-    # @app.route("/login")
-    # def login_page():
-    #     return send_from_directory(app.static_folder, "index.html")
 
     from . import db
     db.init_app(app)
