@@ -101,11 +101,24 @@ body,
 }
 
 /* all posts */
-#blogFeedContainer > .postContainer > .postAuthor {
-  font-weight: 100;
-  color: rgb(86, 86, 86);
+#blogFeedContainer > .postContainer > .postHeader > .nameAndProfilePicContainer > .postAuthor {
+  /* color: rgb(86, 86, 86); */
+  font-weight: bold;
   display: flex;
   justify-content: space-between;
+  font-family: "Comfortaa";
+  cursor: pointer;
+}
+
+#blogFeedContainer > .postContainer > .postHeader > .nameAndProfilePicContainer > .postAuthor:hover {
+  color: var(--primary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.postTimestamp {
+  font-family: "Comfortaa";
+  font-weight: bold;
 }
 
 .nameAndProfilePicContainer {
@@ -321,7 +334,7 @@ body,
 .emptyPostContainer {
   display: flex;
   justify-content: center;
-  background-color: var(--primary);
+  background-color: var(--regBtn);
   border-radius: 1rem;
   color: white;
   padding: 1rem;

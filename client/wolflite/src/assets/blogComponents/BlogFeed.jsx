@@ -13,14 +13,18 @@ export default function BlogFeed() {
 
 
 
-
   // Fetches Posts and polls
   async function fetchAllPosts() {
     try {
       const response = await fetch("/post/fetch", {
         method: "GET",
         headers: { "Content-Type": "application/json" },
+        credentials: "include"
       });
+
+      if(response.status === 401) {
+        window.location.href = "/login"
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP error! ${response.status}`);
@@ -32,6 +36,7 @@ export default function BlogFeed() {
       console.log(err);
     }
   }
+
 
   // Run initially after component mount
   useEffect(() => {
@@ -46,6 +51,10 @@ export default function BlogFeed() {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
+
+      if(response.status === 401) {
+        window.location.href = "/login"
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP error! ${response.status}`);
@@ -105,6 +114,8 @@ export default function BlogFeed() {
         body: JSON.stringify({"authorOfLike": userId})
       })
 
+
+
       if (!response.ok) {
         throw new Error("Failed to send like");
       }
@@ -139,6 +150,10 @@ export default function BlogFeed() {
       )
     })
 
+    if(response.status === 401) {
+      window.location.href = "/login"
+    }
+
     fetchAllPosts()
     const data = await response.json()
   }
@@ -165,6 +180,10 @@ export default function BlogFeed() {
       day: "numeric",
       year: "numeric",
     });
+  }
+
+  function goToProfile(userInQuestion){
+    window.location.href = `/profile?id=${userInQuestion}`
   }
 
   return (
@@ -273,7 +292,7 @@ export default function BlogFeed() {
                               }
                               alt=""
                             />
-                            <h5 className="postAuthor">{post?.username} </h5>
+                            <h3 className="postAuthor" onClick={()=> goToProfile(post.author_id)}>{post?.username} </h3>
                           </span>
                           <span className="postTimestamp">
                             posted {timeAgo(post.created)}
@@ -310,29 +329,33 @@ export default function BlogFeed() {
                         <section className="commentsElementContainer" ref={(el)=> (commentContainerRef.current[index] = el)} >
                           <div className="commentContainer">
 
-                            {console.log(post)}
-
                             <span className="comment">
                               {
-                                post.comments.map((comment)=> {
-                                  return (
-                                    <>
-                                      <div className="commentBlock">
-                                        <div className="commentHeader">
-                                          <section className="commentWhoPostedContainer">
-                                            <img className="commentProfilePic" src={comment.profilePic ? `http://localhost:5000${comment.profilePic}` : "/src/assets/imgs/defaultUser.jpg"} alt="" />
-                                            <h4>{comment.author_username}</h4>
-                                          </section>
-                                          <h5>{timeAgo(comment.created)}</h5>
+                                post.comments.length > 0 ? (
+                                  post.comments.map((comment)=> {
+                                    return (
+                                      <>
+                                        <div className="commentBlock">
+                                          <div className="commentHeader">
+                                            <section className="commentWhoPostedContainer">
+                                              <img className="commentProfilePic" src={comment.profilePic ? `http://localhost:5000${comment.profilePic}` : "/src/assets/imgs/defaultUser.jpg"} alt="" />
+                                              <h4 className="commentAuthor" onClick={()=> window.location.href = `/profile?id=${comment.author_id}`} >{comment.author_username}</h4>
+                                            </section>
+                                            <h5>{timeAgo(comment.created)}</h5>
+                                          </div>
+                                          <div className="commentText">
+                                            <p>{comment.commentBody}</p>
+                                          </div>
                                         </div>
-                                        <div className="commentText">
-                                          <p>{comment.commentBody}</p>
-                                        </div>
-                                      </div>
 
-                                    </>
-                                  )
-                                }).reverse()
+                                      </>
+                                    )
+                                  }).reverse()
+                                ) : (
+                                  <span className="emptyPostContainer">No Comments!</span>
+                                )
+
+
                               }
                             </span>
                           </div>

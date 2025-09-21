@@ -1,29 +1,48 @@
 import { useEffect, useState, useRef } from "react";
 import SideNav from "../navbarComponents/SideNav";
 import LikeAndComment from "../popupComponents/LikeAndComment";
+import { useLocation } from "react-router-dom";
 
 export default function ProfileUI(props) {
-  console.log(props)
   const [allUserPosts, setAllUserPosts] = useState([]);
   const [postImgLoaded, setpostImgLoaded] = useState(null);
   const formRef = useRef(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [animateIndex, setAnimateIndex] = useState(null);
+  const commentContainerRef = useRef([])
+
+
+  // Parse query parameters from the URL using vanilla JS
+  function getQueryParams() {
+    return new URLSearchParams(window.location.search);
+  }
+
+  const query = getQueryParams();
+  const queryString = query.toString();
+  const queryStringID = query.get("id");
+
 
 
   // Fetches profile posts from the current logged in user
   async function fetchProfilePosts() {
-    const response = await fetch("/profileInfo/fetch", {
+    const queryString = query.toString();
+    const response = await fetch(`/profileInfo/fetch?${queryString}`, {
       method: "GET",
+      credentials: "include"
     });
 
     if (!response.ok) {
       throw new Error("Tried and failed getting the user's posts.");
     }
 
+    if(response.status === 401) {
+      window.location.href = "/login"
+    }
+
     const data = await response.json();
     setAllUserPosts(data);
   }
+
 
   useEffect(() => {
     try {
@@ -32,7 +51,6 @@ export default function ProfileUI(props) {
       console.log(error);
     }
   }, []);
-
 
   async function addLikeToPost(userId, postID, index) {
     // Selecting which button to animate
@@ -44,6 +62,10 @@ export default function ProfileUI(props) {
         headers: { "Content-Type": "application/json"},
         body: JSON.stringify({"authorOfLike": userId})
       })
+
+      if(response.status === 401) {
+        window.location.href = "/login"
+      }
 
       if (!response.ok) {
         throw new Error("Failed to send like");
@@ -96,6 +118,10 @@ export default function ProfileUI(props) {
         }
       );
 
+      if(response.status === 401) {
+        window.location.href = "/login"
+      }
+
       if (!response.ok) {
         alert("Upload failed");
         console.log(response);
@@ -115,6 +141,35 @@ export default function ProfileUI(props) {
     } catch (error) {
       console.log(error);
     }
+  }
+
+
+  // Example: addCommentToPost(postIndex)
+  async function addCommentToPost(e, postIndex) {
+    e.preventDefault()
+
+    const commentForm = new FormData(e.target)
+    const commentBody = commentForm.get("userComment")
+
+
+    const response = await fetch("/post/postComment", {
+      method: "POST",
+      headers: {"Content-type": "application/json"},
+      body: JSON.stringify(
+        {
+          commentBody: commentBody,
+          commentAuthor: props?.currentLoggedInUserId,
+          postID: postIndex
+        }
+      )
+    })
+
+    if(response.status === 401) {
+      window.location.href = "/login"
+    }
+
+    fetchProfilePosts()
+    const data = await response.json()
   }
 
   // Post date formatting for post and poll timestamps
@@ -139,17 +194,29 @@ export default function ProfileUI(props) {
     });
   }
 
+
+
   return (
     <>
       <main id="homeContainer">
         <SideNav
-          loggedInUserId={props.loggedInUserId}
+          loggedInUserId={props.currentLoggedInUserId}
           loggedInUsername={props.currentLoggedInUsername}
           currentLoggedInUserProfilePic={props.currentLoggedInUserProfilePic}
         />
 
         <section id="blogFeedContainer">
-          <h2 className="universalHeader">Your Profile</h2>
+            {
+              queryStringID == props.currentLoggedInUserId ? (
+                <h2 className="universalHeader">
+                  Your Profile
+                </h2>
+              ) : (
+                <h2 className="universalHeader">
+                  {allUserPosts.username}'s Profile
+                </h2>
+              )
+            }
           <article id="profileInformation">
             <section className="profileInformationItem">
               <img
@@ -162,47 +229,64 @@ export default function ProfileUI(props) {
                 }
                 alt=""
               />
-              <h1>{props.currentLoggedInUsername}</h1>
-              <h5 id="userIDDisplay">#DHNSI</h5>
+              <h1>{allUserPosts.username}</h1>
+              {/* <h5 id="userIDDisplay">#DHNSI</h5> */}
             </section>
 
-            <form
-              ref={formRef}
-              className="profileInformationItem"
-            >
-              <label
-                className="profilePictureSelectorLabel"
-                htmlFor="profilePictureSelector"
-              >
-                Change Picture
-              </label>
-              <input
-                type="file"
-                id="profilePictureSelector"
-                style={{ display: "none" }}
-                onChange={changeProfilePicture}
-              />
-              {/* <button onClick={()=> alert("Coming soon!")}>Change Background <i className="fa-solid fa-images"></i></button> */}
-              <label
-                className="profilePictureSelectorLabel"
-                onClick={() => (window.location.href = "/create")}
-              >
-                Create <i className="fa-solid fa-plus"></i>
-              </label>
-            </form>
-            <h4 style={{ textAlign: "center", color: "lime" }}>
-              {successMessage}
-            </h4>
+              {
+                queryStringID == props.currentLoggedInUserId ? (
+                  <>
+                    <form
+                      ref={formRef}
+                      className="profileInformationItem"
+                    >
+                      <label
+                        className="profilePictureSelectorLabel"
+                        htmlFor="profilePictureSelector"
+                      >
+                        <i className="fa-solid fa-image"></i> Change Picture
+                      </label>
+                      <input
+                        type="file"
+                        id="profilePictureSelector"
+                        style={{ display: "none" }}
+                        onChange={changeProfilePicture}
+                      />
+                      <label
+                        className="profilePictureSelectorLabel"
+                        onClick={() => (window.location.href = "/create")}
+                      >
+                        <i className="fa-solid fa-plus"></i> Create
+                      </label>
+                    </form>
+                    <h4 style={{ textAlign: "center", color: "lime" }}>
+                      {successMessage}
+                    </h4>
+                  </>
+                ) : (
+                  <span></span>
+                )
+              }
           </article>
 
-          <h2 className="universalHeader">Your Posts</h2>
+          {
+            queryStringID == props.currentLoggedInUserId ? (
+              <h2 className="universalHeader">
+                Your Posts
+              </h2>
+            ) : (
+              <h2 className="universalHeader">
+                {allUserPosts.username}'s Posts
+              </h2>
+            )
+          }
           {allUserPosts ? (
             allUserPosts?.allUserPosts?.length > 0 ? (
               allUserPosts?.allUserPosts
-                ?.map((post, idx) => {
+                ?.map((post, index) => {
                   return (
                     <section
-                      key={post?._id || idx}
+                      key={post?._id || index}
                       className="postContainer animate__animated  animate__fadeInBottomRight"
                     >
                       <div className="postHeader">
@@ -216,16 +300,16 @@ export default function ProfileUI(props) {
                             }
                             alt=""
                           />
-                          <h5 className="postAuthor">
-                            {props.currentLoggedInUsername}
-                          </h5>
+                          <h4 className="postAuthor" onClick={()=> window.location.href = `/profile?id=${post.author_id}`}>
+                            {post.username}
+                          </h4>
                         </span>
 
                         <span className="postTimestamp">
                           posted {timeAgo(post.created)}
                         </span>
                       </div>
-                      <h2>{post?.title}</h2>
+                      <h3>{post?.title}</h3>
                       <p>{post?.body}</p>
                       {post.postPic && (
                         <>
@@ -243,9 +327,53 @@ export default function ProfileUI(props) {
                       <LikeAndComment currentLoggedInUserId={props?.currentLoggedInUserId}
                         postInformation={post}
                         postID={post?.id}
-                        postIndex={idx}
+                        postIndex={index}
                         addLikeToPost={addLikeToPost}
+                        commentSectionRef={commentContainerRef}
                       />
+
+                      <section className="commentsElementContainer" ref={(el)=> (commentContainerRef.current[index] = el)} >
+                        <div className="commentContainer">
+
+                          <span className="comment">
+                            {
+                              post.comments.length > 0 ? (
+                                post.comments.map((comment)=> {
+                                  return (
+                                    <>
+                                      <div className="commentBlock">
+                                        <div className="commentHeader" >
+                                          <section className="commentWhoPostedContainer" >
+                                            <img className="commentProfilePic" src={comment.profilePic ? `http://localhost:5000${comment.profilePic}` : "/src/assets/imgs/defaultUser.jpg"} alt="" />
+                                            <h4 className="commentAuthor" onClick={()=> window.location.href = `/profile?id=${comment.author_id}`}>{comment.author_username}</h4>
+                                          </section>
+                                          <h5>{timeAgo(comment.created)}</h5>
+                                        </div>
+                                        <div className="commentText">
+                                          <p>{comment.commentBody}</p>
+                                        </div>
+                                      </div>
+
+                                    </>
+                                  )
+                                }).reverse()
+                              ) : (
+                                <span className="emptyPostContainer">No Comments!</span>
+                              )
+
+
+                            }
+                          </span>
+                        </div>
+
+                        <form className="commentFunctions" onSubmit={(e) => addCommentToPost(e, post.id)}>
+                          <input type="text" required name="userComment" id="" placeholder="Leave a comment...  "/>
+                          <button type="submit" className="postCommentBtn">Post <i className="fa-solid fa-paper-plane"></i></button>
+                        </form>
+                      </section>
+
+
+
                     </section>
                   );
                 })
@@ -261,3 +389,12 @@ export default function ProfileUI(props) {
     </>
   );
 }
+
+
+// Polishing to do,
+// Comment Username headers are clickable and are able to go to their profiles
+// refactor and clean up code
+
+// commit
+
+// add likes and comments to polls

@@ -25,6 +25,10 @@ function StageUserData() {
           headers: { "Content-Type": "application/json" },
         });
 
+        if(response.status === 401) {
+          window.location.href = "/login"
+        }
+
         if (!response.ok) {
           throw new Error(`HTTP error! ${response.status}`);
         }
@@ -48,11 +52,14 @@ function StageUserData() {
 
   return (
     <>
-      <ProfileUI
-        currentLoggedInUserId={currentLoggedInData?.userId}
-        currentLoggedInUsername={currentLoggedInData?.username}
-        currentLoggedInUserProfilePic={currentLoggedInData?.userPfPic}
-      />
+
+      {currentLoggedInData && (
+        <ProfileUI
+          currentLoggedInUserId={currentLoggedInData?.userId}
+          currentLoggedInUsername={currentLoggedInData?.username}
+          currentLoggedInUserProfilePic={currentLoggedInData?.userPfPic}
+        />
+      )}
     </>
   )
 }

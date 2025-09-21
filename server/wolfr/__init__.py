@@ -10,6 +10,7 @@ from flask import (
     url_for,
     send_from_directory,
 )
+from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from wolfr.db import get_db
@@ -23,7 +24,16 @@ def create_app(test_config=None):
     app = Flask(
         __name__,
         static_folder=os.path.join(BASE_DIR, "static"),
-        static_url_path="/static",
+        static_url_path="/client/wolflite/dist",
+    )
+
+    CORS(app, supports_credentials=True)
+
+    # For development Only
+    app.config.update(
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Lax",  # allow cross-site
+        SESSION_COOKIE_SECURE=False      # keep False in dev if no HTTPS
     )
 
     app.config.from_mapping(
@@ -53,20 +63,34 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    @app.route("/")
-    def init():
-        return "OK", 200
+
+    # React Router to work with browser refreshes and direct links, Flask must serve your index.html for all unknown (non-API) routes:
+    @app.route("/", defaults={'path': ''})
+    @app.route('/<path:path>')
+    def serve_react(path):
+        if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+            return send_from_directory(app.static_folder, path)
+        else:
+            return send_from_directory(app.static_folder, 'index.html')
+
+
+
 
     # LOGIN/CREATE USER
 
     # middleware. Having quick access to the logged in users data
     @app.before_request
     def load_user():
+        if request.endpoint in ("login", "formSubmission"):
+            return
+
         user_id = session.get("user_id")
 
         if user_id is None:
             g.user = None
             print("redirecting.. no session")
+            return jsonify({"error": "not logged in"}), 401
+            # return redirect(url_for("login"))
         else:
             g.user = (
                 get_db()
@@ -74,26 +98,29 @@ def create_app(test_config=None):
                 .fetchone()
             )
 
+
+
     @app.route("/getUserData", methods=(["GET"]))
     def fetchUserData():
         user_id = session.get("user_id")
+
+
         db = get_db()
         cursor = db.cursor()
-        currentUser = cursor.execute(
-            "SELECT username, filename FROM user WHERE id = ?", (user_id,)
-        ).fetchone()
 
-        """ print({
-            "currentUserName": currentUser['username'],
-            "currentUserPfPicture": currentUser["filename"],
-            "currentUserID": g.user[0]
-        }) """
+        try:
+            currentUser = cursor.execute(
+                "SELECT username, filename FROM user WHERE id = ?", (user_id,)
+            ).fetchone()
 
-        return jsonify({
-            "currentUserName": currentUser['username'],
-            "currentUserPfPicture": currentUser["filename"],
-            "currentUserID": g.user[0]
-        })
+            return jsonify({
+                "currentUserName": currentUser['username'],
+                "currentUserPfPicture": currentUser["filename"],
+                "currentUserID": g.user[0]
+            })
+        except sqlite3.IntegrityError:
+            return {"error": "no user here"}, 400
+
 
 
 
@@ -152,6 +179,10 @@ def create_app(test_config=None):
 
         print(f"New User Created!: {username}")
         return jsonify({"message": "Received"}), 201
+
+    # @app.route("/login")
+    # def login_page():
+    #     return send_from_directory(app.static_folder, "index.html")
 
     from . import db
     db.init_app(app)

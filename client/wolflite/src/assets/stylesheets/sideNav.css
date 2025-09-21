@@ -40,18 +40,21 @@
 #sideNavTitle {
   font-family: "Comfortaa";
   color: grey;
+  margin-top: 1rem;
 }
 
 .sideNavButton > i {
-box-shadow: rgba(249, 5, 5, 0.05) 3px 3px 3px 2px;
+  /* box-shadow: rgba(249, 5, 5, 0.05) 3px 3px 3px 2px; */
+  box-shadow: rgba(249, 5, 5, 0.05) 0px 7px 29px 0px;
   color: var(--primary);
   font-size: 1.5rem;
   padding: 0.5rem;
   border-radius: 0.5rem;
+  background-color: white;
 }
 
 .sideNavButton:hover {
-  background-color: rgb(255, 240, 240);
+  background-color: rgb(254, 240, 255);
 }
 
 
@@ -86,8 +89,8 @@ box-shadow: rgba(249, 5, 5, 0.05) 3px 3px 3px 2px;
   height: 70px;
   border-radius: 50%;
   transition: 300ms;
-  cursor: pointer;
-  box-shadow: rgba(0, 0, 0, 0.45) 0px 25px 20px -20px;
+  /* cursor: pointer; */
+  /* box-shadow: rgba(0, 0, 0, 0.45) 0px 25px 20px -20px; */
   object-fit: cover;
 }
 

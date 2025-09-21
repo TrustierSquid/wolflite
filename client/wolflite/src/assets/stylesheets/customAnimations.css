@@ -96,6 +96,11 @@
   padding: 0.5rem;
 }
 
+.commentAuthor:hover {
+  text-decoration: underline;
+  color: var(--primary);
+  cursor: pointer;
+}
 
 .postCommentBtn {
   --color: var(--primary);

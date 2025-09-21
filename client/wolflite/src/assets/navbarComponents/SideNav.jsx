@@ -33,7 +33,6 @@ export default function SideNav(props) {
     const formData = new FormData();
     formData.append("file", file);
 
-    console.log(formData);
 
     try {
       const response = await fetch(
@@ -66,6 +65,7 @@ export default function SideNav(props) {
 
   }
 
+
   return (
     <section id="profileSection" className="animate__animated animate__bounceInLeft">
       <div id="userInformation">
@@ -96,13 +96,11 @@ export default function SideNav(props) {
           </form>
           <h3 style={{ color: "black", textAlign: "center" }}>
             {props?.loggedInUsername}
-            <br />
-
           </h3>
         </div>
         <h4 style={{ textAlign: "center", color: "lime" }}>{successMessage}</h4>
         <article id="sideNavButtonContainer">
-          <h3 id="sideNavTitle">🗺️Menu</h3>
+          <h4 id="sideNavTitle">🌎Menu</h4>
           <button
             className="sideNavButton"
             onClick={() => (window.location.href = "/blog")}
@@ -119,7 +117,7 @@ export default function SideNav(props) {
           </button>
           <button
             className="sideNavButton"
-            onClick={() => (window.location.href = "/profile")}
+            onClick={() => (window.location.href = `/profile?id=${props?.loggedInUserId}`)}
           >
             <i className="fa-solid fa-user"></i>
             <h3>My Profile</h3>
