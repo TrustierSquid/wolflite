@@ -23,7 +23,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         blog: 'blog.html',
-        create: 'create.html'
+        create: 'create.html',
+        profile: 'profile.html',
       }
     }
   }
