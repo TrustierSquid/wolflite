@@ -19,7 +19,7 @@ function Navbar() {
   return (
     <>
       <nav id="navContainer">
-        <section className="navContainerSection" onClick={()=> window.location.href = '/'}>
+        <section className="navContainerSection" onClick={()=> window.location.href = '/login'}>
           <img id="navImg" src="./src/assets/imgs/wolfLogo.png" alt="" />
           <h2>WOLFLITE</h2>
         </section>
