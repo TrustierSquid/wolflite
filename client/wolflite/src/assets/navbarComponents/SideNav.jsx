@@ -67,7 +67,7 @@ export default function SideNav(props) {
 
 
   return (
-    <section id="profileSection" className="animate__animated animate__bounceInLeft">
+    <section id="profileSection" className="animate__animated animate__fadeInLeft">
       <div id="userInformation">
         {/* <h4 style={{ color: "white", textAlign: "center" }}>
           ID: #UIA25{props?.loggedInUserId}
