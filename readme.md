@@ -16,14 +16,26 @@
 
 - When getting started with development, you want to make sure you create a virtual dev environment. This is important because you want to the projects dependencies isolated from the rest of your machine.
 
+- For Linux users using Debian based distributions sometimes the venv python module is shipped in a seperate package. So you will have to install it first.
+```
+$ sudo apt install python3-venv
+```
+
 - Inside the /server directory
 ```
 $ python -m venv .venv
 ```
 
-- For Linux users using Debian based distributions sometimes the venv python module is shipped in a seperate package. So you will have to install it first.
+- Once you have the.venv file in your /server directory, you have to activate it to tap into the virutal environment.
+
+- For Linux/Mac
 ```
-$ sudo apt install python3-venv
+$ source .venv/bin/activate
+```
+
+- For Windows Users
+```
+.venv\Scripts\activate
 ```
 
 ## Installing Wolflite dependencies
