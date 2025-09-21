@@ -15,7 +15,6 @@ function Navbar() {
     }
 
   }
-  console.log(isNavOpen)
 
   return (
     <>
@@ -31,9 +30,6 @@ function Navbar() {
         <ul className="navContainerSectionLinks">
           <li onClick={()=> {window.location.href = '/blog'}}>
             <a href="#" >Home</a>
-          </li>
-          <li onClick={()=> {window.location.href = '/profile'}}>
-            <a href="#">Profile </a>
           </li>
           <li id="navCreatePost" onClick={()=> {window.location.href = '/create'}}>
             <a href="#" >Create <i className="fa-solid fa-plus"></i></a>
