@@ -57,7 +57,7 @@ export default function LikeAndComment(props){
           }}
         >
           <i className="fa-solid fa-message"></i>
-          {props?.postInformation?.comments?.length} {props?.postInformation?.comments?.length <= 1 ? "Comment" : "Comments"}
+          {(props?.postInformation?.comments?.length ?? 0)} {(props?.postInformation?.comments?.length ?? 0) === 1 ? "Comment" : "Comments"}
         </button>
       </div>
     </section>
