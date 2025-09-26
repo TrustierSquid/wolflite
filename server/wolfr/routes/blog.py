@@ -4,6 +4,7 @@ from wolfr.db import get_db
 from werkzeug.utils import secure_filename
 import os
 
+# All endpoints are prefixed with /post (e.g /post/newendpoint)
 blog_page = Blueprint("post", __name__, url_prefix="/post")
 
 
@@ -151,7 +152,7 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 def allowed_file(filename):
    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
-
+# Update Profile Picture
 @blog_page.route('/updateProfilePicture/<int:user_id>', methods=(["PUT"]))
 def updateProfilePicture(user_id):
    db = get_db()
@@ -187,6 +188,9 @@ def updateProfilePicture(user_id):
 
 
 
+
+
+# Adding a like to a post
 @blog_page.route("/addLike/<int:user_id>/<int:postID>", methods=(["POST"]))
 def addLikeToPost(user_id, postID):
    db = get_db()
@@ -217,6 +221,8 @@ def addLikeToPost(user_id, postID):
       return jsonify({"success": 200})
 
    return 200
+
+
 
 
 
@@ -273,6 +279,9 @@ def handleImages():
     return {"error": "Invalid file"}, 400
 
 
+
+
+
 # User creating a poll
 @blog_page.route("/poll/create", methods=(["POST"]))
 def submitPoll():
@@ -311,6 +320,9 @@ def submitPoll():
     return {"success": 200}
 
 
+
+
+
 # Marking an answer that a user selected
 @blog_page.route("/poll/userStats", methods=(['POST', "GET"]))
 def trackUserFeedback():
@@ -340,6 +352,7 @@ def trackUserFeedback():
 
 
    return {"success": 200}
+
 
 
 
