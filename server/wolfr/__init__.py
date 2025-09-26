@@ -11,7 +11,6 @@ from flask import (
     url_for,
     send_from_directory,
 )
-from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from wolfr.db import get_db
@@ -19,16 +18,23 @@ from wolfr.db import get_db
 
 # Creating the flask instance
 def create_app(test_config=None):
+    # goes from wolfr → server
     BASE_DIR = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "..")
-    )  # goes from wolfr → server
-    app = Flask(
-        __name__,
-        static_folder=os.path.join(BASE_DIR, "static"),
-        static_url_path="/client/wolflite/dist",
     )
 
-    CORS(app, supports_credentials=True)
+    app = Flask(
+        __name__,
+
+        # Starts at the very top of the project (/)
+        static_url_path="/",
+
+        # Starts at the base of where the __init__ file resides (wolfr)
+        # Goes up a directory level and goes inside the client/wolflite dir and uses the static files
+        static_folder=os.path.join(BASE_DIR, "../client/wolflite/dist"),
+    )
+
+    # CORS(app, supports_credentials=True)
 
     # For development Only
     app.config.update(
@@ -38,6 +44,7 @@ def create_app(test_config=None):
     )
 
     app.config.from_mapping(
+        # Key is used to securely sign session cookies
         SECRET_KEY="dev",
         DATABASE=os.path.join(app.instance_path, "wolfr.sqlite"),
     )
@@ -47,9 +54,6 @@ def create_app(test_config=None):
 
     # ensures that the static/uploads directories exists
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-
-    # Allowed file extensions to be uploaded to the server
-    ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
     if test_config is None:
         # load the instance config, if it exists, when not testing
@@ -65,16 +69,6 @@ def create_app(test_config=None):
         pass
 
 
-    # React Router to work with browser refreshes and direct links, Flask must serve your index.html for all unknown (non-API) routes:
-    @app.route("/", defaults={'path': ''})
-    @app.route('/<path:path>')
-    def serve_react(path):
-        if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
-            return send_from_directory(app.static_folder, path)
-        else:
-            return send_from_directory(app.static_folder, 'index.html')
-
-
 
 
     # LOGIN/CREATE USER
@@ -82,25 +76,37 @@ def create_app(test_config=None):
     # middleware. Having quick access to the logged in users data
     @app.before_request
     def load_user():
-        if request.endpoint in ("login", "formSubmission"):
+        db = get_db()
+        cursor = db.cursor()
+
+        # Skip auth for static files and index
+        # This if statement prevents this middleware to run on endpoints where prior user is not required
+        if (
+            request.endpoint in ("login", "createUser", "serve_index")
+            or request.path.startswith("/assets/")
+            or request.path.startswith("/uploads/")
+            or request.endpoint == "static"
+        ):
             return
 
         user_id = session.get("user_id")
 
-        if user_id is None:
-            g.user = None
-            print("redirecting.. no session")
-            return jsonify({"error": "not logged in"}), 401
-            # return redirect(url_for("login"))
-        else:
-            g.user = (
-                get_db()
-                .execute("SELECT * FROM user WHERE id = ?", (user_id,))
-                .fetchone()
-            )
+        # if request.endpoint in ("blog", "profile", "create", "fetchUserData"):
+        if request.path in ("/blog", "/profile", "/create", "/getUserData", "/post", "/post/create"):
+            if user_id is None:
+                g.user = None
+                print("redirecting.. no session")
+                return redirect("/login")
+            else:
+                g.user = (
+                    cursor.execute("SELECT * FROM user WHERE id = ?", (user_id,)).fetchone()
+                )
 
 
 
+
+
+    # Fetehes currently logged in user data (userid, picture and username. etc)
     @app.route("/getUserData", methods=(["GET"]))
     def fetchUserData():
         user_id = session.get("user_id")
@@ -113,6 +119,7 @@ def create_app(test_config=None):
             currentUser = cursor.execute(
                 "SELECT username, filename FROM user WHERE id = ?", (user_id,)
             ).fetchone()
+
 
             return jsonify({
                 "currentUserName": currentUser['username'],
@@ -135,6 +142,7 @@ def create_app(test_config=None):
         username = request.form["username"]
         password = request.form["password"]
 
+
         try:
             cursor.execute(
                 "SELECT password, id FROM user WHERE username = ?", (username,)
@@ -147,7 +155,10 @@ def create_app(test_config=None):
             storedhash = user[0]
 
             if check_password_hash(storedhash, password):
+
+                # Creating session data
                 session["user_id"] = user[1]
+
                 return jsonify({"success": "Welcome"}), 200
             else:
                 return jsonify({"message": "Incorrect password!"}), 200
@@ -155,18 +166,22 @@ def create_app(test_config=None):
         except sqlite3.IntegrityError as error:
             return jsonify({"errorMessage": "Username doesnt exist"})
 
+
+
+
+
+
     # Creating a new user
     @app.route("/formSubmission", methods=(["POST"]))
-    def formSubmission():
+    def createUser():
         db = get_db()
+        cursor = db.cursor()
+
         # special characters
         specialPasswordCharacters = ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_', '=', '+', '[', ']', '{', '}', '|', '\\', ':', ';', '"', "'", '<', '>', ',', '.', '?', '/']
         USERNAME_RE = re.compile(r'^[A-Za-z0-9._-]{5,30}$')  # whitelist: letters, numbers, dot, underscore, hyphen
         SPECIAL_RE = re.compile(r'[!@#\$%\^&\*\(\)\-\_\=\+\[\]\{\}\|\\:;\"\'<>,\.\?\/]')
 
-
-        # in order to execute SQL statements and fetch results we need a db cursor
-        cursor = db.cursor()
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
         pw_hash = generate_password_hash(password)
@@ -179,6 +194,7 @@ def create_app(test_config=None):
 
         if len(username) < 5 or len(username) > 20:
             return jsonify({"sanitationError": "Username must be more than 5-30 Characters long."}), 400
+
 
 
         # Password policy
@@ -197,7 +213,7 @@ def create_app(test_config=None):
         if not SPECIAL_RE.search(password):
             return jsonify({"sanitationError": "Password must include at least one special character (e.g. !@#$%)."}), 400
 
-        if specialPasswordCharacters not in password:
+        if not any(char in password for char in specialPasswordCharacters):
             return jsonify({"sanitationError": "Password must contain a special character (e.g !@#$%)"})
 
         try:
@@ -216,9 +232,36 @@ def create_app(test_config=None):
         return jsonify({"message": "Received"}), 201
 
 
+
+
+    # Serving the appropriate page at the respective endpoint
+    @app.route("/")
+    @app.route("/login")
+    def serve_index():
+        # login/create user page
+        return send_from_directory(app.static_folder, "index.html")
+
+    @app.route("/blog")
+    def serve_blog():
+        # Main Post Feed page
+        return send_from_directory(app.static_folder, "blog.html")
+
+    @app.route("/profile")
+    def serve_profile():
+        # Profile page
+        return send_from_directory(app.static_folder, "profile.html")
+
+    @app.route('/create')
+    def serve_create():
+        # Create post/poll page
+        return send_from_directory(app.static_folder, "create.html")
+
+
+    # Importing Database configurations
     from . import db
     db.init_app(app)
 
+    # External Routes
     from .routes import blog
     app.register_blueprint(blog.blog_page)
 
