@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  base: '/',
   server: {
     proxy: {
       '/formSubmission': 'http://localhost:5000',
@@ -22,6 +23,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
+        index: 'index.html',
         blog: 'blog.html',
         create: 'create.html',
         profile: 'profile.html',
