@@ -270,7 +270,7 @@ export default function BlogFeed() {
                       );
                     })
                     .reverse()}
-                <h2 className="universalHeader">Posts</h2>
+                <h2 className="universalHeader">What's New</h2>
                 {/* For Regular Posts */}
                 {allPosts?.posts?.length > 0 ? (
                   allPosts.posts
