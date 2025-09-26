@@ -10,13 +10,15 @@ export default function ProfileUI(props) {
   const [successMessage, setSuccessMessage] = useState("");
   const [animateIndex, setAnimateIndex] = useState(null);
   const commentContainerRef = useRef([])
+  const [userNotFoundContent, setUserNotFoundContent] = useState(false)
 
 
-  // Parse query parameters from the URL using vanilla JS
+  // Parse query parameters from the URL
   function getQueryParams() {
     return new URLSearchParams(window.location.search);
   }
 
+  // Grabbing query string
   const query = getQueryParams();
   const queryString = query.toString();
   const queryStringID = query.get("id");
@@ -25,22 +27,39 @@ export default function ProfileUI(props) {
 
   // Fetches profile posts from the current logged in user
   async function fetchProfilePosts() {
-    const queryString = query.toString();
-    const response = await fetch(`/profileInfo/fetch?${queryString}`, {
-      method: "GET",
-      credentials: "include"
-    });
+    try {
+      const queryString = query.toString();
 
-    if (!response.ok) {
-      throw new Error("Tried and failed getting the user's posts.");
+      const response = await fetch(`/profileInfo/fetch?${queryString}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json"},
+        credentials: "include"
+      });
+
+      // if the searched user does not exist
+      if(response.status === 204) {
+        console.log(`user not found`)
+        setUserNotFoundContent(true)
+        return
+      }
+
+      // If the user has no session cookie
+      if(response.status === 401) {
+        window.location.href = "/login"
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error("Tried and failed getting the user's posts.");
+      }
+
+      const data = await response.json();
+      setAllUserPosts(data);
+
+
+    } catch (error) {
+      console.log(error)
     }
-
-    if(response.status === 401) {
-      window.location.href = "/login"
-    }
-
-    const data = await response.json();
-    setAllUserPosts(data);
   }
 
 
@@ -205,186 +224,194 @@ export default function ProfileUI(props) {
           currentLoggedInUserProfilePic={props.currentLoggedInUserProfilePic}
         />
 
-        <section id="blogFeedContainer">
-            {
-              queryStringID == props.currentLoggedInUserId ? (
-                <h2 className="universalHeader">
-                  Your Profile
-                </h2>
-              ) : (
-                <h2 className="universalHeader">
-                  {allUserPosts.username}'s Profile
-                </h2>
-              )
-            }
-          <article id="profileInformation">
-            <section className="profileInformationItem">
-              <img
-                className="profileInformationPic"
-                id="defaultPfPic"
-                src={
-                  props.currentLoggedInUserProfilePic
-                    ? `http://localhost:5000${props.currentLoggedInUserProfilePic}`
-                    : "src/assets/imgs/defaultUser.jpg"
+        {
+          // Conditional renders "User not found query string is for an id that doesnt exist"
+          userNotFoundContent ? (
+            <h2 id="blogFeedContainer">User not Found 😟</h2>
+          ) : (
+            <section id="blogFeedContainer">
+              {/* TITLE TEXT */}
+                {
+                  queryStringID == props.currentLoggedInUserId ? (
+                    <h2 className="universalHeader">
+                      Your Profile
+                    </h2>
+                  ) : (
+                    <h2 className="universalHeader">
+                      {allUserPosts.username}'s Profile
+                    </h2>
+                  )
                 }
-                alt=""
-              />
-              <h1>{allUserPosts.username}</h1>
-              {/* <h5 id="userIDDisplay">#DHNSI</h5> */}
-            </section>
+              <article id="profileInformation">
+                <section className="profileInformationItem">
+                  <img
+                    className="profileInformationPic"
+                    id="defaultPfPic"
+                    src={
+                      props.currentLoggedInUserProfilePic
+                        ? `http://localhost:5000${props.currentLoggedInUserProfilePic}`
+                        : "src/assets/imgs/defaultUser.jpg"
+                    }
+                    alt=""
+                  />
+                  <h1>{allUserPosts.username}</h1>
+                </section>
+
+                  {
+                    queryStringID == props.currentLoggedInUserId ? (
+                      <>
+                        <form
+                          ref={formRef}
+                          className="profileInformationItem"
+                        >
+                          <label
+                            className="profilePictureSelectorLabel"
+                            htmlFor="profilePictureSelector"
+                          >
+                            <i className="fa-solid fa-image"></i> Change Picture
+                          </label>
+                          <input
+                            type="file"
+                            id="profilePictureSelector"
+                            style={{ display: "none" }}
+                            onChange={changeProfilePicture}
+                          />
+                          <label
+                            className="profilePictureSelectorLabel"
+                            onClick={() => (window.location.href = "/create")}
+                          >
+                            <i className="fa-solid fa-plus"></i> Create
+                          </label>
+                        </form>
+                        <h4 style={{ textAlign: "center", color: "lime" }}>
+                          {successMessage}
+                        </h4>
+                      </>
+                    ) : (
+                      <span></span>
+                    )
+                  }
+              </article>
 
               {
                 queryStringID == props.currentLoggedInUserId ? (
-                  <>
-                    <form
-                      ref={formRef}
-                      className="profileInformationItem"
-                    >
-                      <label
-                        className="profilePictureSelectorLabel"
-                        htmlFor="profilePictureSelector"
-                      >
-                        <i className="fa-solid fa-image"></i> Change Picture
-                      </label>
-                      <input
-                        type="file"
-                        id="profilePictureSelector"
-                        style={{ display: "none" }}
-                        onChange={changeProfilePicture}
-                      />
-                      <label
-                        className="profilePictureSelectorLabel"
-                        onClick={() => (window.location.href = "/create")}
-                      >
-                        <i className="fa-solid fa-plus"></i> Create
-                      </label>
-                    </form>
-                    <h4 style={{ textAlign: "center", color: "lime" }}>
-                      {successMessage}
-                    </h4>
-                  </>
+                  <h2 className="universalHeader">
+                    Your Posts
+                  </h2>
                 ) : (
-                  <span></span>
+                  <h2 className="universalHeader">
+                    {allUserPosts.username}'s Posts
+                  </h2>
                 )
               }
-          </article>
+              {allUserPosts ? (
+                allUserPosts?.allUserPosts?.length > 0 ? (
+                  allUserPosts?.allUserPosts
+                    ?.map((post, index) => {
+                      return (
+                        <section
+                          key={post?._id || index}
+                          className="postContainer animate__animated  animate__fadeInRight"
+                        >
+                          <div className="postHeader">
+                            <span className="nameAndProfilePicContainer">
+                              <img
+                                className="profilePictures"
+                                src={
+                                  props.currentLoggedInUserProfilePic
+                                    ? `http://localhost:5000${props.currentLoggedInUserProfilePic}`
+                                    : "src/assets/imgs/defaultUser.jpg"
+                                }
+                                alt=""
+                              />
+                              <h4 className="postAuthor" onClick={()=> window.location.href = `/profile?id=${post.author_id}`}>
+                                {post.username}
+                              </h4>
+                            </span>
 
-          {
-            queryStringID == props.currentLoggedInUserId ? (
-              <h2 className="universalHeader">
-                Your Posts
-              </h2>
-            ) : (
-              <h2 className="universalHeader">
-                {allUserPosts.username}'s Posts
-              </h2>
-            )
-          }
-          {allUserPosts ? (
-            allUserPosts?.allUserPosts?.length > 0 ? (
-              allUserPosts?.allUserPosts
-                ?.map((post, index) => {
-                  return (
-                    <section
-                      key={post?._id || index}
-                      className="postContainer animate__animated  animate__fadeInBottomRight"
-                    >
-                      <div className="postHeader">
-                        <span className="nameAndProfilePicContainer">
-                          <img
-                            className="profilePictures"
-                            src={
-                              props.currentLoggedInUserProfilePic
-                                ? `http://localhost:5000${props.currentLoggedInUserProfilePic}`
-                                : "src/assets/imgs/defaultUser.jpg"
-                            }
-                            alt=""
+                            <span className="postTimestamp">
+                              posted {timeAgo(post.created)}
+                            </span>
+                          </div>
+                          <h3>{post?.title}</h3>
+                          <p>{post?.body}</p>
+                          {post.postPic && (
+                            <>
+                              {!postImgLoaded && <span className="loader"></span>}
+                              <img
+                                src={`http://localhost:5000/${post.postPic}`}
+                                alt="postPic"
+                                style={postImgLoaded ? {} : { display: "none" }}
+                                onLoad={() => setpostImgLoaded(true)}
+                                onError={() => setpostImgLoaded(true)}
+                              />
+                            </>
+                          )}
+
+                          <LikeAndComment currentLoggedInUserId={props?.currentLoggedInUserId}
+                            postInformation={post}
+                            postID={post?.id}
+                            postIndex={index}
+                            addLikeToPost={addLikeToPost}
+                            commentSectionRef={commentContainerRef}
                           />
-                          <h4 className="postAuthor" onClick={()=> window.location.href = `/profile?id=${post.author_id}`}>
-                            {post.username}
-                          </h4>
-                        </span>
 
-                        <span className="postTimestamp">
-                          posted {timeAgo(post.created)}
-                        </span>
-                      </div>
-                      <h3>{post?.title}</h3>
-                      <p>{post?.body}</p>
-                      {post.postPic && (
-                        <>
-                          {!postImgLoaded && <span className="loader"></span>}
-                          <img
-                            src={`http://localhost:5000/${post.postPic}`}
-                            alt="postPic"
-                            style={postImgLoaded ? {} : { display: "none" }}
-                            onLoad={() => setpostImgLoaded(true)}
-                            onError={() => setpostImgLoaded(true)}
-                          />
-                        </>
-                      )}
+                          <section className="commentsElementContainer" ref={(el)=> (commentContainerRef.current[index] = el)} >
+                            <div className="commentContainer">
 
-                      <LikeAndComment currentLoggedInUserId={props?.currentLoggedInUserId}
-                        postInformation={post}
-                        postID={post?.id}
-                        postIndex={index}
-                        addLikeToPost={addLikeToPost}
-                        commentSectionRef={commentContainerRef}
-                      />
+                              <span className="comment">
+                                {
+                                  post.comments.length > 0 ? (
+                                    post.comments.map((comment)=> {
+                                      return (
+                                        <>
+                                          <div className="commentBlock">
+                                            <div className="commentHeader" >
+                                              <section className="commentWhoPostedContainer" >
+                                                <img className="commentProfilePic" src={comment.profilePic ? `http://localhost:5000${comment.profilePic}` : "/src/assets/imgs/defaultUser.jpg"} alt="" />
+                                                <h4 className="commentAuthor" onClick={()=> window.location.href = `/profile?id=${comment.author_id}`}>{comment.author_username}</h4>
+                                              </section>
+                                              <h5>{timeAgo(comment.created)}</h5>
+                                            </div>
+                                            <div className="commentText">
+                                              <p>{comment.commentBody}</p>
+                                            </div>
+                                          </div>
 
-                      <section className="commentsElementContainer" ref={(el)=> (commentContainerRef.current[index] = el)} >
-                        <div className="commentContainer">
-
-                          <span className="comment">
-                            {
-                              post.comments.length > 0 ? (
-                                post.comments.map((comment)=> {
-                                  return (
-                                    <>
-                                      <div className="commentBlock">
-                                        <div className="commentHeader" >
-                                          <section className="commentWhoPostedContainer" >
-                                            <img className="commentProfilePic" src={comment.profilePic ? `http://localhost:5000${comment.profilePic}` : "/src/assets/imgs/defaultUser.jpg"} alt="" />
-                                            <h4 className="commentAuthor" onClick={()=> window.location.href = `/profile?id=${comment.author_id}`}>{comment.author_username}</h4>
-                                          </section>
-                                          <h5>{timeAgo(comment.created)}</h5>
-                                        </div>
-                                        <div className="commentText">
-                                          <p>{comment.commentBody}</p>
-                                        </div>
-                                      </div>
-
-                                    </>
+                                        </>
+                                      )
+                                    }).reverse()
+                                  ) : (
+                                    <span className="emptyPostContainer">No Comments!</span>
                                   )
-                                }).reverse()
-                              ) : (
-                                <span className="emptyPostContainer">No Comments!</span>
-                              )
 
 
-                            }
-                          </span>
-                        </div>
+                                }
+                              </span>
+                            </div>
 
-                        <form className="commentFunctions" onSubmit={(e) => addCommentToPost(e, post.id)}>
-                          <input type="text" required name="userComment" id="" placeholder="Leave a comment...  "/>
-                          <button type="submit" className="postCommentBtn">Post <i className="fa-solid fa-paper-plane"></i></button>
-                        </form>
-                      </section>
+                            <form className="commentFunctions" onSubmit={(e) => addCommentToPost(e, post.id)}>
+                              <input type="text" required name="userComment" id="" placeholder="Leave a comment...  "/>
+                              <button type="submit" className="postCommentBtn">Post <i className="fa-solid fa-paper-plane"></i></button>
+                            </form>
+                          </section>
 
 
 
-                    </section>
-                  );
-                })
-                .reverse()
-            ) : (
-              <span className="emptyPostContainer">You have no posts yet!</span>
-            )
-          ) : (
-            <span>loading</span>
-          )}
-        </section>
+                        </section>
+                      );
+                    })
+                    .reverse()
+                ) : (
+                  <span className="emptyPostContainer">You have no posts yet!</span>
+                )
+              ) : (
+                <span>loading</span>
+              )}
+            </section>
+          )
+        }
+
       </main>
     </>
   );

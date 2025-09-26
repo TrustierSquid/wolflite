@@ -4,18 +4,30 @@ from wolfr.db import get_db
 from werkzeug.utils import secure_filename
 import os
 
+# All endpoints are prefixed with /post (e.g /profileInfo/newendpoint)
 profile_page = Blueprint("profileInfo", __name__, url_prefix="/profileInfo")
 
 @profile_page.route("/fetch", methods=["GET"])
 def retrieveLoggedInUserPost():
-  user_id = request.args.get("id")
-  print(f"{user_id}'s profile")
-
-  if not user_id:
-    return jsonify({"error": "No user id provided"}), 400
-
   db = get_db()
   cursor = db.cursor()
+
+  # using Query string to  search a profile by user's ID
+  user_id = int(request.args.get("id"))
+
+  if not user_id:
+    return jsonify({"error": "No user id provided"}), 204
+
+
+  # If the user searched in the query string does not exist, send back error
+  findUser = cursor.execute(
+    """
+      SELECT * FROM user WHERE id = ?
+    """, (user_id,)).fetchone()
+
+  # Return user does not exist
+  if findUser is None:
+    return '', 204
 
 
   try:
@@ -70,6 +82,7 @@ def retrieveLoggedInUserPost():
           "username": like["username"]
         })
 
+    # Map for all of the logged in users posts
     allLoggedInUserPosts = []
     for row in userPostedPosts:
       allLoggedInUserPosts.append({
