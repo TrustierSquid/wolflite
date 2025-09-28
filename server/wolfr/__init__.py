@@ -1,6 +1,7 @@
 import os
 import re
 import sqlite3
+from dotenv import load_dotenv
 from flask import (
     Flask,
     request,
@@ -15,6 +16,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from wolfr.db import get_db
 
+# loading environment variables
+load_dotenv()
+db_key = os.getenv("DB_KEY")
 
 # Creating the flask instance
 def create_app(test_config=None):
@@ -45,7 +49,7 @@ def create_app(test_config=None):
 
     app.config.from_mapping(
         # Key is used to securely sign session cookies
-        SECRET_KEY="dev",
+        SECRET_KEY=db_key,
         DATABASE=os.path.join(app.instance_path, "wolfr.sqlite"),
     )
 
