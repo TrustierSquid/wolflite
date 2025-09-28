@@ -103,15 +103,15 @@ export default function BlogFeed() {
   }
 
 
-  async function addLikeToPost(userId, postID, index) {
+  async function addLikeToPost(userID, postID, index) {
     // Selecting which button to animate
     setAnimateIndex(index)
 
     try {
-      const response = await fetch(`/post/addLike/${userId}/${postID}`, {
+      const response = await fetch(`/post/addLike/${userID}/${postID}`, {
         method: "POST",
         headers: { "Content-Type": "application/json"},
-        body: JSON.stringify({"authorOfLike": userId})
+        body: JSON.stringify({"authorOfLike": userID})
       })
 
 
