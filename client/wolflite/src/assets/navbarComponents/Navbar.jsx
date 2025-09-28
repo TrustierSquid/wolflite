@@ -20,7 +20,7 @@ function Navbar() {
     <>
       <nav id="navContainer">
         <section className="navContainerSection" onClick={()=> window.location.href = '/login'}>
-          <img id="navImg" src="./src/assets/imgs/wolfLogo.png" alt="" />
+          <img id="navImg" src={`${import.meta.env.VITE_SERVER}/static/uploads/wolfLogo.png`} alt="" />
           <h2>WOLFLITE</h2>
         </section>
 

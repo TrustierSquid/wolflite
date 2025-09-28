@@ -98,7 +98,7 @@ function LoginCreate() {
               <>
                 <section id="loginSection1">
                   <span className="loginTextContainer" >
-                    <img src="./src/assets/imgs/wolfLogo.png" alt="Pic" />
+                    <img src={`${import.meta.env.VITE_SERVER}/static/uploads/wolfLogo.png`} alt="Pic" />
                     <p className="loginText">Login</p>
                   </span>
                   <form method="post" id="loginForm" onSubmit={loginUser}>
@@ -142,7 +142,7 @@ function LoginCreate() {
               <>
                 <section id="loginSection1">
                   <span className="loginTextContainer" >
-                    <img src="./src/assets/imgs/wolfLogo.png" alt="Pic" />
+                    <img src={`${import.meta.env.VITE_SERVER}/static/uploads/wolfLogo.png`} alt="Pic" />
                     <p className="loginText">Create User</p>
                   </span>
                   <form method="post" id="loginForm" onSubmit={createUser}>

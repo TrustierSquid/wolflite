@@ -88,8 +88,8 @@ export default function SideNav(props) {
               id="defaultPfPic"
               src={
                 props?.currentLoggedInUserProfilePic
-                  ? `http://localhost:5000/${props?.currentLoggedInUserProfilePic}`
-                  : "/src/assets/imgs/defaultUser.jpg"
+                  ? `${import.meta.env.VITE_SERVER}${props?.currentLoggedInUserProfilePic}`
+                  : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
               }
               alt=""
             />

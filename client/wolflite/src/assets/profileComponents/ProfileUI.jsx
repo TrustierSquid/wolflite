@@ -248,15 +248,16 @@ export default function ProfileUI(props) {
                     className="profileInformationPic"
                     id="defaultPfPic"
                     src={
-                      props.currentLoggedInUserProfilePic
-                        ? `http://localhost:5000${props.currentLoggedInUserProfilePic}`
-                        : "src/assets/imgs/defaultUser.jpg"
+                      allUserPosts?.userProfilePic
+                        ? `${import.meta.env.VITE_SERVER}${allUserPosts.userProfilePic}`
+                        : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
                     }
                     alt=""
                   />
                   <h1>{allUserPosts.username}</h1>
                 </section>
 
+                  {/* If profile id matches the loggedinusers id then show interface for changing prof pic */}
                   {
                     queryStringID == props.currentLoggedInUserId ? (
                       <>
@@ -291,6 +292,8 @@ export default function ProfileUI(props) {
                       <span></span>
                     )
                   }
+
+
               </article>
 
               {
@@ -318,9 +321,9 @@ export default function ProfileUI(props) {
                               <img
                                 className="profilePictures"
                                 src={
-                                  props.currentLoggedInUserProfilePic
-                                    ? `http://localhost:5000${props.currentLoggedInUserProfilePic}`
-                                    : "src/assets/imgs/defaultUser.jpg"
+                                  post.profilePic
+                                    ? `${import.meta.env.VITE_SERVER}${post.profilePic}`
+                                    : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
                                 }
                                 alt=""
                               />
@@ -339,7 +342,7 @@ export default function ProfileUI(props) {
                             <>
                               {!postImgLoaded && <span className="loader"></span>}
                               <img
-                                src={`http://localhost:5000/${post.postPic}`}
+                                src={`${import.meta.env.VITE_SERVER}${post.postPic}`}
                                 alt="postPic"
                                 style={postImgLoaded ? {} : { display: "none" }}
                                 onLoad={() => setpostImgLoaded(true)}
@@ -368,7 +371,7 @@ export default function ProfileUI(props) {
                                           <div className="commentBlock">
                                             <div className="commentHeader" >
                                               <section className="commentWhoPostedContainer" >
-                                                <img className="commentProfilePic" src={comment.profilePic ? `http://localhost:5000${comment.profilePic}` : "/src/assets/imgs/defaultUser.jpg"} alt="" />
+                                                <img className="commentProfilePic" src={comment.profilePic ? `${import.meta.env.VITE_SERVER}${comment.profilePic}` : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`} alt="" />
                                                 <h4 className="commentAuthor" onClick={()=> window.location.href = `/profile?id=${comment.author_id}`}>{comment.author_username}</h4>
                                               </section>
                                               <h5>{timeAgo(comment.created)}</h5>

@@ -186,6 +186,7 @@ export default function BlogFeed() {
     window.location.href = `/profile?id=${userInQuestion}`
   }
 
+
   return (
     <>
       <main id="homeContainer">
@@ -214,8 +215,8 @@ export default function BlogFeed() {
                                 className="profilePictures"
                                 src={
                                   poll.profilePic
-                                    ? `http://localhost:5000${poll.profilePic}`
-                                    : "/src/assets/imgs/defaultUser.jpg"
+                                    ? `${import.meta.env.VITE_SERVER}${poll.profilePic}`
+                                    : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
                                 }
                                 alt=""
                               />
@@ -287,8 +288,8 @@ export default function BlogFeed() {
                               className="profilePictures"
                               src={
                                 post.profilePic
-                                  ? `http://localhost:5000${post.profilePic}`
-                                  : `/src/assets/imgs/defaultUser.jpg`
+                                  ? `${import.meta.env.VITE_SERVER}${post.profilePic}`
+                                  : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
                               }
                               alt=""
                             />
@@ -305,7 +306,7 @@ export default function BlogFeed() {
                             {!imgLoaded && <span className="loader"></span>}
                             <img
                               id="postImage"
-                              src={`http://localhost:5000/${post.filename}`}
+                              src={`${import.meta.env.VITE_SERVER}${post.filename}`}
                               alt="Post"
                               style={imgLoaded ? {} : { display: "none" }}
                               onLoad={() => setImgLoaded(true)}
@@ -338,7 +339,7 @@ export default function BlogFeed() {
                                         <div className="commentBlock">
                                           <div className="commentHeader">
                                             <section className="commentWhoPostedContainer">
-                                              <img className="commentProfilePic" src={comment.profilePic ? `http://localhost:5000${comment.profilePic}` : "/src/assets/imgs/defaultUser.jpg"} alt="" />
+                                              <img className="commentProfilePic" src={comment.profilePic ? `${import.meta.env.VITE_SERVER}${comment.profilePic}` : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`} alt="" />
                                               <h4 className="commentAuthor" onClick={()=> window.location.href = `/profile?id=${comment.author_id}`} >{comment.author_username}</h4>
                                             </section>
                                             <h5>{timeAgo(comment.created)}</h5>
