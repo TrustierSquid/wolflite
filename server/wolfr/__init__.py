@@ -22,23 +22,16 @@ db_key = os.getenv("DB_KEY")
 
 # Creating the flask instance
 def create_app(test_config=None):
-    # goes from wolfr → server
+    # server directory
     BASE_DIR = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "..")
     )
 
     app = Flask(
         __name__,
-
-        # Starts at the very top of the project (/)
-        static_url_path="/",
-
-        # Starts at the base of where the __init__ file resides (wolfr)
-        # Goes up a directory level and goes inside the client/wolflite dir and uses the static files
-        static_folder=os.path.join(BASE_DIR, "../client/wolflite/dist"),
+        static_url_path="/static",
+        static_folder=os.path.join(BASE_DIR, "static"),
     )
-
-    # CORS(app, supports_credentials=True)
 
     # For development Only
     app.config.update(
@@ -87,7 +80,7 @@ def create_app(test_config=None):
         # This if statement prevents this middleware to run on endpoints where prior user is not required
         if (
             request.endpoint in ("login", "createUser", "serve_index")
-            or request.path.startswith("/assets/")
+            or request.path.startswith(app.static_url_path)
             or request.path.startswith("/uploads/")
             or request.endpoint == "static"
         ):
@@ -95,16 +88,16 @@ def create_app(test_config=None):
 
         user_id = session.get("user_id")
 
-        # if request.endpoint in ("blog", "profile", "create", "fetchUserData"):
-        if request.path in ("/blog", "/profile", "/create", "/getUserData", "/post", "/post/create"):
-            if user_id is None:
-                g.user = None
-                print("redirecting.. no session")
-                return redirect("/login")
-            else:
-                g.user = (
-                    cursor.execute("SELECT * FROM user WHERE id = ?", (user_id,)).fetchone()
-                )
+        # if request.endpoint in these, give the session the user id, so it can be used later
+        # For all endpoints except those explicitly skipped above, require login
+        if user_id is None:
+            g.user = None
+            print("redirecting.. no session")
+            return redirect("/login")
+        else:
+            g.user = (
+                cursor.execute("SELECT * FROM user WHERE id = ?", (user_id,)).fetchone()
+            )
 
 
 
@@ -140,9 +133,8 @@ def create_app(test_config=None):
     @app.route("/loginUser", methods=(["POST"]))
     def login():
         db = get_db()
-
-        # in order to execute SQL statements and fetch results we need a db cursor
         cursor = db.cursor()
+
         username = request.form["username"]
         password = request.form["password"]
 
@@ -243,22 +235,22 @@ def create_app(test_config=None):
     @app.route("/login")
     def serve_index():
         # login/create user page
-        return send_from_directory(app.static_folder, "index.html")
+        return send_from_directory(os.path.join(app.static_folder, "dist"), "index.html")
 
     @app.route("/blog")
     def serve_blog():
         # Main Post Feed page
-        return send_from_directory(app.static_folder, "blog.html")
+        return send_from_directory(os.path.join(app.static_folder, "dist"), "blog.html")
 
     @app.route("/profile")
     def serve_profile():
         # Profile page
-        return send_from_directory(app.static_folder, "profile.html")
+        return send_from_directory(os.path.join(app.static_folder, "dist"), "profile.html")
 
     @app.route('/create')
     def serve_create():
         # Create post/poll page
-        return send_from_directory(app.static_folder, "create.html")
+        return send_from_directory(os.path.join(app.static_folder, "dist"), "create.html")
 
 
     # Importing Database configurations
