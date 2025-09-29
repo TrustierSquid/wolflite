@@ -103,12 +103,12 @@ export default function BlogFeed() {
   }
 
 
-  async function addLikeToPost(userID, postID, index) {
+  async function addLikeToPost(userID, postID, index, isPoll) {
     // Selecting which button to animate
     setAnimateIndex(index)
 
     try {
-      const response = await fetch(`/post/addLike/${userID}/${postID}`, {
+      const response = await fetch(`/post/addLike/${userID}/${postID}/${isPoll}`, {
         method: "POST",
         headers: { "Content-Type": "application/json"},
         body: JSON.stringify({"authorOfLike": userID})
@@ -129,9 +129,8 @@ export default function BlogFeed() {
 
   }
 
-
   // Example: addCommentToPost(postIndex)
-  async function addCommentToPost(e, postIndex) {
+  async function addCommentToPost(e, postIndex, isPoll) {
     e.preventDefault()
 
     const commentForm = new FormData(e.target)
@@ -145,7 +144,8 @@ export default function BlogFeed() {
         {
           commentBody: commentBody,
           commentAuthor: currentLoggedInUserId,
-          postID: postIndex
+          postID: postIndex,
+          isPoll: isPoll
         }
       )
     })
@@ -186,6 +186,7 @@ export default function BlogFeed() {
     window.location.href = `/profile?id=${userInQuestion}`
   }
 
+  console.log(allPosts)
 
   return (
     <>
@@ -205,69 +206,119 @@ export default function BlogFeed() {
                   allPosts?.polls
                     ?.map((poll, index) => {
                       return (
-                        <section
-                          className="postContainer"
-                          key={poll?.id || index}
-                        >
-                          <div className="postHeader">
-                            <span className="nameAndProfilePicContainer">
-                              <img
-                                className="profilePictures"
-                                src={
-                                  poll.profilePic
-                                    ? `${import.meta.env.VITE_SERVER}${poll.profilePic}`
-                                    : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
-                                }
-                                alt=""
-                              />
-                              <h5 className="postAuthor">{poll.username}</h5>
-                            </span>
-
-                            <span className="postTimestamp">
-                              posted a poll {timeAgo(poll.created)}
-                            </span>
-                          </div>
-
-                          <h3>{poll?.question}</h3>
-
-                          {poll?.options?.map((option) => {
-                            return (
-                              <>
-                                <button
-                                  onClick={() => {
-                                    trackPollNumber(poll?.id, option.id);
-                                  }}
-                                  className={
-                                    option.voters.includes(
-                                      currentLoggedInUserId
-                                    )
-                                      ? "hasVoted"
-                                      : "pollOption"
+                        <>
+                          <section
+                            className="postContainer"
+                            key={poll?.id || index}
+                          >
+                            <div className="postHeader">
+                              <span className="nameAndProfilePicContainer">
+                                <img
+                                  className="profilePictures"
+                                  src={
+                                    poll.profilePic
+                                      ? `${import.meta.env.VITE_SERVER}${poll.profilePic}`
+                                      : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
                                   }
-                                >
-                                  {option.voters.includes(
-                                    currentLoggedInUserId
-                                  ) ? (
-                                    <>
-                                      {option?.option_text}{" "}
-                                      <span>
-                                        Voted{" "}
-                                        <i class="fa-solid fa-check-double fa-xl"></i>
-                                      </span>
-                                    </>
-                                  ) : (
-                                    <span>{option?.option_text}</span>
-                                  )}
-                                  {option.user_voted} votes
-                                </button>
-                              </>
-                            );
-                          })}
+                                  alt=""
+                                />
+                                <h5 className="postAuthor">{poll.username}</h5>
+                              </span>
 
-                          <span className="checkAnswers">
-                            <h4>{poll.totalVotes} votes</h4>
-                          </span>
-                        </section>
+                              <span className="postTimestamp">
+                                posted a poll {timeAgo(poll.created)}
+                              </span>
+                            </div>
+
+                            <h3>{poll?.question}</h3>
+
+                            {poll?.options?.map((option) => {
+                              return (
+                                <>
+                                  <button
+                                    onClick={() => {
+                                      trackPollNumber(poll?.id, option.id);
+                                    }}
+                                    className={
+                                      option.voters.includes(
+                                        currentLoggedInUserId
+                                      )
+                                        ? "hasVoted"
+                                        : "pollOption"
+                                    }
+                                  >
+                                    {option.voters.includes(
+                                      currentLoggedInUserId
+                                    ) ? (
+                                      <>
+                                        {option?.option_text}{" "}
+                                        <span>
+                                          Voted{" "}
+                                          <i className="fa-solid fa-check-double fa-xl"></i>
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <span>{option?.option_text}</span>
+                                    )}
+                                    {option.user_voted} votes
+                                  </button>
+                                </>
+                              );
+                            })}
+
+                            <span className="checkAnswers">
+                              <h4>{poll.totalVotes} votes</h4>
+                            </span>
+                            <LikeAndComment currentLoggedInUserId={currentLoggedInUserId}
+                              postInformation={poll}
+                              postID={poll?.id}
+                              postIndex={`poll-${index}`}
+                              addLikeToPost={addLikeToPost}
+                              commentSectionRef={commentContainerRef}
+                              isPoll={poll?.isPoll}
+                            />
+                          </section>
+                          <section className="commentsElementContainer" ref={(el)=> (commentContainerRef.current[`poll-${index}`] = el)} >
+                            <div className="commentContainer">
+
+                              <span className="comment">
+                                {
+                                  poll?.comments?.length > 0 ? (
+                                    poll?.comments?.map((comment)=> {
+                                      return (
+                                        <>
+                                          <div className="commentBlock">
+                                            <div className="commentHeader">
+                                              <section className="commentWhoPostedContainer">
+                                                <img className="commentProfilePic" src={comment.profilePic ? `${import.meta.env.VITE_SERVER}${comment.profilePic}` : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`} alt="" />
+                                                <h4 className="commentAuthor" onClick={()=> window.location.href = `/profile?id=${comment.author_id}`} >{comment.author_username}</h4>
+                                              </section>
+                                              <h5>{timeAgo(comment.created)}</h5>
+                                            </div>
+                                            <div className="commentText">
+                                              <p>{comment.commentBody}</p>
+                                            </div>
+                                          </div>
+
+                                        </>
+                                      )
+                                    }).reverse()
+                                  ) : (
+                                    <span className="emptyPostContainer">No Comments!</span>
+                                  )
+
+
+                                }
+                              </span>
+                            </div>
+
+                            <form className="commentFunctions" onSubmit={(e) => addCommentToPost(e, poll.id, poll.isPoll)}>
+                              <input type="text" required name="userComment" id="" placeholder="Leave a comment...  "/>
+                              <button type="submit" className="postCommentBtn">Post <i className="fa-solid fa-paper-plane"></i></button>
+                            </form>
+                          </section>
+
+                        </>
                       );
                     })
                     .reverse()}
@@ -320,14 +371,15 @@ export default function BlogFeed() {
                         <LikeAndComment currentLoggedInUserId={currentLoggedInUserId}
                           postInformation={post}
                           postID={post.id}
-                          postIndex={index}
+                          postIndex={`post-${index}`}
                           addLikeToPost={addLikeToPost}
                           commentSectionRef={commentContainerRef}
+                          isPoll={post?.isPoll}
                         />
 
 
 
-                        <section className="commentsElementContainer" ref={(el)=> (commentContainerRef.current[index] = el)} >
+                        <section className="commentsElementContainer" ref={(el)=> (commentContainerRef.current[`post-${index}`] = el)} >
                           <div className="commentContainer">
 
                             <span className="comment">
@@ -361,7 +413,7 @@ export default function BlogFeed() {
                             </span>
                           </div>
 
-                          <form className="commentFunctions" onSubmit={(e) => addCommentToPost(e, post.id)}>
+                          <form className="commentFunctions" onSubmit={(e) => addCommentToPost(e, post.id, post.isPoll)}>
                             <input type="text" required name="userComment" id="" placeholder="Leave a comment...  "/>
                             <button type="submit" className="postCommentBtn">Post <i className="fa-solid fa-paper-plane"></i></button>
                           </form>

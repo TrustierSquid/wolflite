@@ -27,12 +27,22 @@ def retrievePosts():
 
       # Selecting all polls
       polls = cursor.execute(
-         "SELECT polls.*, user.username, user.filename AS userProfilePic FROM polls JOIN user ON polls.author_id = user.id"
+         "SELECT polls.*, user.username, user.filename AS userProfilePic, "
+         "COUNT(likes.id) AS likeCount "
+         "FROM polls JOIN user ON polls.author_id = user.id "
+         "LEFT JOIN likes ON likes.poll_id = polls.id "
+         "GROUP BY polls.id"
       ).fetchall()
 
       # Get all likes per post with like author id and username
       likesMembers = cursor.execute("""
          SELECT likes.post_id, likes.author_id, user.username
+         FROM likes
+         JOIN user ON likes.author_id = user.id
+      """).fetchall()
+
+      pollLikesMembers = cursor.execute("""
+         SELECT likes.poll_id, likes.author_id, user.username
          FROM likes
          JOIN user ON likes.author_id = user.id
       """).fetchall()
@@ -49,8 +59,27 @@ def retrievePosts():
             "username": like["username"]
          })
 
+      # map for likes (lists all users by id and username who liked a post)
+      likes_by_poll = {}
+      for like in pollLikesMembers:
+         poll_id = like["poll_id"]
+
+         if poll_id not in likes_by_poll:
+            likes_by_poll[poll_id] = []
+         likes_by_poll[poll_id].append({
+            "author_id": like["author_id"],
+            "username": like["username"]
+         })
+
+
       comments = cursor.execute("""
          SELECT comments.author_id, comments.post_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
+         FROM comments
+         JOIN user ON comments.author_id = user.id
+      """).fetchall()
+
+      pollComments = cursor.execute("""
+         SELECT comments.author_id, comments.poll_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
          FROM comments
          JOIN user ON comments.author_id = user.id
       """).fetchall()
@@ -64,6 +93,18 @@ def retrievePosts():
             "author_username": comment["username"],
             "profilePic": comment["userProfilePic"],
             "post_id": comment["post_id"],
+            "created": comment["created"],
+            "commentBody": comment["commentBody"]
+         })
+
+      comments_by_poll = {}
+      for comment in pollComments:
+         poll_id = comment["poll_id"]
+         comments_by_poll.setdefault(poll_id, []).append({
+            "author_id": comment["author_id"],
+            "author_username": comment["username"],
+            "profilePic": comment["userProfilePic"],
+            "poll_id": comment["poll_id"],
             "created": comment["created"],
             "commentBody": comment["commentBody"]
          })
@@ -89,7 +130,8 @@ def retrievePosts():
                "profilePic": row["userProfilePic"],
                "likeCount": row["likeCount"],
                "likesByPost": likes_by_post.get(row["id"], []),
-               "comments": comments_by_post.get(row["id"], [])
+               "comments": comments_by_post.get(row["id"], []),
+               "isPoll": False
             }
          )
 
@@ -130,8 +172,13 @@ def retrievePosts():
             # appended the blueprint of the options map
             "options": option_map.get(poll["id"], []),
             "totalVotes": total_votes,
-            "profilePic": poll["userProfilePic"]
+            "profilePic": poll["userProfilePic"],
+            "isPoll": True,
+            "likeCount": poll["likeCount"],
+            "comments": comments_by_poll.get(poll["id"], []),
+            "likesByPoll": likes_by_poll.get(poll["id"], [])
          })
+
 
 
       return (
@@ -191,36 +238,53 @@ def updateProfilePicture(user_id):
 
 
 # Adding a like to a post
-@blog_page.route("/addLike/<int:user_id>/<int:postID>", methods=(["POST"]))
-def addLikeToPost(user_id, postID):
+@blog_page.route("/addLike/<int:user_id>/<int:item_id>/<is_poll>", methods=(["POST"]))
+def addLike(user_id, item_id, is_poll):
    db = get_db()
    cursor = db.cursor()
+   is_poll = is_poll.lower() == "true"
 
-   # Checking if the user has already liked the post
-   existing_like = cursor.execute("""
-      SELECT 1 FROM likes WHERE author_id = ? AND post_id = ?
-   """, (user_id, postID)).fetchone()
+   if is_poll:
+      # Check if user already liked the poll
+      existing_like = cursor.execute("""
+         SELECT 1 FROM likes WHERE author_id = ? AND poll_id = ?
+      """, (user_id, item_id)).fetchone()
 
-   if existing_like:
-      cursor.execute("""
-         DELETE FROM likes WHERE author_id = ? AND post_id = ?
-      """, (user_id, postID))
-      db.commit()
+      if existing_like:
+         cursor.execute("""
+            DELETE FROM likes WHERE author_id = ? AND poll_id = ?
+         """, (user_id, item_id))
+         db.commit()
+         return jsonify({"success": 200})
 
-      return jsonify({"success": 200})
+      if request.method == "POST":
+         cursor.execute("""
+            INSERT INTO likes (author_id, poll_id) VALUES (?, ?)
+         """, (user_id, item_id))
+         db.commit()
+         return jsonify({"success": 200})
 
-   if request.method == "POST":
-      cursor.execute("""
-         INSERT INTO likes (author_id, post_id) VALUES (?, ?)
-      """, (user_id, postID))
+   else:
+      # Check if user already liked the post
+      existing_like = cursor.execute("""
+         SELECT 1 FROM likes WHERE author_id = ? AND post_id = ?
+      """, (user_id, item_id)).fetchone()
 
-      # map for likes (lists all users by id and username who liked a post)
-      likeMap = []
+      if existing_like:
+         cursor.execute("""
+            DELETE FROM likes WHERE author_id = ? AND post_id = ?
+         """, (user_id, item_id))
+         db.commit()
+         return jsonify({"success": 200})
 
-      db.commit()
-      return jsonify({"success": 200})
+      if request.method == "POST":
+         cursor.execute("""
+            INSERT INTO likes (author_id, post_id) VALUES (?, ?)
+         """, (user_id, item_id))
+         db.commit()
+         return jsonify({"success": 200})
 
-   return 200
+   return jsonify({"success": 200})
 
 
 
@@ -365,21 +429,38 @@ def postComment():
    if request.method == "POST":
       try:
          data = request.get_json()
-
          # Information about the user and the post the comment was made on
          commentBody = data["commentBody"]
          commentAuthor = data["commentAuthor"]
          postID = data["postID"]
-
-
-         cursor.execute("""
-            INSERT INTO comments (author_id, post_id, commentBody)
-            VALUES (?, ?, ?)
-         """, (commentAuthor, postID, commentBody))
-
-         db.commit()
-
          print(data)
+
+         if data["isPoll"] is False:
+            try:
+               print("is not a poll")
+               cursor.execute("""
+                  INSERT INTO comments (author_id, post_id, commentBody)
+                  VALUES (?, ?, ?)
+               """, (commentAuthor, postID, commentBody))
+
+               db.commit()
+               return jsonify({"success": True}), 200
+            except sqlite3.IntegrityError:
+               print("Failed to send comment to post")
+
+         else:
+            try:
+               print("is a poll")
+               cursor.execute("""
+                  INSERT INTO comments (author_id, poll_id, commentBody)
+                  VALUES (?, ?, ?)
+               """, (commentAuthor, postID, commentBody))
+
+               db.commit()
+               return jsonify({"success": True}), 200
+            except sqlite3.IntegrityError:
+               print("Failed to send comment to poll")
+
       except sqlite3.IntegrityError:
          return jsonify({"error": "failed to save comment"})
 

@@ -44,13 +44,52 @@ def retrieveLoggedInUserPost():
       """, (user_id,)
     ).fetchall()
 
+    userPostedPolls = cursor.execute(
+      """
+      SELECT polls.*, user.username, user.filename AS userProfilePic,
+      COUNT(likes.id) AS likeCount
+      FROM polls
+      JOIN user ON polls.author_id = user.id
+      LEFT JOIN likes ON polls.id = likes.poll_id
+      WHERE user.id = ?
+      GROUP BY polls.id
+      """, (user_id,)
+    ).fetchall()
+
+    # Selecting all poll options
+    options = cursor.execute(
+        "SELECT * FROM poll_options"
+    ).fetchall()
+
+    # Blueprint FOR POLLS Results
+    option_map = {}
+    for opt in options:
+        # Fetch user IDs who voted for this option
+        voters = cursor.execute(
+        "SELECT user_id FROM votes WHERE option_id = ?", (opt["id"],)
+        ).fetchall()
+        voter_ids = [v["user_id"] for v in voters]
+
+        option_map.setdefault(opt["poll_id"], []).append({
+          "id": opt["id"],
+          "option_text": opt["option_text"],
+          "user_voted": opt["users_voted"],
+          "voters": voter_ids,
+        })
+
     comments = cursor.execute("""
       SELECT comments.author_id, comments.post_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
       FROM comments
       JOIN user ON comments.author_id = user.id
     """).fetchall()
 
-      # Organize comments by post_id
+    pollComments = cursor.execute("""
+      SELECT comments.author_id, comments.poll_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
+      FROM comments
+      JOIN user ON comments.author_id = user.id
+    """).fetchall()
+
+    # Organize comments by post_id
     comments_by_post = {}
     for comment in comments:
       post_id = comment["post_id"]
@@ -63,12 +102,33 @@ def retrieveLoggedInUserPost():
         "commentBody": comment["commentBody"]
       })
 
+    # Organize comments by poll_id
+    comments_by_poll = {}
+    for comment in pollComments:
+      poll_id = comment["poll_id"]
+      comments_by_poll.setdefault(poll_id, []).append({
+        "author_id": comment["author_id"],
+        "author_username": comment["username"],
+        "profilePic": comment["userProfilePic"],
+        "poll_id": comment["poll_id"],
+        "created": comment["created"],
+        "commentBody": comment["commentBody"]
+      })
+
     # Get all likes per post with like author id and username
     likesMembers = cursor.execute("""
         SELECT likes.post_id, likes.author_id, user.username
         FROM likes
         JOIN user ON likes.author_id = user.id
     """).fetchall()
+
+    likesMembersPoll = cursor.execute(
+      """
+      SELECT likes.poll_id, likes.author_id, user.username
+      FROM likes
+      JOIN user ON likes.author_id = user.id
+      """
+    ).fetchall()
 
     # map for likes (lists all users by id and username who liked a post)
     likes_by_post = {}
@@ -81,6 +141,19 @@ def retrieveLoggedInUserPost():
           "author_id": like["author_id"],
           "username": like["username"]
         })
+
+    # map for likes (lists all users by id and username who liked a poll)
+    likes_by_poll = {}
+    for like in likesMembersPoll:
+      poll_id = like["poll_id"]
+
+      if poll_id not in likes_by_poll:
+          likes_by_poll[poll_id] = []
+      likes_by_poll[poll_id].append({
+        "author_id": like["author_id"],
+        "username": like["username"]
+      })
+
 
     # Map for all of the logged in users posts
     allLoggedInUserPosts = []
@@ -96,7 +169,38 @@ def retrieveLoggedInUserPost():
         "likeCount": row["likeCount"],
         "username": row["username"],
         "likesByPost": likes_by_post.get(row["id"], []),
-        "comments": comments_by_post.get(row["id"], [])
+        "comments": comments_by_post.get(row["id"], []),
+        "isPoll": False
+      })
+
+
+
+
+    # Map for all of the logged in users poll
+    allLoggedInUserPolls = []
+    for row in userPostedPolls:
+      # Getting total votes for each poll
+      result = cursor.execute("""
+        SELECT SUM(users_voted) AS total_votes FROM poll_options WHERE poll_id = ? """, (row["id"],)
+      ).fetchone()
+
+      total_votes = result["total_votes"] if result and result["total_votes"] is not None else 0
+
+
+      allLoggedInUserPolls.append({
+        "id": row["id"],
+        "author_id": row["author_id"],
+        "created": row["created"],
+        "question": row["question"],
+        "username": row["username"],
+        # appended the blueprint of the options map
+        "options": option_map.get(row["id"], []),
+        "totalVotes": total_votes,
+        "profilePic": row["userProfilePic"],
+        "likeCount": row["likeCount"],
+        "likesByPoll": likes_by_poll.get(row["id"], []),
+        "comments": comments_by_poll.get(row["id"], []),
+        "isPoll": True
       })
 
 
@@ -111,6 +215,7 @@ def retrieveLoggedInUserPost():
 
     return jsonify({
       "allUserPosts": allLoggedInUserPosts,
+      "allUserPolls": allLoggedInUserPolls,
       "username": queried_username,
       "userProfilePic": profilePicture
     }), 200
