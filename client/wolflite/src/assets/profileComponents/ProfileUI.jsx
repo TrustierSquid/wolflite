@@ -100,6 +100,38 @@ export default function ProfileUI(props) {
 
   }
 
+  // Calculates the poll numbers (total votes, total votes for each option in a poll)
+  async function trackPollNumber(pollID, optionID) {
+    try {
+      // Sends the poll id and calculates the percentage of users that have selected an answer for each poll
+      const response = await fetch("/post/poll/userStats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pollID: pollID, optionID: optionID }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      /*
+        If the user tries to vote again and the client receives an error from the server
+        Preventing the User from spamming the api endpoint and voting more than once.
+       */
+      if (data.error) {
+        alert(
+          data.error + ". Start a new Poll or wait for this one to expire."
+        );
+      }
+
+      fetchProfilePosts();
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   // Changing profile Picture
   async function changeProfilePicture() {
     /*
