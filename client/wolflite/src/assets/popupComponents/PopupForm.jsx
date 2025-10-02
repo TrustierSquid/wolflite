@@ -218,6 +218,7 @@ export default function PopupForm() {
                       onChange={handleQuestionChange}
                       required
                       placeholder="Enter a post title"
+                      maxLength={200}
                     />
                   </div>
 
@@ -241,6 +242,7 @@ export default function PopupForm() {
                           value={option}
                           placeholder={`Option ${index + 1}`}
                           onChange={(e)=> handleOptionChange(index, e.target.value)}
+                          maxLength={100}
                           required
                         />
 
