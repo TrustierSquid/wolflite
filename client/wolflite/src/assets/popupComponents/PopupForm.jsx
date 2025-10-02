@@ -76,7 +76,6 @@ export default function PopupForm() {
       options: options.filter((opt)=> opt.trim() !== ""),
     }
 
-    console.log(payload)
 
     console.log("Submitting poll:", payload);
 
