@@ -396,7 +396,25 @@ body,
 /* add pollOptionButton */
 #addPollOptionButton {
   margin-left: auto;
-  background-color: blue;
+  background-color: var(--infoBtn);
+}
+
+.votePercentageContainer {
+  width: 120px;
+}
+
+.votePercentage {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  gap: 0.5rem;
+}
+
+.optionText {
+  font-size: 0.8rem;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  text-align: left;
 }
 
 #removePollOptionButton:hover {
