@@ -61,7 +61,7 @@ export default function PopupForm() {
   }
 
   // Add a new option
-  const addOption = ()=> setOptions([...options, ""])
+  const addOption = ()=> options.length === 12 ? setOptions([...options]) : setOptions([...options, ""])
 
 
   // Remove an option
