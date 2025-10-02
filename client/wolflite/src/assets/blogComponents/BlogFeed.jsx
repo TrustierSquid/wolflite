@@ -248,7 +248,7 @@ export default function BlogFeed() {
                               </span>
                             </div>
 
-                            <h4>{poll?.question}</h4>
+                            <h4 style={{ whiteSpace: "pre-wrap" }}>{poll?.question}</h4>
 
                             {poll?.options?.map((option) => {
                               return (
