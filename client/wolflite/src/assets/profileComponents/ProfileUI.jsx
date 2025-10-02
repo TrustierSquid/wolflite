@@ -182,7 +182,7 @@ export default function ProfileUI(props) {
 
       setSuccessMessage("Profile Picture Changed!");
       setTimeout(() => {
-        window.location.href = "/profile";
+        window.location.href = `/profile?id=${props.currentLoggedInUserId}`;
       }, 1000);
 
       const data = await response.json();
