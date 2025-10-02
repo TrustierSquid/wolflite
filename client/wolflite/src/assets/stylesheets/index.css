@@ -79,7 +79,6 @@ body,
   box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
   object-fit: contain;
   position: relative;
-  animation-duration: 500ms;
   word-break: break-all;
 }
 
