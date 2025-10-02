@@ -56,7 +56,7 @@ export default function PopupInformation(props){
                 props?.pollInfo?.options &&
                 props?.pollInfo?.options[displayOptionVoters]?.voters?.length > 0 ? (
                   props.pollInfo.options[displayOptionVoters].voters.map((voter, idx) => {
-                      const voterInfo = whoVotedFlat.find(who => who.user_id || who.id === voter);
+                      const voterInfo = whoVotedFlat.find(who => (who.user_id === voter || who.id === voter));
 
                       return (
                         <span key={idx} className="voter">
