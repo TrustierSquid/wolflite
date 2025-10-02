@@ -44,6 +44,8 @@ hr {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  font-family: "Arial";
+  line-height: 1.3;
 }
 
 #totalVotesCount {
