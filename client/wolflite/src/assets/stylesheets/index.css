@@ -7,8 +7,9 @@
 :root {
   --primary: #ff4167;
   --secondary: #a454ff;
+  --infoBtn: #2491ff;
   --background: #e2e2e2;
-  --regBtn: #333;
+  --regBtn: #333333;
 }
 
 .text-gradient {
@@ -39,7 +40,6 @@ body,
   justify-content: center;
   padding: 1rem;
   font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
-  margin-top: 3rem;
 }
 
 
@@ -80,6 +80,7 @@ body,
   object-fit: contain;
   position: relative;
   animation-duration: 500ms;
+  word-break: break-all;
 }
 
 #blogFeedContainer > .postContainer > p {
@@ -87,6 +88,10 @@ body,
   overflow-wrap: anywhere;
 }
 
+.postContainer > h3 {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
 
 #blogFeedContainer > .postContainer > #postImage {
   max-width: 100%;
@@ -268,6 +273,19 @@ body,
 
 #createMenuContent {
   padding: 2rem;
+}
+
+.checkAnswers > button{
+  color: white;
+  background-color: var(--infoBtn);
+  border: none;
+  padding: 0.3rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.checkAnswers > button:hover {
+  background-color: var(--regBtn);
 }
 
 /* POPUP FORM */

@@ -34,6 +34,29 @@ def retrievePosts():
          "GROUP BY polls.id"
       ).fetchall()
 
+      # Get votes for each poll and who voted
+      votes = cursor.execute("""
+         SELECT votes.poll_id, votes.option_id, votes.user_id, user.username, user.filename AS userProfilePic
+         FROM votes
+         JOIN user ON votes.user_id = user.id
+      """).fetchall()
+
+      # Organize votes by poll and option
+      votes_by_poll = {}
+      for vote in votes:
+         poll_id = vote["poll_id"]
+         option_id = vote["option_id"]
+         user_info = {
+            "user_id": vote["user_id"],
+            "username": vote["username"],
+            "profilePic": vote["userProfilePic"]
+         }
+         if poll_id not in votes_by_poll:
+            votes_by_poll[poll_id] = {}
+         if option_id not in votes_by_poll[poll_id]:
+            votes_by_poll[poll_id][option_id] = []
+         votes_by_poll[poll_id][option_id].append(user_info)
+
       # Get all likes per post with like author id and username
       likesMembers = cursor.execute("""
          SELECT likes.post_id, likes.author_id, user.username
@@ -176,6 +199,7 @@ def retrievePosts():
             "isPoll": True,
             "likeCount": poll["likeCount"],
             "comments": comments_by_poll.get(poll["id"], []),
+            "whoVoted": votes_by_poll.get(poll["id"], []),
             "likesByPoll": likes_by_poll.get(poll["id"], [])
          })
 

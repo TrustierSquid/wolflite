@@ -1,3 +1,7 @@
+hr {
+  color: lightgrey;
+}
+
 .heartIcon {
   color: var(--primary);
 }
@@ -10,25 +14,189 @@
   color: var(--secondary);
 }
 
+/* MOODLE STYLES */
 .static {
   opacity: 0;
   display: none;
 }
 
+#pollInformationContainer{
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  background-color: rgb(234, 234, 234);
+  border-radius: 1rem;
+  padding: 1rem ;
+  overflow-y: scroll;
+
+}
+
+#moodleTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  word-break: break-word;
+  gap: 5rem;
+}
+
+#pollQuestionContainer {
+  width: 80%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+#totalVotesCount {
+  color: grey;
+}
+
+
+
+#moodleBackButton {
+  background: none;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 2rem;
+  color: white;
+  cursor: pointer;
+  transition: 150ms;
+  background-color: var(--primary);
+  align-self: start;
+}
+
+#moodleBackButton:hover {
+  background-color: var(--secondary);
+  color: white;
+}
+
+.voter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  /* border-top: 1px solid lightgrey; */
+  border-bottom: 1px solid lightgrey;
+}
+
+.voter > img {
+  height: 30px;
+  width: 30px;
+  border-radius: 50%;
+}
+
+
+
+#moodleContainer {
+  height: 100vh;
+  width: 100vw;
+  background: none;
+  position: fixed;
+  z-index: 999;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+#listOfVotes {
+  display: flex;
+  flex-direction: column;
+  width: 60%;
+  padding: 0.5rem;
+  border-right: 1px lightgrey solid;
+  gap: 1rem;
+  overflow-y: scroll;
+}
+
+.voteItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: space-between;
+  padding-inline: 0.3rem;
+}
+
+.voteItem:hover {
+  border-radius: 0.5rem;
+  background-color: grey;
+  color: white;
+  cursor: pointer;
+}
+
+
+.selectOption {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+#votersContainer {
+  width: 40%;
+  overflow-y: scroll;
+}
+
+.optionVotes {
+  background-color: var(--primary);
+  max-width: 105px;
+  border-radius: 10px;
+  padding: 0.3rem;
+  color: white;
+  font-family: "Comfortaa";
+  word-break: normal;
+  white-space: nowrap;
+}
+
+.blackScreen {
+  background-color: black;
+  opacity: 0.8;
+  position: fixed;
+  z-index: 999;
+  height: 100vh;
+  width: 100vw;
+}
+
+.openPostInformationMoodle {
+  width: 50%;
+  height: 70%;
+  border-radius: 1rem;
+  background-color: white;
+  position: fixed;
+  z-index: 1000;
+  padding: 2rem;
+  pointer-events: all;
+  box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  font-family: "Comfortaa";
+}
+
+/* each poll option in the menu */
+.selectOption {
+  cursor: pointer;
+  padding-inline: 0.2rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-radius: 0.5rem;
+  transition: 150ms;
+}
+
+
+.closePostInformationMoodle {
+  opacity: 0;
+  pointer-events: none;
+}
+
+
 /* For comments opening and closing */
 .commentsElementContainer {
-  /* display: flex; */
-
-  /* init display */
   display: none;
-
   flex-direction: column;
-  background-color: rgb(220, 220, 220);
-  box-shadow: rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em;
-  border-radius: 0.5rem;
+  background-color: rgb(255, 255, 255);
+  margin-top: 1rem;
   width: 100%;
-  height: 400px;
-  padding: 1rem;
+  height: 500px;
   justify-content: space-between;
   gap: 1rem;
 }
@@ -55,6 +223,13 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  border: 1px solid #e0e0e0;
+  background-color: #f1f1f1;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  padding: 1rem;
+  border-radius: 1rem;
+  /* box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px; */
+  box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
 }
 
 .comment > .commentBlock > .commentHeader {
@@ -70,8 +245,10 @@
 }
 
 .comment > .commentBlock > .commentHeader > .commentWhoPostedContainer > .commentProfilePic {
+  width: 30px;
   height: 30px;
   border-radius: 50%;
+  object-fit: cover;
 }
 
 
@@ -81,10 +258,9 @@
   word-break: break-word;
   white-space: pre-wrap;
   padding: 0.5rem;
-  padding-left: 1rem;
-  color: white;
-  background: #FF4167;
-  background: linear-gradient(171deg, rgba(255, 65, 103, 1) 0%, rgba(164, 84, 255, 1) 100%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 

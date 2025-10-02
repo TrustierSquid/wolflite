@@ -186,6 +186,22 @@ def retrieveLoggedInUserPost():
 
       total_votes = result["total_votes"] if result and result["total_votes"] is not None else 0
 
+      # For each poll, get all voters with their profile pic and username
+      voters_info = cursor.execute("""
+        SELECT DISTINCT user.id, user.username, user.filename AS profilePic
+        FROM votes
+        JOIN user ON votes.user_id = user.id
+        WHERE votes.poll_id = ?
+      """, (row["id"],)).fetchall()
+      voters = [
+        {
+          "id": voter["id"],
+          "username": voter["username"],
+          "profilePic": voter["profilePic"]
+        }
+        for voter in voters_info
+      ]
+
 
       allLoggedInUserPolls.append({
         "id": row["id"],
@@ -200,8 +216,12 @@ def retrieveLoggedInUserPost():
         "likeCount": row["likeCount"],
         "likesByPoll": likes_by_poll.get(row["id"], []),
         "comments": comments_by_poll.get(row["id"], []),
-        "isPoll": True
+        "isPoll": True,
+        "whoVoted": voters
       })
+
+
+
 
 
     if allLoggedInUserPosts:

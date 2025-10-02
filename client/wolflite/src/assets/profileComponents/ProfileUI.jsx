@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import SideNav from "../navbarComponents/SideNav";
 import LikeAndComment from "../popupComponents/LikeAndComment";
-import { useLocation } from "react-router-dom";
+import PopupInformation from "../popupComponents/PopupInformation";
 
 export default function ProfileUI(props) {
   const [allUserPosts, setAllUserPosts] = useState([]);
@@ -62,7 +62,6 @@ export default function ProfileUI(props) {
     }
   }
 
-  console.log(allUserPosts)
 
   useEffect(() => {
     try {
@@ -247,14 +246,31 @@ export default function ProfileUI(props) {
     });
   }
 
-  console.log(allUserPosts.allUserPolls)
 
   // Separate arrays for polls and posts to avoid index overlap
   const userPolls = allUserPosts?.allUserPolls || [];
   const userPosts = allUserPosts?.allUserPosts || [];
 
+  // throwing poll info in state when viewing total votes
+  const [isChecking, setIsChecking] = useState(false)
+  const [pollInQuestion, setPollInQuestion] = useState([])
+
+  function viewPostInfo(){
+    setIsChecking(prev => !prev)
+  }
+
   return (
     <>
+      <PopupInformation
+        pollInfo={pollInQuestion}
+        loggedInUserId={props?.currentLoggedInUserId}
+        loggedInUsername={props?.currentLoggedInUserName}
+        currentLoggedInUserProfilePic={props?.currentLoggedInUserProfilePic}
+
+        // bool to check if the user clicked on votes
+        isOpen={isChecking}
+        onClose={()=> setIsChecking(false)}
+      />
       <main id="homeContainer">
         <SideNav
           loggedInUserId={props.currentLoggedInUserId}
@@ -367,7 +383,7 @@ export default function ProfileUI(props) {
                             posted {timeAgo(poll.created)}
                           </span>
                         </div>
-                        <h3>{poll?.question}</h3>
+                        <h4>{poll?.question}</h4>
                         {poll?.options?.map((option) => (
                           <button
                             key={option.id}
@@ -399,7 +415,7 @@ export default function ProfileUI(props) {
                           </button>
                         ))}
                         <span className="checkAnswers">
-                          <h4>{poll.totalVotes} votes</h4>
+                          <button onClick={()=> {viewPostInfo(poll); setPollInQuestion(poll)}}>{poll.totalVotes} votes <i className="fa-solid fa-check-to-slot"></i></button>
                         </span>
 
                         <LikeAndComment currentLoggedInUserId={props?.currentLoggedInUserId}

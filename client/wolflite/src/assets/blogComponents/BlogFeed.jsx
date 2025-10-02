@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import SideNav from "../navbarComponents/SideNav";
 import LikeAndComment from "../popupComponents/LikeAndComment";
+import PopupInformation from "../popupComponents/PopupInformation";
 
 export default function BlogFeed() {
   const [allPosts, setAllPosts] = useState({ posts: [], polls: [] });
@@ -186,10 +187,26 @@ export default function BlogFeed() {
     window.location.href = `/profile?id=${userInQuestion}`
   }
 
-  console.log(allPosts)
+  const [isChecking, setIsChecking] = useState(false)
+  const [pollInQuestion, setPollInQuestion] = useState([])
+
+  function viewPostInfo(){
+    setIsChecking(prev => !prev)
+  }
+
 
   return (
     <>
+      <PopupInformation
+        pollInfo={pollInQuestion}
+        loggedInUserId={currentLoggedInUserId}
+        loggedInUsername={currentLoggedInUserName}
+        currentLoggedInUserProfilePic={currentLoggedInUserProfilePic}
+
+        // bool to check if the user clicked on votes
+        isOpen={isChecking}
+        onClose={()=> setIsChecking(false)}
+      />
       <main id="homeContainer">
         <SideNav
           loggedInUserId={currentLoggedInUserId}
@@ -197,6 +214,7 @@ export default function BlogFeed() {
           currentLoggedInUserProfilePic={currentLoggedInUserProfilePic}
         />
         <section id="blogFeedContainer" className="animate__animated animate__fadeInRight">
+          <h2 className="universalHeader">Newest Polls </h2>
           {
             // Loading condition for fetching the posts from the server
             allPosts ? (
@@ -230,7 +248,7 @@ export default function BlogFeed() {
                               </span>
                             </div>
 
-                            <h3>{poll?.question}</h3>
+                            <h4>{poll?.question}</h4>
 
                             {poll?.options?.map((option) => {
                               return (
@@ -267,7 +285,7 @@ export default function BlogFeed() {
                             })}
 
                             <span className="checkAnswers">
-                              <h4>{poll.totalVotes} votes</h4>
+                              <button onClick={()=> {viewPostInfo(poll); setPollInQuestion(poll)}}>{poll.totalVotes} votes <i className="fa-solid fa-check-to-slot"></i></button>
                             </span>
                             <LikeAndComment currentLoggedInUserId={currentLoggedInUserId}
                               postInformation={poll}
@@ -277,52 +295,59 @@ export default function BlogFeed() {
                               commentSectionRef={commentContainerRef}
                               isPoll={poll?.isPoll}
                             />
-                          </section>
-                          <section className="commentsElementContainer" ref={(el)=> (commentContainerRef.current[`poll-${index}`] = el)} >
-                            <div className="commentContainer">
+                            <section className="commentsElementContainer" ref={(el)=> (commentContainerRef.current[`poll-${index}`] = el)} >
+                              <div className="commentContainer">
 
-                              <span className="comment">
-                                {
-                                  poll?.comments?.length > 0 ? (
-                                    poll?.comments?.map((comment)=> {
-                                      return (
-                                        <>
-                                          <div className="commentBlock">
-                                            <div className="commentHeader">
-                                              <section className="commentWhoPostedContainer">
-                                                <img className="commentProfilePic" src={comment.profilePic ? `${import.meta.env.VITE_SERVER}${comment.profilePic}` : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`} alt="" />
-                                                <h4 className="commentAuthor" onClick={()=> window.location.href = `/profile?id=${comment.author_id}`} >{comment.author_username}</h4>
-                                              </section>
-                                              <h5>{timeAgo(comment.created)}</h5>
+                                <span className="comment">
+                                  {
+                                    poll?.comments?.length > 0 ? (
+                                      poll?.comments?.map((comment)=> {
+                                        return (
+                                          <>
+                                            <div className="commentBlock">
+                                              <div className="commentHeader">
+                                                <section className="commentWhoPostedContainer">
+                                                  <img className="commentProfilePic" src={comment.profilePic ? `${import.meta.env.VITE_SERVER}${comment.profilePic}` : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`} alt="" />
+                                                  <h4 className="commentAuthor" onClick={()=> window.location.href = `/profile?id=${comment.author_id}`} >{comment.author_username}</h4>
+                                                </section>
+                                                <h5>{timeAgo(comment.created)}</h5>
+                                              </div>
+                                              <div className="commentText">
+                                                <i className="fa-solid fa-arrows-turn-right"></i>
+                                                <p>{comment.commentBody}</p>
+                                              </div>
                                             </div>
-                                            <div className="commentText">
-                                              <p>{comment.commentBody}</p>
-                                            </div>
-                                          </div>
 
-                                        </>
-                                      )
-                                    }).reverse()
-                                  ) : (
-                                    <span className="emptyPostContainer">No Comments!</span>
-                                  )
+                                          </>
+                                        )
+                                      }).reverse()
+                                    ) : (
+                                      <span className="emptyPostContainer">No Comments!</span>
+                                    )
 
 
-                                }
-                              </span>
-                            </div>
+                                  }
+                                </span>
+                              </div>
 
-                            <form className="commentFunctions" onSubmit={(e) => addCommentToPost(e, poll.id, poll.isPoll)}>
-                              <input type="text" required name="userComment" id="" placeholder="Leave a comment...  "/>
-                              <button type="submit" className="postCommentBtn">Post <i className="fa-solid fa-paper-plane"></i></button>
-                            </form>
+                              <form className="commentFunctions" onSubmit={(e) => addCommentToPost(e, poll.id, poll.isPoll)}>
+                                <input type="text" required name="userComment" id="" placeholder="Leave a comment...  "/>
+                                <button type="submit" className="postCommentBtn">Post <i className="fa-solid fa-paper-plane"></i></button>
+                              </form>
+                            </section>
+
+
                           </section>
+
+
 
                         </>
                       );
                     })
                     .reverse()}
-                <h2 className="universalHeader">What's New</h2>
+
+                <h2 className="universalHeader">Newest Posts</h2>
+
                 {/* For Regular Posts */}
                 {allPosts?.posts?.length > 0 ? (
                   allPosts.posts
@@ -344,7 +369,7 @@ export default function BlogFeed() {
                               }
                               alt=""
                             />
-                            <h3 className="postAuthor" onClick={()=> goToProfile(post.author_id)}>{post?.username} </h3>
+                            <h5 className="postAuthor" onClick={()=> goToProfile(post.author_id)}>{post?.username} </h5>
                           </span>
                           <span className="postTimestamp">
                             posted {timeAgo(post.created)}
