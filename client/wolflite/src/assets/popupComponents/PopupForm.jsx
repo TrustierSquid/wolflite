@@ -109,17 +109,9 @@ export default function PopupForm() {
   return (
     <>
       <main id="elementContainer">
-        <h2 className="moodleTitle">Create</h2>
+        <h2 className="moodleTitle animate__animated animate__fadeInLeftBig ">Create</h2>
 
-        <div id="createMenuContainer">
-          <ul id="createMenuOptions">
-            <li onClick={() => setMenuSelector("standard")}>
-              <h3>Standard</h3>
-            </li>
-            <li onClick={() => setMenuSelector("Poll")}>
-              <h3>Poll</h3>
-            </li>
-          </ul>
+        <div id="createMenuContainer" className="animate__animated animate__fadeInLeftBig">
 
           {menuSelector === "standard" ? (
             <section id="createMenuContent">
@@ -128,18 +120,47 @@ export default function PopupForm() {
                 ref={formRef}
                 onSubmit={handleUpload}
               >
-                <h2>Standard</h2>
-                <br />
+                <h2>Post</h2>
+                <ul id="createMenuOptions">
+                  <li onClick={() => setMenuSelector("standard")}>
+                    <h3><i className="fa-solid fa-square-poll-horizontal"></i> Post</h3>
+                  </li>
+                  <li onClick={() => setMenuSelector("Poll")}>
+                    <h3><i class="fa-solid fa-bars-progress"></i> Poll </h3>
+                  </li>
+                </ul>
 
                 <div id="imageInsertContainer">
                   <input
                     type="file"
                     name="file"
+                    id="file"
+                    onChange={e => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = ev => setImageUrl(ev.target.result);
+                        reader.readAsDataURL(file);
+                      } else {
+                        setImageUrl(null);
+                      }
+                    }}
                   />
+
+                  <label htmlFor="file" id="selectImage"><i className="fa-solid fa-image"></i> Upload Media</label>
+                  {/* {imageUrl && (
+                    <img
+                    src={`http://localhost:5000${imageUrl}`}
+                    alt="Uploaded"
+                    />
+                  )} */}
+
                   {imageUrl && (
                     <img
-                      src={`http://localhost:5000${imageUrl}`}
-                      alt="Uploaded"
+                      id="imagePreview"
+                      src={imageUrl.startsWith("data:") ? imageUrl : `http://localhost:5000${imageUrl}`}
+                      alt="Preview"
+                      // style={{ maxWidth: "200px", marginTop: "10px" }}
                     />
                   )}
                 </div>
@@ -185,14 +206,22 @@ export default function PopupForm() {
                   type="submit"
                   id="submitTextBtn"
                 >
-                  Post
+                  <i className="fa-solid fa-paper-plane"></i> Post
                 </button>
               </form>
             </section>
           ) : (
             <section id="createMenuContent">
-              <h2>Create Poll</h2>
+              <h2>Poll</h2>
               <br />
+              <ul id="createMenuOptions">
+                <li onClick={() => setMenuSelector("standard")}>
+                  <h3><i className="fa-solid fa-square-poll-horizontal"></i> Post</h3>
+                </li>
+                <li onClick={() => setMenuSelector("Poll")}>
+                  <h3><i class="fa-solid fa-bars-progress"></i> Poll</h3>
+                </li>
+              </ul>
               <form
                 method="POST"
                 ref={pollForm}
@@ -200,6 +229,7 @@ export default function PopupForm() {
               >
                 <main id="createPostForm">
                   {/* POLL QUESTION */}
+
                   <div className="formPostTitleSection">
 
 
@@ -210,14 +240,15 @@ export default function PopupForm() {
                       Poll Question:
                     </label>
                     <br />
-                    <input
+                    <textarea
                       className="createPostFormInputTitle"
                       name="pollQuestion"
                       type="text"
+                      // style={{ maxWidth: '590px', maxHeight: '200px' }}
                       onChange={handleQuestionChange}
                       required
                       placeholder="Enter a post title"
-                      maxLength={200}
+                      maxLength={250}
                     />
                   </div>
 
@@ -246,8 +277,8 @@ export default function PopupForm() {
                         />
 
                         {
-                          option.length < 1 && (
-                            <button type="button" id="removePollOptionButton" onClick={()=> removeOption(index)}>Remove</button>
+                          options.length > 1 && (
+                            <button type="button" id="removePollOptionButton" onClick={() => removeOption(index)}><i className="fa-solid fa-trash"></i> Remove</button>
                           )
                         }
                       </div>
@@ -260,14 +291,14 @@ export default function PopupForm() {
                 <section id="functionBtns">
                   {/* Add Option Button */}
                   <button type="button" onClick={addOption} id="addPollOptionButton" >
-                    Add Answer
+                   <i className="fa-solid fa-plus"></i> Add Answer
                   </button>
 
                   <button
                     onClick={(e)=> handlePollUploads}
                     id="submitTextBtn"
                   >
-                    Create Post
+                    <i className="fa-solid fa-bars-progress"></i> Create Poll
                   </button>
                 </section>
 

@@ -80,6 +80,7 @@ body,
   object-fit: contain;
   position: relative;
   word-break: break-all;
+  overflow-wrap: anywhere;
 }
 
 #blogFeedContainer > .postContainer > p {
@@ -166,14 +167,6 @@ body,
   background-color: maroon;
 }
 
-/* .postFunctionBtn:nth-of-type(even) {
-
-}
-
-.postFunctionBtn:nth-of-type(odd) {
-
-} */
-
 
 /* POLLS */
 .pollOption,
@@ -187,20 +180,15 @@ body,
   justify-content: space-between;
   cursor: pointer;
   transition: 150ms;
+  gap: 4rem;
+  background-color: var(--regBtn);
+  background-color: color-mix(in srgb, var(--regBtn) 90%, transparent);
+  border: var(--secondary) 2px solid;
+  color: white;
 }
 
 .hasVoted {
   background-color: green;
-  color: white;
-}
-
-.pollOption:nth-of-type(even) {
-  background-color: #a454ff;
-  color: white;
-}
-
-.pollOption:nth-of-type(odd) {
-  background-color: rgb(255, 65, 103);
   color: white;
 }
 
@@ -230,19 +218,42 @@ body,
   max-width: 800px;
   max-height: 100vh;
 }
+/* for image selection */
+#file{
+  display: none;
+}
 
-#createMenuOptions {
-  list-style-type: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  background-color: var(--primary);
-  padding: 1rem;
+#imagePreview {
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
   border-radius: 1rem;
 }
 
+#selectImage {
+  width: 30%;
+  background-color: lightgrey;
+  border-radius: 1rem;
+  padding: 1rem;
+  cursor: pointer;
+}
+
+#selectImage:hover {
+  background-color: var(--secondary);
+  color: white;
+}
+
+#createMenuOptions {
+  display: flex;
+  width: 50%;
+  gap: 1rem;
+  list-style-type: none;
+  border-radius: 1rem;
+  margin-bottom: 1rem;
+}
+
 #createMenuOptions > li {
-  width: 100%;
+  width: 50%;
   border: none;
   padding: 0.5rem;
   border-radius: 0.5rem;
@@ -250,8 +261,7 @@ body,
   background-color: #e1e6f9; /* Soft light blue for contrast */
   color: #6c2eb7;
   cursor: pointer;
-  box-shadow: rgba(0, 0, 0, 0.07) 0px 1px 2px, rgba(0, 0, 0, 0.07) 0px 2px 4px, rgba(0, 0, 0, 0.07) 0px 4px 8px, rgba(0, 0, 0, 0.07) 0px 8px 16px, rgba(0, 0, 0, 0.07) 0px 16px 32px, rgba(0, 0, 0, 0.07) 0px 32px 64px;
-  margin-top: 0.5rem;
+  /* margin-top: 0.5rem; */
   transition: background 0.2s, color 0.2s;
   text-align: left;
   font-family: "Comfortaa";
@@ -293,21 +303,22 @@ body,
   flex-direction: column;
   gap: 1rem;
   overflow-y: scroll;
-  max-height: 400px;
+  max-height: 600px;
 }
 
 #createPostForm > #imageInsertContainer {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: left;
+  width: 100%;
+  gap: 1rem;
 }
 
 #createPostForm > #imageInsertContainer > input {
   color: var(--secondary);
 }
 
-#createPostForm > #imageInsertContainer > img {
-  width: 100px;
-}
+
 
 /* Form labels */
 .createPostFormLabel {
@@ -324,21 +335,28 @@ body,
 .createPostFormInputTitle {
   width: 100%;
   height: 40px;
-  border-radius: 0.5rem;
   border: 1px solid grey;
   padding: 0.5rem;
   outline: none;
+  max-width: 800px;
+  max-height: 200px;
+  border: 1px solid grey;
+  border-radius: 1rem;
+  font-family: "Arial";
+  font-size: 1rem;
 }
 
 /* Post Body input field */
 .createPostFormInput {
   padding: 0.5rem;
-  border-radius: 0.5rem;
+  border-radius: 1rem;
   border: 1px solid grey;
   max-width: 100%;
   width: 100%;
   resize: none;
   outline: none;
+  font-family: "Arial";
+  font-size: 1rem;
 }
 
 #functionBtns {
@@ -365,11 +383,12 @@ body,
   color: white;
   font-size: 1rem;
   margin-left: auto;
-  width: 150px;
+  /* width: 100px; */
   padding: 0.5rem;
+  padding-inline: 1rem;
   border: none;
   font-weight: bold;
-  border-radius: 0.3rem;
+  border-radius: 1rem;
   cursor: pointer;
 }
 
