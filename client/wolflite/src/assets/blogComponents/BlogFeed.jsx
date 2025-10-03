@@ -247,7 +247,7 @@ export default function BlogFeed() {
                                   }
                                   alt=""
                                 />
-                                <h5 className="postAuthor">{poll.username}</h5>
+                                <h4 className="postAuthor" onClick={()=> goToProfile(poll.author_id)}>{poll.username}</h4>
                               </span>
 
                               <span className="postTimestamp">
