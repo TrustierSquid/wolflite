@@ -135,6 +135,7 @@ export default function PopupForm() {
                     type="file"
                     name="file"
                     id="file"
+                    accept="image/*,video/*"
                     onChange={e => {
                       const file = e.target.files[0];
                       if (file) {
@@ -148,18 +149,20 @@ export default function PopupForm() {
                   />
 
                   <label htmlFor="file" id="selectImage"><i className="fa-solid fa-image"></i> Upload Media</label>
-                  {/* {imageUrl && (
-                    <img
-                    src={`http://localhost:5000${imageUrl}`}
-                    alt="Uploaded"
-                    />
-                  )} */}
 
                   {imageUrl && (
                     <img
                       id="imagePreview"
                       src={imageUrl.startsWith("data:") ? imageUrl : `http://localhost:5000${imageUrl}`}
                       alt="Preview"
+                      // style={{ maxWidth: "200px", marginTop: "10px" }}
+                    />
+                  )}
+                  {imageUrl && imageUrl.startsWith("data:video") && (
+                    <video
+                      id="videoPreview"
+                      src={imageUrl}
+                      controls
                       // style={{ maxWidth: "200px", marginTop: "10px" }}
                     />
                   )}
