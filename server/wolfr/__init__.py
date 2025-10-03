@@ -189,7 +189,7 @@ def create_app(test_config=None):
             return jsonify({"sanitationError": "Username may only contain letters, numbers, dots, underscores, and hyphens."}), 400
 
         if len(username) < 5 or len(username) > 20:
-            return jsonify({"sanitationError": "Username must be more than 5-30 Characters long."}), 400
+            return jsonify({"sanitationError": "Username must be 5-30 Characters long."}), 400
 
 
 
