@@ -1,6 +1,14 @@
 
 
 /* SideNav */
+
+#sidenavContainer{
+  display: flex;
+  flex-direction: column;
+}
+
+
+
 #profileSection {
   margin: 1rem;
   max-height: 60%;
@@ -13,32 +21,58 @@
   align-self: flex-start;
   top: 6rem;
   box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
-  /* transition: 150ms; */
-  /* animation: onLoad 0.5s ease-in-out; */
 }
 
 
+#scrollButtons {
+  display: flex;
+  justify-content: space-between;
+
+  /* Temporary Solution  */
+  position: sticky;
+  top: 32rem;
+
+  gap: 1rem;
+  /* flex-direction: column; */
+  padding: 1rem;
+}
+
+#scrollButtons > a {
+  text-decoration: none;
+  color: white;
+  background-color: var(--primary);
+  padding: 0.5rem;
+  border-radius: 1rem;
+  transition: 150ms;
+  width: 100%;
+}
+
+#scrollButtons > a:hover {
+  background-color: var(--regBtn);
+  transform: translateY(-0.3rem);
+}
 
 .sideNavButton {
   background: none;
   width: 100%;
   border: none;
-  padding: 1rem;
+  padding: 0.5rem;
   cursor: pointer;
   font-weight: bold;
-  transition: 0.1s;
+  transition: 150ms;
   display: flex;
   align-items: center;
   justify-content: left;
   gap: 0.5rem;
   font-family: "Comfortaa";
   font-size: 0.9rem;
-  color: black;
-  border-radius: 0.5rem;
+  color: color-mix(in srgb, var(--primary) 70%, black 30%);
+  border-radius: 2rem;
+  font-family: "Arial";
 }
 
 #sideNavTitle {
-  font-family: "Comfortaa";
+  font-family: "Arial";
   color: grey;
   margin-top: 1rem;
 }
@@ -50,11 +84,15 @@
   font-size: 1.5rem;
   padding: 0.5rem;
   border-radius: 0.5rem;
-  background-color: white;
 }
 
 .sideNavButton:hover {
-  background-color: rgb(254, 240, 255);
+  background-color: var(--primary);
+  color: white;
+}
+
+.sideNavButton:hover > i {
+  color: white;
 }
 
 
@@ -62,6 +100,7 @@
 #sideNavButtonContainer {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
   /* margin-top: 2rem; */
 
 }
@@ -84,9 +123,20 @@
   align-items: center;
 }
 
+#userRoleContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 0.5rem;
+}
+
+#userRole {
+  color: grey;
+}
+
 #defaultPfPic {
-  width: 70px;
-  height: 70px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   transition: 300ms;
   /* cursor: pointer; */

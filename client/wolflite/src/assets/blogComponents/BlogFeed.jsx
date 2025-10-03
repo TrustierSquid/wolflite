@@ -11,6 +11,8 @@ export default function BlogFeed() {
   const [currentLoggedInUserProfilePic, setCurrentLoggedInUserProfilePic] = useState([]);
   const [animateIndex, setAnimateIndex] = useState(null)
   const commentContainerRef = useRef([])
+  const postScrollRef = useRef(null)
+  const pollScrollRef = useRef(null)
 
 
 
@@ -212,8 +214,13 @@ export default function BlogFeed() {
           loggedInUserId={currentLoggedInUserId}
           loggedInUsername={currentLoggedInUserName}
           currentLoggedInUserProfilePic={currentLoggedInUserProfilePic}
+          postScrollRef={postScrollRef}
+          pollScrollRef={pollScrollRef}
         />
         <section id="blogFeedContainer" className="animate__animated animate__fadeInRight">
+
+          {/* span tag for smooth scrolling */}
+          <span id="pollView" ref={pollScrollRef}></span>
           <h2 className="universalHeader">Newest Polls </h2>
           {
             // Loading condition for fetching the posts from the server
@@ -369,8 +376,10 @@ export default function BlogFeed() {
                     })
                     .reverse()}
 
+                {/* span tag for smooth scrolling */}
+                <span id="#postView" ref={postScrollRef}></span>
+                <br />
                 <h2 className="universalHeader">Newest Posts</h2>
-
                 {/* For Regular Posts */}
                 {allPosts?.posts?.length > 0 ? (
                   allPosts.posts

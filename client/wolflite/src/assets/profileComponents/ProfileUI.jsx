@@ -11,7 +11,8 @@ export default function ProfileUI(props) {
   const [animateIndex, setAnimateIndex] = useState(null);
   const commentContainerRef = useRef([])
   const [userNotFoundContent, setUserNotFoundContent] = useState(false)
-
+  const postScrollRef = useRef(null)
+  const pollScrollRef = useRef(null)
 
   // Parse query parameters from the URL
   function getQueryParams() {
@@ -276,6 +277,8 @@ export default function ProfileUI(props) {
           loggedInUserId={props.currentLoggedInUserId}
           loggedInUsername={props.currentLoggedInUsername}
           currentLoggedInUserProfilePic={props.currentLoggedInUserProfilePic}
+          postScrollRef={postScrollRef}
+          pollScrollRef={pollScrollRef}
         />
 
         {
@@ -360,10 +363,14 @@ export default function ProfileUI(props) {
 
               {allUserPosts ? (
                 <>
+                  {/* span tag for smooth scrolling */}
+                  <span id="pollView" ref={pollScrollRef}></span>
                   {/* Polls */}
                   {userPolls.length > 0 ? (
                     userPolls.map((poll, pollIndex) => (
                       <section key={poll?._id || pollIndex} className="postContainer animate__animated  animate__fadeInRight">
+
+
                         <div className="postHeader">
                           <span className="nameAndProfilePicContainer">
                             <img
@@ -498,6 +505,11 @@ export default function ProfileUI(props) {
                   ) : (
                     <span></span>
                   )}
+
+
+                  {/* span tag for smooth scrolling */}
+                  <span id="#postView" ref={postScrollRef}></span>
+                  <br />
 
                   {/* Posts */}
                   {userPosts.length > 0 ? (
