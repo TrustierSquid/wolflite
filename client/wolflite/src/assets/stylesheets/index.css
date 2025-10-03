@@ -111,7 +111,7 @@ body,
   font-weight: bold;
   display: flex;
   justify-content: space-between;
-  font-family: "Comfortaa";
+  font-family: "Arial";
   cursor: pointer;
 }
 
@@ -218,6 +218,12 @@ body,
   max-width: 800px;
   max-height: 100vh;
 }
+
+.commentInput {
+  outline: none;
+}
+
+
 /* for image selection */
 #file{
   display: none;
