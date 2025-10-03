@@ -93,7 +93,7 @@ body,
   overflow-wrap: anywhere;
 }
 
-#blogFeedContainer > .postContainer > #postImage {
+#blogFeedContainer > .postContainer > .postMedia {
   max-width: 100%;
   background: #ffffff;
   background: linear-gradient(

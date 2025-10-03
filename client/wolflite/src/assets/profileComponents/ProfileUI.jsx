@@ -527,13 +527,24 @@ export default function ProfileUI(props) {
                         {post.postPic && (
                           <>
                             {!postImgLoaded && <span className="loader"></span>}
-                            <img
-                              src={`${import.meta.env.VITE_SERVER}${post.postPic}`}
-                              alt="postPic"
-                              style={postImgLoaded ? {} : { display: "none" }}
-                              onLoad={() => setpostImgLoaded(true)}
-                              onError={() => setpostImgLoaded(true)}
-                            />
+
+                            {
+                              post.postPic.includes('.mp4') ? (
+                                <video controls className="postMedia">
+                                  <source src={`${import.meta.env.VITE_SERVER}${post.postPic}`} type="video/mp4" />
+                                  Your browser does not support the video tag.
+                                </video>
+                              ) : (
+                                <img
+                                  src={`${import.meta.env.VITE_SERVER}${post.postPic}`}
+                                  alt="postPic"
+                                  style={postImgLoaded ? {} : { display: "none" }}
+                                  onLoad={() => setpostImgLoaded(true)}
+                                  onError={() => setpostImgLoaded(true)}
+                                />
+                              )
+                            }
+
                           </>
                         )}
 

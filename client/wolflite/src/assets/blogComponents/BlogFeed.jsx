@@ -403,14 +403,24 @@ export default function BlogFeed() {
                         {post.filename && (
                           <>
                             {!imgLoaded && <span className="loader"></span>}
-                            <img
-                              id="postImage"
-                              src={`${import.meta.env.VITE_SERVER}${post.filename}`}
-                              alt="Post"
-                              style={imgLoaded ? {} : { display: "none" }}
-                              onLoad={() => setImgLoaded(true)}
-                              onError={() => setImgLoaded(true)} // hide loader if fails
-                            />
+
+                            {
+                              post.filename.includes('.mp4') ? (
+                                <video controls className="postMedia">
+                                  <source src={`${import.meta.env.VITE_SERVER}${post.filename}`} type="video/mp4" />
+                                  Your browser does not support the video tag.
+                                </video>
+                              ) : (
+                                <img
+                                  className="postMedia"
+                                  src={`${import.meta.env.VITE_SERVER}${post.filename}`}
+                                  alt="Post"
+                                  style={imgLoaded ? {} : { display: "none" }}
+                                  onLoad={() => setImgLoaded(true)}
+                                  onError={() => setImgLoaded(true)} // hide loader if fails
+                                />
+                              )
+                            }
                           </>
                         )}
 

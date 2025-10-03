@@ -216,7 +216,7 @@ def retrievePosts():
 
 
 # Allowed file extensions to be uploaded to the server
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "mp4", "mov", "avi", "webm"}
 
 
 # FILE/IMAGE UPLOAD HANDLING: When a filename is passed in from the client, this checks if its a valid img file.
