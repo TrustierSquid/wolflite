@@ -401,7 +401,7 @@ export default function BlogFeed() {
                               }
                               alt=""
                             />
-                            <h5 className="postAuthor" onClick={()=> goToProfile(post.author_id)}>{post?.username} </h5>
+                            <h4 className="postAuthor" onClick={()=> goToProfile(post.author_id)}>{post?.username} </h4>
                           </span>
                           <span className="postTimestamp">
                             posted {timeAgo(post.created)}
