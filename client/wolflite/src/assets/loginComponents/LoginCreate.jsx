@@ -25,26 +25,27 @@ function LoginCreate() {
       const response = await request.json();
 
 
+      // usernameRef.current.value = ''
+
 
 
       if (Object.keys(response).includes("sanitationError")){
         setErrorMessage(response.sanitationError)
-        usernameRef.current.value = `${usernameRef.current.value}`
-        passwordRef.current.value = `${usernameRef.current.value}`
+        passwordRef.current.value = ``
+        passwordRef.current.value = ``
         return
       }
 
       if (Object.keys(response).includes("errorMessage")) {
         usernameRef.current.value = `${usernameRef.current.value}`
-        passwordRef.current.value = `${usernameRef.current.value}`
+        passwordRef.current.value = `${passwordRef.current.value}`
         setErrorMessage('The username exists already')
         return
       } else if (Object.keys(response).includes("message")) {
         setErrorMessage('')
       }
 
-      usernameRef.current.value = ''
-      passwordRef.current.value = ''
+
 
       window.location.href = '/login'
 
@@ -65,7 +66,6 @@ function LoginCreate() {
         body: formData
       })
 
-      usernameRef.current.value = ''
       passwordRef.current.value = ''
 
       const response = await request.json()
