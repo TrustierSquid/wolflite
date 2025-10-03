@@ -361,7 +361,8 @@ export default function BlogFeed() {
                               </div>
 
                               <form className="commentFunctions" onSubmit={(e) => addCommentToPost(e, poll.id, poll.isPoll)}>
-                                <input type="text" required name="userComment" id="" placeholder="Leave a comment...  "/>
+                                <img src={currentLoggedInUserProfilePic ? `${import.meta.env.VITE_SERVER}${currentLoggedInUserProfilePic}` : ""} alt="pic" className="profilePictures" />
+                                <input type="text" required name="userComment" id="" placeholder="Leave a comment...  " className="commentInput"/>
                                 <button type="submit" className="postCommentBtn">Post <i className="fa-solid fa-paper-plane"></i></button>
                               </form>
                             </section>
@@ -481,7 +482,8 @@ export default function BlogFeed() {
                           </div>
 
                           <form className="commentFunctions" onSubmit={(e) => addCommentToPost(e, post.id, post.isPoll)}>
-                            <input type="text" required name="userComment" id="" placeholder="Leave a comment...  "/>
+                            <img src={currentLoggedInUserProfilePic ? `${import.meta.env.VITE_SERVER}${currentLoggedInUserProfilePic}` : ""} alt="pic" className="profilePictures" />
+                            <input type="text" required name="userComment" className="commentInput" placeholder="Leave a comment...  "/>
                             <button type="submit" className="postCommentBtn">Post <i className="fa-solid fa-paper-plane"></i></button>
                           </form>
                         </section>
