@@ -153,6 +153,8 @@ export default function BlogFeed() {
       )
     })
 
+    e.target.reset();
+
     if(response.status === 401) {
       window.location.href = "/login"
     }
