@@ -109,7 +109,7 @@ export default function PopupForm() {
   return (
     <>
       <main id="elementContainer">
-        <h2 className="moodleTitle animate__animated animate__fadeInLeftBig ">Create</h2>
+        <h2 className="universalHeader moodleTitle animate__animated animate__fadeInLeftBig ">Create</h2>
 
         <div id="createMenuContainer" className="animate__animated animate__fadeInLeftBig">
 
