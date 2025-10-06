@@ -1,18 +1,17 @@
 # Wolflite Docs
 
-- Wolflite is a smaller version of wolf, made with python/flask
-- Just a simple blog site for experiments
-
-- Simple flask python backend setup with React Frontend setup (no css framework preprocessor)
+- Wolflite is an even more intuitive version of Wolf, made with python/flask
+- Built from the ground up with Flask and React.
 
 ## Features
 
-- Blog posts
-- User creation and authentication
-- Lighter version of the 'Den' System from the original WOLF
+- Social posts, (polls, posts, videos)
+- User creation and user authentication
+- admin permissions and user analytics dashboards
+- Den community system for communities to post about their favorite topics
 
 
-# Getting Started
+# Getting Started for developers
 
 - When getting started with development, you want to make sure you create a virtual dev environment. This is important because you want to the projects dependencies isolated from the rest of your machine.
 
