@@ -272,6 +272,111 @@ export default function ProfileUI(props) {
         isOpen={isChecking}
         onClose={()=> setIsChecking(false)}
       />
+
+      <article id="profileInformation" className="animate__animated animate__fadeInRight">
+        <section className="profileInformationItemPicForm">
+          <img
+            className="profileInformationPic"
+            id=""
+            src={
+              allUserPosts?.userProfilePic
+                ? `${import.meta.env.VITE_SERVER}${allUserPosts.userProfilePic}`
+                : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
+            }
+            alt=""
+          />
+
+          <div id="profileDetails">
+            <span id="nameAndAT">
+              <h2 id="profileDetailsUsername">{allUserPosts.username}</h2>
+              <p id="profileDetailsHeader">@turdburglar</p>
+              <p className="userPermissionAdmin"><i className="fa-solid fa-user-tie"></i> Admin</p>
+            </span>
+            <p id="profileDetailsBio">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Id, nulla doloribus rerum odit qui reprehenderit dolore repellendus alias adipisci possimus.</p>
+            <h4 style={{ color: "Green", textAlign: "left" }}>
+              {successMessage}
+            </h4>
+          </div>
+        </section>
+
+        <div id="profileStatusBar">
+          {
+            queryStringID == props.currentLoggedInUserId ? (
+              <>
+                <form
+                  ref={formRef}
+                  id="formButtonGroup"
+                >
+
+                  <div className="userInformation">
+                    <span className="userAnalyticsItem">
+                      <h3><i className="fa-solid fa-user-group"></i> 324</h3>
+                      <p className="analyticLabel">Friends</p>
+                    </span>
+                    <span className="userAnalyticsItem">
+                      <h3><i className="fa-solid fa-paper-plane"></i> 30</h3>
+                      <p className="analyticLabel">Posts</p>
+                    </span>
+                  </div>
+
+
+                  <div className="profileInformationItemButtonGroup ">
+                    <label
+                      className="profilePictureSelectorLabel"
+                      onClick={() => (window.location.href = "/create")}
+                    >
+                      <i className="fa-solid fa-plus"></i> Create
+                    </label>
+                    <label
+                      className="profilePictureSelectorLabel"
+                      htmlFor="profilePictureSelector"
+                    >
+                      <i className="fa-solid fa-image"></i> Change Profile Picture
+                    </label>
+                    <input
+                      type="file"
+                      id="profilePictureSelector"
+                      style={{ display: "none" }}
+                      onChange={changeProfilePicture}
+                    />
+
+                  </div>
+
+
+
+
+                </form>
+            </>
+            ) : (
+              <span></span>
+            )
+          }
+        </div>
+
+
+
+
+      </article>
+
+      <section className="profileInformationItem animate__animated animate__fadeInLeft">
+        <div className="profileInformationItemButtonGroup">
+          {/* Expired or closed polls */}
+
+          <button className="profileControBtn" onClick={()=> viewFeed("Archived Posts")}><i className="fa-solid fa-square-poll-horizontal"></i> Archived Polls</button>
+
+          {/* Liked Posts */}
+          <button className="profileControBtn" onClick={()=> viewFeed("Liked Posts")}><i className="fa-solid fa-comment"></i> Liked Posts</button>
+        </div>
+        <div className="profileInformationItemButtonGroup">
+
+          {/* View Polls */}
+          <button className="profileControBtn" onClick={()=> viewFeed("Polls")}><i className="fa-solid fa-square-poll-horizontal"></i> Polls</button>
+
+          {/* View Posts  */}
+          <button className="profileControBtn" onClick={()=> viewFeed("Posts")}><i className="fa-solid fa-comment"></i> Posts</button>
+        </div>
+      </section>
+
       <main id="homeContainer">
         <SideNav
           loggedInUserId={props.currentLoggedInUserId}
