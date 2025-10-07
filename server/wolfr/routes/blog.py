@@ -204,10 +204,15 @@ def retrievePosts():
          })
 
 
+         combined_results = postResults + pollResults
+         # Sort by 'created' field (descending: newest first)
+         combined_results.sort(key=lambda x: x["created"], reverse=True)
+
 
       return (
          jsonify(
-            {"posts": postResults, "polls": pollResults},
+            # {"posts": postResults, "polls": pollResults},
+            {"feed": combined_results}
          ),
          200,
       )
