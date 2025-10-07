@@ -317,7 +317,7 @@ export default function BlogFeed() {
                             })}
 
                             <span className="checkAnswers">
-                              <button onClick={()=> {viewPostInfo(poll); setPollInQuestion(poll)}}>{poll.totalVotes} votes <i className="fa-solid fa-check-to-slot"></i></button>
+                              <button className="viewVotes" onClick={()=> {viewPostInfo(poll); setPollInQuestion(poll)}}>{poll.totalVotes} votes <i className="fa-solid fa-check-to-slot"></i></button>
                             </span>
                             <LikeAndComment currentLoggedInUserId={currentLoggedInUserId}
                               postInformation={poll}
