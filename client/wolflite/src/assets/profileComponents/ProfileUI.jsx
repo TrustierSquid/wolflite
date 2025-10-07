@@ -256,9 +256,21 @@ export default function ProfileUI(props) {
   const [isChecking, setIsChecking] = useState(false)
   const [pollInQuestion, setPollInQuestion] = useState([])
 
+  // Setting a state for checking if a popup is up or not
   function viewPostInfo(){
     setIsChecking(prev => !prev)
   }
+
+
+  const [feedToView, setFeedToView] = useState('Posts')
+
+  // Changes what feed is viewed on the profile page
+  function viewFeed(feed){
+    setFeedToView(`${feed}`)
+  }
+
+
+
 
   return (
     <>
@@ -469,33 +481,45 @@ export default function ProfileUI(props) {
               {allUserPosts ? (
                 <>
                   {/* span tag for smooth scrolling */}
-                  <span id="pollView" ref={pollScrollRef}></span>
-                  {/* Polls */}
-                  {userPolls.length > 0 ? (
-                    userPolls.map((poll, pollIndex) => (
-                      <section key={poll?._id || pollIndex} className="postContainer animate__animated  animate__fadeInRight">
 
+                  {
+                    queryStringID == props.currentLoggedInUserId ? (
+                      <h2 className="universalHeader">{feedToView === `Posts` ? `Your Posts` : feedToView === "Polls" ? `Your Polls` : "Polls"}</h2>
+                    ) : (
+                      <h2 className="universalHeader">{feedToView === `Posts` ? `${allUserPosts.username}'s Posts` : feedToView === "Polls" ? `${allUserPosts.username}'s Polls` : "Polls"}</h2>
+                    )
+                  }
 
-                        <div className="postHeader">
-                          <span className="nameAndProfilePicContainer">
-                            <img
-                              className="profilePictures"
-                              src={
-                                poll.profilePic
-                                  ? `${import.meta.env.VITE_SERVER}${poll.profilePic}`
-                                  : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
-                              }
-                              alt=""
-                            />
-                            <h4 className="postAuthor" onClick={()=> window.location.href = `/profile?id=${poll.author_id}`}>
-                              {poll.username}
-                            </h4>
-                          </span>
-                          <span className="postTimestamp">
-                            posted {timeAgo(poll.created)}
-                          </span>
-                        </div>
-                        <h4>{poll?.question}</h4>
+                    <span id="pollView" ref={pollScrollRef}></span>
+                    {/* Polls */}
+
+                    {
+                      feedToView === 'Polls' ? (
+                        userPolls.length > 0 ? (
+                          userPolls.map((poll, pollIndex) => (
+
+                            <section key={poll?._id || pollIndex} className="postContainer animate__animated  animate__fadeInRight">
+
+                              <div className="postHeader">
+                                <span className="nameAndProfilePicContainer">
+                                  <img
+                                    className="profilePictures"
+                                    src={
+                                      poll.profilePic
+                                        ? `${import.meta.env.VITE_SERVER}${poll.profilePic}`
+                                        : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
+                                    }
+                                    alt=""
+                                  />
+                                  <h4 className="postAuthor" onClick={()=> window.location.href = `/profile?id=${poll.author_id}`}>
+                                    {poll.username}
+                                  </h4>
+                                </span>
+                                <span className="postTimestamp">
+                                  posted {timeAgo(poll.created)}
+                                </span>
+                              </div>
+                              <h4>{poll?.question}</h4>
 
                         {poll?.options?.map((option) => (
                           <button
@@ -617,33 +641,35 @@ export default function ProfileUI(props) {
                   <br />
 
                   {/* Posts */}
-                  {userPosts.length > 0 ? (
-                    userPosts.map((post, postIndex) => (
-                      <section key={post?._id || postIndex} className="postContainer animate__animated  animate__fadeInRight">
-                        <div className="postHeader">
-                          <span className="nameAndProfilePicContainer">
-                            <img
-                              className="profilePictures"
-                              src={
-                                post.profilePic
-                                  ? `${import.meta.env.VITE_SERVER}${post.profilePic}`
-                                  : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
-                              }
-                              alt=""
-                            />
-                            <h4 className="postAuthor" onClick={()=> window.location.href = `/profile?id=${post.author_id}`}>
-                              {post.username}
-                            </h4>
-                          </span>
-                          <span className="postTimestamp">
-                            posted {timeAgo(post.created)}
-                          </span>
-                        </div>
-                        <h3>{post?.title}</h3>
-                        <p>{post?.body}</p>
-                        {post.postPic && (
-                          <>
-                            {!postImgLoaded && <span className="loader"></span>}
+                  {
+                    feedToView === 'Posts' ? (
+                      userPosts.length > 0 ? (
+                        userPosts.map((post, postIndex) => (
+                          <section key={post?._id || postIndex} className="postContainer animate__animated  animate__fadeInRight">
+                            <div className="postHeader">
+                              <span className="nameAndProfilePicContainer">
+                                <img
+                                  className="profilePictures"
+                                  src={
+                                    post.profilePic
+                                      ? `${import.meta.env.VITE_SERVER}${post.profilePic}`
+                                      : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
+                                  }
+                                  alt=""
+                                />
+                                <h4 className="postAuthor" onClick={()=> window.location.href = `/profile?id=${post.author_id}`}>
+                                  {post.username}
+                                </h4>
+                              </span>
+                              <span className="postTimestamp">
+                                posted {timeAgo(post.created)}
+                              </span>
+                            </div>
+                            <h3>{post?.title}</h3>
+                            <p>{post?.body}</p>
+                            {post.postPic && (
+                              <>
+                                {/* {!postImgLoaded && <span className="loader"></span>} */}
 
                             {
                               post.postPic.includes('.mp4') ? (
