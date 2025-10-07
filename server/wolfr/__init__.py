@@ -252,6 +252,11 @@ def create_app(test_config=None):
         # Create post/poll page
         return send_from_directory(os.path.join(app.static_folder, "dist"), "create.html")
 
+    @app.route('/settings')
+    def serve_settings():
+        # Create post/poll page
+        return send_from_directory(os.path.join(app.static_folder, "dist"), "settings.html")
+
 
     # Importing Database configurations
     from . import db
