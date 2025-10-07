@@ -414,7 +414,6 @@ export default function BlogFeed() {
                         <p>{post?.body}</p>
                         {post.filename && (
                           <>
-                            {!imgLoaded && <span className="loader"></span>}
 
                             {
                               post.filename.includes('.mp4') ? (
