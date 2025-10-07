@@ -29,6 +29,7 @@ export default defineConfig({
         blog: 'blog.html',
         create: 'create.html',
         profile: 'profile.html',
+        settings: 'settings.html'
       }
     }
   }
