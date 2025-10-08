@@ -3,6 +3,7 @@ from flask import Blueprint, g, request, jsonify, redirect, current_app
 from wolfr.db import get_db
 from werkzeug.utils import secure_filename
 import os
+import datetime
 
 # All endpoints are prefixed with /post (e.g /profileInfo/newendpoint)
 profile_page = Blueprint("profileInfo", __name__, url_prefix="/profileInfo")
@@ -178,6 +179,7 @@ def retrieveLoggedInUserPost():
 
     # Map for all of the logged in users poll
     allLoggedInUserPolls = []
+
     for row in userPostedPolls:
       # Getting total votes for each poll
       result = cursor.execute("""
@@ -202,7 +204,6 @@ def retrieveLoggedInUserPost():
         for voter in voters_info
       ]
 
-
       allLoggedInUserPolls.append({
         "id": row["id"],
         "author_id": row["author_id"],
@@ -217,11 +218,79 @@ def retrieveLoggedInUserPost():
         "likesByPoll": likes_by_poll.get(row["id"], []),
         "comments": comments_by_poll.get(row["id"], []),
         "isPoll": True,
+        "isOpen": row["isOpen"],
+        "isArchived": row["isArchived"],
+        "archive_at": row["archive_at"],
         "whoVoted": voters
       })
 
+    # GET ALL POLLS THAT THE USER HAS ARCHIVED
+    archivedPolls = cursor.execute(
+      """
+      SELECT polls.*, user.username, user.filename AS userProfilePic,
+      COUNT(likes.id) AS likeCount
+      FROM polls
+      JOIN user ON polls.author_id = user.id
+      LEFT JOIN likes ON polls.id = likes.poll_id
+      WHERE user.id = ? AND polls.isArchived = 0
+      GROUP BY polls.id
+      """, (user_id,)
+    ).fetchall()
+
+    allArchivedPolls = []
+
+    for row in archivedPolls:
+      allArchivedPolls.append({
+        "id": row["id"],
+        "author_id": row["author_id"],
+        "created": row["created"],
+        "question": row["question"],
+        "username": row["username"],
+        # appended the blueprint of the options map
+        "options": option_map.get(row["id"], []),
+        "totalVotes": total_votes,
+        "profilePic": row["userProfilePic"],
+        "likeCount": row["likeCount"],
+        "likesByPoll": likes_by_poll.get(row["id"], []),
+        "comments": comments_by_poll.get(row["id"], []),
+        "isPoll": True,
+        "isOpen": row["isOpen"],
+        "isArchived": row["isArchived"],
+        "archive_at": row["archive_at"],
+        "whoVoted": voters
+      })
+
+    # FETCHING ALL POSTS THAT THE USER HAS LIKED
+    likedPosts = cursor.execute(
+      """
+      SELECT posts.*, posts.filename AS postPic, user.username, user.filename AS profilePic,
+        (SELECT COUNT(*) FROM likes WHERE likes.post_id = posts.id) AS PostLikeCount
+      FROM posts
+      JOIN user ON posts.author_id = user.id
+      WHERE posts.id IN (
+        SELECT post_id FROM likes WHERE author_id = ?
+        );
+      """, (user_id,)
+    ).fetchall()
 
 
+    allLikedPosts = []
+
+    for row in likedPosts:
+      allLikedPosts.append({
+        "id": row["id"],
+        "author_id": row["author_id"],
+        "created": row["created"],
+        "title": row["title"],
+        "body": row["body"],
+        "postPic": row["postPic"],
+        "username": row["username"],
+        "profilePic": row["profilePic"],
+        "likeCount": row["PostLikeCount"],
+        "isPoll": False,
+        "comments": comments_by_post.get(row["id"], []),
+        "likesByPost": likes_by_post.get(row["id"], [])
+      })
 
 
     if allLoggedInUserPosts:
@@ -236,9 +305,65 @@ def retrieveLoggedInUserPost():
     return jsonify({
       "allUserPosts": allLoggedInUserPosts,
       "allUserPolls": allLoggedInUserPolls,
+      "archivedPolls": allArchivedPolls,
+      "likedPosts": allLikedPosts,
       "username": queried_username,
-      "userProfilePic": profilePicture
+      "userProfilePic": profilePicture,
     }), 200
 
   except sqlite3.IntegrityError:
     return jsonify({"error": "user does not exist"})
+
+
+@profile_page.route('/closePoll/<int:pollToClose>', methods=['DELETE'])
+def closePoll(pollToClose):
+  db = get_db()
+  cursor = db.cursor()
+
+  try:
+    if request.method == "DELETE":
+
+      # Schedule deletion by setting a "close_time" or "delete_at" timestamp in the polls table
+      # (Assumes you have a "delete_at" column of type DATETIME in your polls table)
+
+      days_until_close = 2  # Number of days after closing to archive the poll
+      archive_at = datetime.datetime.utcnow() + datetime.timedelta(days=days_until_close)
+
+      cursor.execute(
+        """
+        UPDATE polls
+        SET archive_at = ?
+        WHERE id = ?
+        """, (archive_at, pollToClose)
+      )
+
+      archive_at_row = cursor.execute(
+        "SELECT archive_at FROM polls WHERE id = ?", (pollToClose,)
+      ).fetchone()
+      archive_at = archive_at_row["archive_at"] if archive_at_row else None
+
+      # If the archive date is in the past or now, archive the poll immediately
+      if archive_at and datetime.datetime.strptime(archive_at.split('.')[0], "%Y-%m-%d %H:%M:%S") <= datetime.datetime.utcnow():
+        cursor.execute(
+          """
+          UPDATE polls
+          SET isArchived = 1
+          WHERE id = ?
+          """, (pollToClose,)
+        )
+
+      # closing the poll
+      cursor.execute(
+        """
+        UPDATE polls
+        SET isOpen = 0
+        WHERE id = ?
+        """, (pollToClose,)
+      )
+
+      db.commit()
+
+
+    return jsonify({"message": f"Successfully closed poll {pollToClose}"}), 200
+  except sqlite3.IntegrityError:
+    return jsonify({"message": "Failed to close poll"}), 500
