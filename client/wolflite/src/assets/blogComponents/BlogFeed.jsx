@@ -41,6 +41,7 @@ export default function BlogFeed() {
   }
 
 
+
   // Run initially after component mount
   useEffect(() => {
     fetchAllPosts();
@@ -73,8 +74,12 @@ export default function BlogFeed() {
   }
 
 
+
+
   // Calculates the poll numbers (total votes, total votes for each option in a poll)
-  async function trackPollNumber(pollID, optionID) {
+  async function addVote(pollID, optionID, isOpen) {
+    if (!isOpen) return
+
     try {
       // Sends the poll id and calculates the percentage of users that have selected an answer for each poll
       const response = await fetch("/post/poll/userStats", {
@@ -89,21 +94,14 @@ export default function BlogFeed() {
 
       const data = await response.json();
 
-      /*
-        If the user tries to vote again and the client receives an error from the server
-        Preventing the User from spamming the api endpoint and voting more than once.
-       */
-      if (data.error) {
-        alert(
-          data.error + ". Start a new Poll or wait for this one to expire."
-        );
-      }
 
       fetchAllPosts();
     } catch (err) {
       console.log(err);
     }
   }
+
+
 
 
   async function addLikeToPost(userID, postID, index, isPoll) {
@@ -131,6 +129,8 @@ export default function BlogFeed() {
     }
 
   }
+
+
 
   // Example: addCommentToPost(postIndex)
   async function addCommentToPost(e, postIndex, isPoll) {
@@ -187,6 +187,7 @@ export default function BlogFeed() {
     });
   }
 
+  // redirects to a profile of choice (selected by userID)
   function goToProfile(userInQuestion){
     window.location.href = `/profile?id=${userInQuestion}`
   }
@@ -194,9 +195,12 @@ export default function BlogFeed() {
   const [isChecking, setIsChecking] = useState(false)
   const [pollInQuestion, setPollInQuestion] = useState([])
 
+  // For keeping track of opening and closing the popup
   function viewPostInfo(){
     setIsChecking(prev => !prev)
   }
+
+
 
 
   return (
@@ -221,281 +225,205 @@ export default function BlogFeed() {
         />
         <section id="blogFeedContainer" className="animate__animated animate__fadeInRight">
 
-          {/* span tag for smooth scrolling */}
-          <span id="pollView" ref={pollScrollRef}></span>
-          <h2 className="universalHeader">Newest Polls </h2>
           {
-            // Loading condition for fetching the posts from the server
             allPosts ? (
-              <>
-                {/* For Polls */}
-                {allPosts?.polls?.length > 0 &&
-                  allPosts?.polls
-                    ?.map((poll, index) => {
-                      return (
+              allPosts?.feed?.length > 0 ? (
+                allPosts?.feed?.map((post, index) => (
+                  <section
+                  className="postContainer"
+                  key={index}
+                  >
+                    <div className="postHeader">
+                      <span className="nameAndProfilePicContainer">
+                        <img
+                          className="profilePictures"
+                          src={
+                            post.profilePic
+                              ? `${import.meta.env.VITE_SERVER}${post.profilePic}`
+                              : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
+                          }
+                          alt=""
+                        />
+                        <h4 className="postAuthor" onClick={()=> goToProfile(post.author_id)}>{post.username}</h4>
+                      </span>
+
+                      <span className="postTimestamp">
+                        {timeAgo(post.created)}
+                      </span>
+                    </div>
+
+
+                    {
+                      // Checking to see if the post is a poll
+                      post.isPoll ? (
                         <>
-                          <section
-                            className="postContainer"
-                            key={poll?.id || index}
-                          >
-                            <div className="postHeader">
-                              <span className="nameAndProfilePicContainer">
-                                <img
-                                  className="profilePictures"
-                                  src={
-                                    poll.profilePic
-                                      ? `${import.meta.env.VITE_SERVER}${poll.profilePic}`
-                                      : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
-                                  }
-                                  alt=""
-                                />
-                                <h4 className="postAuthor" onClick={()=> goToProfile(poll.author_id)}>{poll.username}</h4>
-                              </span>
-
-                              <span className="postTimestamp">
-                                posted a poll {timeAgo(poll.created)}
-                              </span>
-                            </div>
-
-                            <h4 style={{ whiteSpace: "pre-wrap" }}>{poll?.question}</h4>
-
-                            {poll?.options?.map((option) => {
-                              return (
-                                <>
-                                  <button
-                                    onClick={() => {
-                                      trackPollNumber(poll?.id, option.id);
-                                    }}
-                                    className={
+                          <h4 style={{ whiteSpace: "pre-wrap" }}>{post?.question}</h4>
+                          {post?.options?.map((option) => {
+                            return (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    addVote(post?.id, option.id, post.isOpen);
+                                  }}
+                                  className={
+                                    post?.isOpen ? (
                                       option.voters.includes(currentLoggedInUserId)
                                         ? "hasVoted"
                                         : "pollOption"
-                                    }
-                                  >
-                                    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
-                                      <h5 className="optionText">{option?.option_text}</h5>
+                                    ) : (
+                                      "pollClosed"
+                                    )
+                                  }
+                                >
+                                  <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                                    <h5 className="optionText">{option?.option_text}</h5>
 
 
-                                      {/* Progress bar */}
+                                    {/* Progress bar */}
+                                    <div
+                                      style={{
+                                        background: "#e0e0e0",
+                                        borderRadius: "8px",
+                                        height: "8px",
+                                        width: "100%",
+                                        margin: "8px 0",
+                                        overflow: "hidden",
+                                      }}
+                                    >
                                       <div
                                         style={{
-                                          background: "#e0e0e0",
-                                          borderRadius: "8px",
-                                          height: "8px",
-                                          width: "100%",
-                                          margin: "8px 0",
-                                          overflow: "hidden",
+                                          background: option.voters.includes(currentLoggedInUserId)
+                                            ? "#4caf50"
+                                            : "#2196f3",
+                                          width: post.totalVotes
+                                            ? `${(option.user_voted / post.totalVotes) * 100}%`
+                                            : "0%",
+                                          height: "100%",
+                                          transition: "width 0.4s",
                                         }}
-                                      >
-                                        <div
-                                          style={{
-                                            background: option.voters.includes(currentLoggedInUserId)
-                                              ? "#4caf50"
-                                              : "#2196f3",
-                                            width: poll.totalVotes
-                                              ? `${(option.user_voted / poll.totalVotes) * 100}%`
-                                              : "0%",
-                                            height: "100%",
-                                            transition: "width 0.4s",
-                                          }}
-                                        ></div>
-                                      </div>
-                                      <span className="votePercentage" style={{ display: "flex", justifyContent: "space-between" }}>
-                                        <p>{option.user_voted} votes</p>
-                                        <h4>
-                                          {poll.totalVotes
-                                            ? `${((option.user_voted / poll.totalVotes) * 100)}%`
-                                            : "0%"}
-                                        </h4>
-                                      </span>
-
-
+                                      ></div>
                                     </div>
-                                  </button>
-                                </>
-                              );
-                            })}
-
-                            <span className="checkAnswers">
-                              <button className="viewVotes" onClick={()=> {viewPostInfo(poll); setPollInQuestion(poll)}}>{poll.totalVotes} votes <i className="fa-solid fa-check-to-slot"></i></button>
-                            </span>
-                            <LikeAndComment currentLoggedInUserId={currentLoggedInUserId}
-                              postInformation={poll}
-                              postID={poll?.id}
-                              postIndex={`poll-${index}`}
-                              addLikeToPost={addLikeToPost}
-                              commentSectionRef={commentContainerRef}
-                              isPoll={poll?.isPoll}
-                            />
-                            <section className="commentsElementContainer" ref={(el)=> (commentContainerRef.current[`poll-${index}`] = el)} >
-                              <div className="commentContainer">
-
-                                <span className="comment">
-                                  {
-                                    poll?.comments?.length > 0 ? (
-                                      poll?.comments?.map((comment)=> {
-                                        return (
-                                          <>
-                                            <div className="commentBlock">
-                                              <div className="commentHeader">
-                                                <section className="commentWhoPostedContainer">
-                                                  <img className="commentProfilePic" src={comment.profilePic ? `${import.meta.env.VITE_SERVER}${comment.profilePic}` : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`} alt="" />
-                                                  <h4 className="commentAuthor" onClick={()=> window.location.href = `/profile?id=${comment.author_id}`} >{comment.author_username}</h4>
-                                                </section>
-                                                <h5>{timeAgo(comment.created)}</h5>
-                                              </div>
-                                              <div className="commentText">
-                                                <i className="fa-solid fa-arrows-turn-right"></i>
-                                                <p>{comment.commentBody}</p>
-                                              </div>
-                                            </div>
-
-                                          </>
-                                        )
-                                      }).reverse()
-                                    ) : (
-                                      <span className="emptyPostContainer">No Comments!</span>
-                                    )
+                                    <span className="votePercentage" style={{ display: "flex", justifyContent: "space-between" }}>
+                                      <p>{option.user_voted} votes</p>
+                                      <h4>
+                                        {post.totalVotes
+                                          ? `${((option.user_voted / post.totalVotes) * 100)}%`
+                                          : "0%"}
+                                      </h4>
+                                    </span>
 
 
-                                  }
-                                </span>
-                              </div>
+                                  </div>
+                                </button>
 
-                              <form className="commentFunctions" onSubmit={(e) => addCommentToPost(e, poll.id, poll.isPoll)}>
-                                <img src={currentLoggedInUserProfilePic ? `${import.meta.env.VITE_SERVER}${currentLoggedInUserProfilePic}` : ""} alt="pic" className="profilePictures" />
-                                <input type="text" required name="userComment" id="" placeholder="Leave a comment...  " className="commentInput"/>
-                                <button type="submit" className="postCommentBtn">Post <i className="fa-solid fa-paper-plane"></i></button>
-                              </form>
-                            </section>
-
-
-                          </section>
-
-
-
-                        </>
-                      );
-                    })
-                    .reverse()}
-
-                {/* span tag for smooth scrolling */}
-                <span id="#postView" ref={postScrollRef}></span>
-                <br />
-                <h2 className="universalHeader">Newest Posts</h2>
-                {/* For Regular Posts */}
-                {allPosts?.posts?.length > 0 ? (
-                  allPosts.posts
-                    .slice()
-                    .reverse()
-                    .map((post, index) => (
-                      <section
-                        className="postContainer"
-                        key={post?.id}
-                      >
-                        <div className="postHeader">
-                          <span className="nameAndProfilePicContainer">
-                            <img
-                              className="profilePictures"
-                              src={
-                                post.profilePic
-                                  ? `${import.meta.env.VITE_SERVER}${post.profilePic}`
-                                  : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
-                              }
-                              alt=""
-                            />
-                            <h4 className="postAuthor" onClick={()=> goToProfile(post.author_id)}>{post?.username} </h4>
-                          </span>
-                          <span className="postTimestamp">
-                            posted {timeAgo(post.created)}
-                          </span>
-                        </div>
-                        <h3>{post?.title}</h3>
-                        <p>{post?.body}</p>
-                        {post.filename && (
-                          <>
+                              </>
+                            );
+                          })}
+                          <span className="checkAnswers">
+                            <button className="viewVotes" onClick={()=> {viewPostInfo(post); setPollInQuestion(post)}}>{post.totalVotes} votes <i className="fa-solid fa-check-to-slot"></i></button>
 
                             {
-                              post.filename.includes('.mp4') ? (
-                                <video controls className="postMedia">
-                                  <source src={`${import.meta.env.VITE_SERVER}${post.filename}`} type="video/mp4" />
-                                  Your browser does not support the video tag.
-                                </video>
+                              post?.isOpen ? (
+                                <></>
                               ) : (
-                                <img
-                                  className="postMedia"
-                                  src={`${import.meta.env.VITE_SERVER}${post.filename}`}
-                                  alt="Post"
-                                  style={imgLoaded ? {} : { display: "none" }}
-                                  onLoad={() => setImgLoaded(true)}
-                                  onError={() => setImgLoaded(true)} // hide loader if fails
-                                />
+                                <h4> <i className="fa-solid fa-lock"></i> Poll Closed</h4>
                               )
                             }
-                          </>
-                        )}
+                          </span>
+                        </>
 
+                      ) : (
+                        // IF NOT A POLL
+                        <section
+                          className="postContainer"
+                          key={post?.id}
+                        >
+                          <h3>{post?.title}</h3>
+                          <p>{post?.body}</p>
+                          {post.filename && (
+                            <>
 
-                        {/* Like and Comment sections */}
-                        <LikeAndComment currentLoggedInUserId={currentLoggedInUserId}
-                          postInformation={post}
-                          postID={post.id}
-                          postIndex={`post-${index}`}
-                          addLikeToPost={addLikeToPost}
-                          commentSectionRef={commentContainerRef}
-                          isPoll={post?.isPoll}
-                        />
-
-
-
-                        <section className="commentsElementContainer" ref={(el)=> (commentContainerRef.current[`post-${index}`] = el)} >
-                          <div className="commentContainer">
-
-                            <span className="comment">
                               {
-                                post.comments.length > 0 ? (
-                                  post.comments.map((comment)=> {
-                                    return (
-                                      <>
-                                        <div className="commentBlock">
-                                          <div className="commentHeader">
-                                            <section className="commentWhoPostedContainer">
-                                              <img className="commentProfilePic" src={comment.profilePic ? `${import.meta.env.VITE_SERVER}${comment.profilePic}` : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`} alt="" />
-                                              <h4 className="commentAuthor" onClick={()=> window.location.href = `/profile?id=${comment.author_id}`} >{comment.author_username}</h4>
-                                            </section>
-                                            <h5>{timeAgo(comment.created)}</h5>
-                                          </div>
-                                          <div className="commentText">
-                                            <p>{comment.commentBody}</p>
-                                          </div>
-                                        </div>
-
-                                      </>
-                                    )
-                                  }).reverse()
+                                post.filename.includes('.mp4') ? (
+                                  <video controls className="postMedia">
+                                    <source src={`${import.meta.env.VITE_SERVER}${post.filename}`} type="video/mp4" />
+                                    Your browser does not support the video tag.
+                                  </video>
                                 ) : (
-                                  <span className="emptyPostContainer">No Comments!</span>
+                                  <img
+                                    className="postMedia"
+                                    src={`${import.meta.env.VITE_SERVER}${post.filename}`}
+                                    alt="Post"
+                                    style={imgLoaded ? {} : { display: "none" }}
+                                    onLoad={() => setImgLoaded(true)}
+                                    onError={() => setImgLoaded(true)} // hide loader if fails
+                                  />
                                 )
-
-
                               }
-                            </span>
-                          </div>
-
-                          <form className="commentFunctions" onSubmit={(e) => addCommentToPost(e, post.id, post.isPoll)}>
-                            <img src={currentLoggedInUserProfilePic ? `${import.meta.env.VITE_SERVER}${currentLoggedInUserProfilePic}` : ""} alt="pic" className="profilePictures" />
-                            <input type="text" required name="userComment" className="commentInput" placeholder="Leave a comment...  "/>
-                            <button type="submit" className="postCommentBtn">Post <i className="fa-solid fa-paper-plane"></i></button>
-                          </form>
+                            </>
+                          )}
                         </section>
 
+                      )
+                    }
 
-                      </section>
-                    ))
-                ) : (
-                  <span className="emptyPostContainer">No Posts yet!</span>
-                )}
-              </>
+                    <LikeAndComment currentLoggedInUserId={currentLoggedInUserId}
+                      postInformation={post}
+                      postID={post?.id}
+                      postIndex={`${index}`}
+                      addLikeToPost={addLikeToPost}
+                      commentSectionRef={commentContainerRef}
+                      isPoll={post?.isPoll}
+                    />
+
+
+                    <section className="commentsElementContainer" ref={(el)=> (commentContainerRef.current[`${index}`] = el)} >
+                      <div className="commentContainer">
+
+                        <span className="comment">
+                          {
+                            post?.comments?.length > 0 ? (
+                              post?.comments?.map((comment)=> {
+                                return (
+                                  <>
+                                    <div className="commentBlock">
+                                      <div className="commentHeader">
+                                        <section className="commentWhoPostedContainer">
+                                          <img className="commentProfilePic" src={comment.profilePic ? `${import.meta.env.VITE_SERVER}${comment.profilePic}` : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`} alt="" />
+                                          <h4 className="commentAuthor" onClick={()=> window.location.href = `/profile?id=${comment.author_id}`} >{comment.author_username}</h4>
+                                        </section>
+                                        <h5>{timeAgo(comment.created)}</h5>
+                                      </div>
+                                      <div className="commentText">
+                                        <i className="fa-solid fa-arrows-turn-right"></i>
+                                        <p>{comment.commentBody}</p>
+                                      </div>
+                                    </div>
+
+                                  </>
+                                )
+                              }).reverse()
+                            ) : (
+                              <span className="emptyPostContainer">No Comments!</span>
+                            )
+
+
+                          }
+                        </span>
+                      </div>
+                      <form className="commentFunctions" onSubmit={(e) => addCommentToPost(e, post.id, post.isPoll)}>
+                        <img src={currentLoggedInUserProfilePic ? `${import.meta.env.VITE_SERVER}${currentLoggedInUserProfilePic}` : null} alt="pic" className="profilePictures" />
+                        <input type="text" required name="userComment" placeholder="Leave a comment...  " className="commentInput"/>
+                        <button type="submit" className="postCommentBtn">Post <i className="fa-solid fa-paper-plane"></i></button>
+                      </form>
+                    </section>
+
+
+                  </section>
+                ))
+              ) : (
+                <span className="emptyPostContainer">No posts yet!</span>
+              )
             ) : (
               <span className="loader"></span>
             )
