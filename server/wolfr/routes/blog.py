@@ -212,7 +212,6 @@ def retrievePosts():
 
       return (
          jsonify(
-            # {"posts": postResults, "polls": pollResults},
             {"feed": combined_results}
          ),
          200,
