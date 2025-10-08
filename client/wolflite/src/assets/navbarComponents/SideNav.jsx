@@ -96,6 +96,33 @@ export default function SideNav(props) {
       <nav id="sidenavContainer">
         <section id="profileSection" className="animate__animated animate__fadeInLeft">
           <div id="userInformation">
+            <br />
+            <div id="pictureSelectorContainer">
+              <form
+                id="pictureSelectorForm"
+                ref={formRef}
+              >
+                <input
+                  id="pictureSelector"
+                  type="file"
+                  onChange={changeProfilePicture}
+                />
+                <img
+                  id="defaultPfPic"
+                  src={
+                    props?.currentLoggedInUserProfilePic
+                      ? `${import.meta.env.VITE_SERVER}${props?.currentLoggedInUserProfilePic}`
+                      : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
+                  }
+                  alt=""
+                />
+              </form>
+              <div id="userRoleContainer">
+                <h3 style={{ color: "black", textAlign: "center" }}>{props?.loggedInUsername}</h3>
+                <h5 id="userRole">Change Profile Picture</h5>
+              </div>
+            </div>
+            <h4 style={{ textAlign: "center", color: "lime" }}>{successMessage}</h4>
 
             <article id="sideNavButtonContainer">
               <h4 id="sideNavTitle">MENU</h4>
@@ -130,39 +157,13 @@ export default function SideNav(props) {
             </article>
 
 
-            <br />
-            <div id="pictureSelectorContainer">
-              <form
-                id="pictureSelectorForm"
-                ref={formRef}
-              >
-                <input
-                  id="pictureSelector"
-                  type="file"
-                  onChange={changeProfilePicture}
-                />
-                <img
-                  id="defaultPfPic"
-                  src={
-                    props?.currentLoggedInUserProfilePic
-                      ? `${import.meta.env.VITE_SERVER}${props?.currentLoggedInUserProfilePic}`
-                      : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
-                  }
-                  alt=""
-                />
-              </form>
-              <div id="userRoleContainer">
-                <h3 style={{ color: "black", textAlign: "center" }}>{props?.loggedInUsername}</h3>
-                <h5 id="userRole">Change Profile Picture</h5>
-              </div>
-            </div>
-            <h4 style={{ textAlign: "center", color: "lime" }}>{successMessage}</h4>
+
           </div>
         </section>
-        <div id="scrollButtons" className="animate__animated animate__fadeInLeft">
-          <a href="#postView" onClick={e => handleSmoothScroll(e, "postView")}><i className="fa-solid fa-comment-nodes"></i> View posts <i className="fa-solid fa-arrow-down"></i></a>
-          <a href="#pollView" onClick={e => handleSmoothScroll(e, "pollView")}><i className="fa-solid fa-square-poll-horizontal"></i> View Polls <i className="fa-solid fa-arrow-up"></i></a>
-        </div>
+        {/* <div id="scrollButtons" className="animate__animated animate__fadeInLeft">
+          <a href="#postView" onClick={e => handleSmoothScroll(e, "postView")}><i className="fa-solid fa-comment-nodes"></i>  Posts <i className="fa-solid fa-arrow-down"></i></a>
+          <a href="#pollView" onClick={e => handleSmoothScroll(e, "pollView")}><i className="fa-solid fa-square-poll-horizontal"></i> Polls <i className="fa-solid fa-arrow-up"></i></a>
+        </div> */}
       </nav>
     </>
   );
