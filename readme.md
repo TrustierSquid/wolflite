@@ -1,15 +1,12 @@
 # Wolflite Docs
 
-- Wolflite is a smaller version of wolf, made with python/flask
-- Just a simple blog site for experiments
-
-- Simple flask python backend setup with React Frontend setup (no css framework preprocessor)
+Wolflite is a social blogging platform where users can create posts and polls, interact through likes and comments, and manage their profiles with custom profile pictures. The app features a dynamic feed, user profiles, and real-time updates for community engagement. Upcoming features include communities, allowing users to join groups, share content, and participate in discussions within focused interest areas.
 
 ## Features
 
 - Blog posts
 - User creation and authentication
-- Lighter version of the 'Den' System from the original WOLF
+- Communities for users to discuss and share their thoughts on their favorite topics
 
 
 # Getting Started
