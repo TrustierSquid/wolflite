@@ -435,7 +435,9 @@ export default function ProfileUI(props) {
                         {feedToView === `Posts` ? `Your Posts` : feedToView === "Polls" ? `Your Polls` : feedToView === "Archived" ? `Your Archived Posts` :  feedToView === 'Liked' ? `Your Liked Posts` : "Liked"}
                       </h2>
                     ) : (
-                      <h2 className="universalHeader">{feedToView === `Posts` ? `${allUserPosts.username}'s Posts` : feedToView === "Polls" ? `${allUserPosts.username}'s Polls` : "Polls"}</h2>
+                      <h2 className="universalHeader">
+                        {feedToView === `Posts` ? `${allUserPosts.username}'s Posts` : feedToView === "Polls" ? `${allUserPosts.username}'s Polls` : feedToView === "Archived" ? `${allUserPosts.username}'s Archived Posts` : "Archived"}
+                      </h2>
                     )
                   }
 
