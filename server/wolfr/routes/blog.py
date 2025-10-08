@@ -197,6 +197,7 @@ def retrievePosts():
             "totalVotes": total_votes,
             "profilePic": poll["userProfilePic"],
             "isPoll": True,
+            "isOpen": poll["isOpen"],
             "likeCount": poll["likeCount"],
             "comments": comments_by_poll.get(poll["id"], []),
             "whoVoted": votes_by_poll.get(poll["id"], []),
