@@ -32,7 +32,7 @@ function Navbar() {
             <a href="#" >Home</a>
           </li>
           <li id="navCreatePost" onClick={()=> {window.location.href = '/create'}}>
-            <a href="#" >Create <i className="fa-solid fa-plus"></i></a>
+            <a href="#" ><i className="fa-solid fa-plus"></i> Create</a>
           </li>
         </ul>
       </nav>

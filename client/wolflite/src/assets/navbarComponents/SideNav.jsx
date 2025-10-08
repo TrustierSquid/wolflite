@@ -66,71 +66,105 @@ export default function SideNav(props) {
   }
 
 
+  // Helper function for smooth scrolling
+  function handleSmoothScroll(e, whichView) {
+    e.preventDefault();
+    // Scroll a little above the target element (e.g., 80px offset)
+    const offset = 70;
+    let element;
+
+    if (whichView === "postView") {
+      element = props?.postScrollRef?.current;
+
+      if (element) {
+        const y = element.getBoundingClientRect().top + window.pageYOffset - offset;
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
+    } else {
+      element = props?.pollScrollRef?.current;
+
+      if (element) {
+        const y = element.getBoundingClientRect().top + window.pageYOffset - offset;
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
+    }
+
+  }
+
   return (
-    <section id="profileSection" className="animate__animated animate__fadeInLeft">
-      <div id="userInformation">
-        {/* <h4 style={{ color: "white", textAlign: "center" }}>
-          ID: #UIA25{props?.loggedInUserId}
-        </h4> */}
-        <br />
-        <div id="pictureSelectorContainer">
-          <form
-            id="pictureSelectorForm"
-            ref={formRef}
-          >
-            <input
-              id="pictureSelector"
-              type="file"
-              onChange={changeProfilePicture}
-            />
-            {/* <img id="defaultPfPic" src={"/src/assets/imgs/defaultUser.jpg" || `http://localhost:5000/${imageUrl}`} alt="pic"  /> */}
-            <img
-              id="defaultPfPic"
-              src={
-                props?.currentLoggedInUserProfilePic
-                  ? `${import.meta.env.VITE_SERVER}${props?.currentLoggedInUserProfilePic}`
-                  : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
-              }
-              alt=""
-            />
-          </form>
-          <h3 style={{ color: "black", textAlign: "center" }}>
-            {props?.loggedInUsername}
-          </h3>
-        </div>
-        <h4 style={{ textAlign: "center", color: "lime" }}>{successMessage}</h4>
-        <article id="sideNavButtonContainer">
-          <h4 id="sideNavTitle">🌎Menu</h4>
-          <button
-            className="sideNavButton"
-            onClick={() => (window.location.href = "/blog")}
-          >
-            <i className="fa-solid fa-house"></i>
-             <h3>Home</h3>
-          </button>
-          <button
-            className="sideNavButton"
-            onClick={() => (window.location.href = "/create")}
-          >
-            <i className="fa-solid fa-plus"></i>
-            <h3>Create</h3>
-          </button>
-          <button
-            className="sideNavButton"
-            onClick={() => (window.location.href = `/profile?id=${props?.loggedInUserId}`)}
-          >
-            <i className="fa-solid fa-user"></i>
-            <h3>My Profile</h3>
-          </button>
-          <button
-            className="sideNavButton"
-            onClick={() => (window.location.href = "/login")}
-          >
-            <i className="fa-solid fa-right-from-bracket"></i>
-            <h3>Logout</h3>
-          </button>
-        </article>
-      </div>
-    </section>
+    <>
+      <nav id="sidenavContainer">
+        <section id="profileSection" className="animate__animated animate__fadeInLeft">
+          <div id="userInformation">
+            <br />
+            <div id="pictureSelectorContainer">
+              <form
+                id="pictureSelectorForm"
+                ref={formRef}
+              >
+                <input
+                  id="pictureSelector"
+                  type="file"
+                  onChange={changeProfilePicture}
+                />
+                <img
+                  id="defaultPfPic"
+                  src={
+                    props?.currentLoggedInUserProfilePic
+                      ? `${import.meta.env.VITE_SERVER}${props?.currentLoggedInUserProfilePic}`
+                      : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
+                  }
+                  alt=""
+                />
+              </form>
+              <div id="userRoleContainer">
+                <h3 style={{ color: "black", textAlign: "center" }}>{props?.loggedInUsername}</h3>
+                <h5 id="userRole">Change Profile Picture</h5>
+              </div>
+            </div>
+            <h4 style={{ textAlign: "center", color: "lime" }}>{successMessage}</h4>
+
+            <article id="sideNavButtonContainer">
+              <h4 id="sideNavTitle">MENU</h4>
+              <button
+                className="sideNavButton"
+                onClick={() => (window.location.href = "/blog")}
+              >
+                <i className="fa-solid fa-house"></i>
+                <h3>Home</h3>
+              </button>
+              <button
+                className="sideNavButton"
+                onClick={() => (window.location.href = "/create")}
+              >
+                <i className="fa-solid fa-plus"></i>
+                <h3>Create</h3>
+              </button>
+              <button
+                className="sideNavButton"
+                onClick={() => (window.location.href = `/profile?id=${props?.loggedInUserId}`)}
+              >
+                <i className="fa-solid fa-user"></i>
+                <h3>My Profile</h3>
+              </button>
+              <button
+                className="sideNavButton"
+                onClick={() => (window.location.href = "/login")}
+              >
+                <i className="fa-solid fa-right-from-bracket"></i>
+                <h3>Logout</h3>
+              </button>
+            </article>
+
+
+
+          </div>
+        </section>
+        {/* <div id="scrollButtons" className="animate__animated animate__fadeInLeft">
+          <a href="#postView" onClick={e => handleSmoothScroll(e, "postView")}><i className="fa-solid fa-comment-nodes"></i>  Posts <i className="fa-solid fa-arrow-down"></i></a>
+          <a href="#pollView" onClick={e => handleSmoothScroll(e, "pollView")}><i className="fa-solid fa-square-poll-horizontal"></i> Polls <i className="fa-solid fa-arrow-up"></i></a>
+        </div> */}
+      </nav>
+    </>
   );
 }

@@ -8,9 +8,12 @@ import './assets/stylesheets/customAnimations.css'
 import Navbar from "./assets/navbarComponents/Navbar.jsx";
 import ProfileUI from "./assets/profileComponents/ProfileUI.jsx";
 import { useEffect, useState } from "react";
+import ProfileSettings from "./assets/profileComponents/ProfileSettings.jsx";
 
 
-// const [mappedData, setMappedData] = useState(null)
+
+const endpoint = window.location.pathname;
+
 
 let mappedData = []
 // Fetches the Username and UID for the logged in user
@@ -53,13 +56,23 @@ function StageUserData() {
   return (
     <>
 
-      {currentLoggedInData && (
-        <ProfileUI
-          currentLoggedInUserId={currentLoggedInData?.userId}
-          currentLoggedInUsername={currentLoggedInData?.username}
-          currentLoggedInUserProfilePic={currentLoggedInData?.userPfPic}
-        />
-      )}
+      {
+        endpoint === "/profile" ? (
+          currentLoggedInData && (
+            <ProfileUI
+              currentLoggedInUserId={currentLoggedInData?.userId}
+              currentLoggedInUsername={currentLoggedInData?.username}
+              currentLoggedInUserProfilePic={currentLoggedInData?.userPfPic}
+            />
+          )
+        ) : (
+          <ProfileSettings
+            currentLoggedInUserId={currentLoggedInData?.userId}
+            currentLoggedInUsername={currentLoggedInData?.username}
+            currentLoggedInUserProfilePic={currentLoggedInData?.userPfPic}
+          />
+        )
+      }
     </>
   )
 }

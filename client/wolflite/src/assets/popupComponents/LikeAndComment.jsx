@@ -11,17 +11,21 @@ export default function LikeAndComment(props){
   // OPENING COMMENT SECTIONS
   function openAndCloseCommentSection(postIndex) {
     setCommentAnimationIndex(postIndex)
-    const commentSection = props.commentSectionRef?.current[postIndex];
+    const commentSection = props.commentSectionRef?.current[`${postIndex}`];
+    const commentSectionPoll = props.commentSectionRef?.current[`${postIndex}`];
     const isOpen = openComments[postIndex] || false;
+
 
     if (commentSection) {
       commentSection.style.display = !isOpen ? 'flex' : 'none';
       commentSection.scrollIntoView({ behavior: "smooth", block: "center" })
       setOpenComments(prev => ({
-        ...prev,
-        [postIndex]: !isOpen
+      ...prev,
+      [postIndex]: !isOpen
       }));
     }
+
+
   }
 
 
@@ -32,10 +36,19 @@ export default function LikeAndComment(props){
       {/* Likes and Comments */}
       <div className="postFunctions">
         <button
-          className={`postFunctionBtn ${props?.postInformation?.likesByPost?.some(like => like.author_id === props?.currentLoggedInUserId) ? "heartIcon" : "emptyHeartIcon"}${animateIndex === props?.postIndex ? " animate__animated animate__rubberBand" : ""}`}
+          className={`postFunctionBtn
+            ${
+                props.isPoll
+                  ? (props?.postInformation?.likesByPoll?.some(like => like.author_id === props?.currentLoggedInUserId)
+                      ? "heartIcon"
+                      : "emptyHeartIcon")
+                  : (props?.postInformation?.likesByPost?.some(like => like.author_id === props?.currentLoggedInUserId)
+                      ? "heartIcon"
+                      : "emptyHeartIcon")
+            }${animateIndex === props?.postIndex ? " animate__animated animate__rubberBand" : ""}`}
           ref={(el) => (buttonRefs.current[props?.postIndex] = el)}
           onClick={() => {
-            props.addLikeToPost(props?.currentLoggedInUserId, props?.postID, props?.postIndex);
+            props.addLikeToPost(props?.currentLoggedInUserId, props?.postID, props?.postIndex, props?.isPoll);
             setAnimateIndex(props.postIndex)
             setTimeout(() => {
               setAnimateIndex(null)
