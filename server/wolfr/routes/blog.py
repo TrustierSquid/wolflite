@@ -429,6 +429,31 @@ def trackUserFeedback():
          option_ID = data["optionID"]
          cursor = db.cursor()
 
+         print(f"PollID: {poll_ID} and optionID: {option_ID} ")
+
+
+
+         # Find if the user already voted on this poll, and delete their previous vote
+         # Find the previous option the user voted for
+         prev_vote = cursor.execute(
+            "SELECT option_id FROM votes WHERE user_id = ? AND poll_id = ?",
+            (g.user[0], poll_ID)
+         ).fetchone()
+
+         # Delete the previous vote
+         cursor.execute(
+            "DELETE FROM votes WHERE user_id = ? AND poll_id = ?",
+            (g.user[0], poll_ID)
+         )
+
+         # Decrement users_voted for the previous option if it exists
+         if prev_vote:
+            cursor.execute(
+               "UPDATE poll_options SET users_voted = users_voted - 1 WHERE id = ?;",
+               (prev_vote["option_id"],)
+            )
+
+
          cursor.execute("""
             INSERT INTO votes (user_id, poll_id, option_id)
             VALUES (?, ?, ?)
@@ -442,7 +467,7 @@ def trackUserFeedback():
 
 
       except sqlite3.IntegrityError:
-         return jsonify({"error": "You already voted in this poll"})
+         return jsonify({"error": "Couldnt apply vote"}), 500
 
 
    return {"success": 200}
