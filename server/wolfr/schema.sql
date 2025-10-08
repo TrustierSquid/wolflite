@@ -31,7 +31,10 @@ CREATE TABLE polls (
    id INTEGER PRIMARY KEY AUTOINCREMENT,
    author_id INTEGER NOT NULL,
    created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-   question TEXT NOT NULL
+   question TEXT NOT NULL,
+   isOpen BOOLEAN NOT NULL DEFAULT 1,
+   archive_at DATETIME,
+   isArchived BOOLEAN NOT NULL DEFAULT 0
 );
 
 CREATE TABLE poll_options (
@@ -63,7 +66,8 @@ CREATE TABLE comments (
   commentBody TEXT NOT NULL,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (author_id) REFERENCES user(id),
-  FOREIGN KEY (post_id) REFERENCES posts(id)
+  FOREIGN KEY (post_id) REFERENCES posts(id),
+  FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE CASCADE
 );
 
 CREATE TABLE likes (
