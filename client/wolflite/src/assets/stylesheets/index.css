@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css?family=Comfortaa:400,700&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -29,11 +31,6 @@ body,
   background-color: var(--background);
 }
 
-/* For all react page roots */
-/* #root {
-  position: relative;
-} */
-
 /* PROFILE SECTION */
 #homeContainer {
   display: flex;
@@ -62,7 +59,7 @@ body,
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  width: clamp(355px, 80%, 600px);
+  width: clamp(355px, 80%, 700px);
 
 }
 
@@ -93,7 +90,8 @@ body,
   overflow-wrap: anywhere;
 }
 
-#blogFeedContainer > .postContainer > .postMedia {
+
+.postMedia {
   max-width: 100%;
   background: #ffffff;
   background: linear-gradient(
@@ -104,6 +102,7 @@ body,
   );
   border-radius: 0.5rem;
 }
+
 
 /* all posts */
 #blogFeedContainer > .postContainer > .postHeader > .nameAndProfilePicContainer > .postAuthor {
@@ -183,7 +182,29 @@ body,
   gap: 4rem;
   background-color: var(--regBtn);
   background-color: color-mix(in srgb, var(--regBtn) 90%, transparent);
-  border: var(--secondary) 2px solid;
+  /* border: var(--secondary) 2px solid; */
+  color: white;
+}
+
+#pollView,
+#postView {
+  display: none;
+}
+
+.pollClosed {
+  border: none;
+  padding: 0.8rem;
+  font-weight: bold;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: default;
+  transition: 150ms;
+  gap: 4rem;
+  background-color: var(--regBtn);
+  background-color: color-mix(in srgb, var(--regBtn) 90%, transparent);
+  border: var(--primary) 1px solid;
   color: white;
 }
 
@@ -290,7 +311,22 @@ body,
   padding: 2rem;
 }
 
-.checkAnswers > button{
+.checkAnswers {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.closePollButton {
+  background-color: crimson;
+  border: none;
+  padding: 0.3rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  color: white;
+}
+
+.viewVotes {
   color: white;
   background-color: var(--infoBtn);
   border: none;
