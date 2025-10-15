@@ -285,7 +285,6 @@ export default function ProfileUI(props) {
     setFeedToView(`${feed}`)
   }
 
-  console.log(allUserPosts)
 
 
   return (
@@ -300,6 +299,8 @@ export default function ProfileUI(props) {
         isOpen={isChecking}
         onClose={()=> setIsChecking(false)}
       />
+
+
 
       <article id="profileInformation" className="animate__animated animate__fadeInRight">
         <section className="profileInformationItemPicForm">
@@ -316,11 +317,22 @@ export default function ProfileUI(props) {
 
           <div id="profileDetails">
             <span id="nameAndAT">
-              <h2 id="profileDetailsUsername">{allUserPosts.username}</h2>
-              <p id="profileDetailsHeader">@turdburglar</p>
-              <h4 className="userPermissionAdmin">Admin</h4>
+              <p id="profileDetailsUsername">{allUserPosts.username} <span className="userPermissionAdmin">Admin</span> </p>
+              <p id="profileDetailsHeader">
+                Joined <></>
+                <span>
+                  {allUserPosts?.joinedDate &&
+                    new Date(props.userJoinedDate).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric"
+                    })
+                  }
+                </span>
+              </p>
             </span>
-            <p id="profileDetailsBio">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Id, nulla doloribus rerum odit qui reprehenderit dolore repellendus alias adipisci possimus.</p>
+            {/* <p id="profileDetailsBio">Exploring ideas, sharing stories, and connecting with communities. Welcome to my profile!</p> */}
+            <p id="profileDetailsBio">Exploring ideas, sharing stories</p>
             <h4 style={{ color: "Green", textAlign: "left" }}>
               {successMessage}
             </h4>
@@ -335,7 +347,7 @@ export default function ProfileUI(props) {
                   ref={formRef}
                   id="formButtonGroup"
                 >
-                  <div className="profileInformationItemButtonGroup ">
+                  <div className="profileInformationItemButtonGroupMain ">
                     <label
                       className="profilePictureSelectorLabel"
                       htmlFor="profilePictureSelector"
@@ -348,20 +360,19 @@ export default function ProfileUI(props) {
                       style={{ display: "none" }}
                       onChange={changeProfilePicture}
                     />
-
                     <label className="profilePictureSelectorLabel" onClick={()=> window.location.href = '/settings'}><i className="fa-solid fa-gear"></i> Profile Settings</label>
                   </div>
 
-                  <div className="userInformation">
+                  {/* <div className="userInformation">
                     <span className="userAnalyticsItem">
-                      <h3><i className="fa-solid fa-user-group"></i> 324</h3>
+                      <h3>324</h3>
                       <p className="analyticLabel">Friends</p>
                     </span>
                     <span className="userAnalyticsItem">
-                      <h3><i className="fa-solid fa-paper-plane"></i> 30</h3>
+                      <h3>30</h3>
                       <p className="analyticLabel">Posts</p>
                     </span>
-                  </div>
+                  </div> */}
 
 
                 </form>
@@ -369,7 +380,7 @@ export default function ProfileUI(props) {
             ) : (
               <>
                 <form action="" id="formButtonGroup">
-                  <div className="userInformation">
+                  {/* <div className="userInformation">
                     <span className="userAnalyticsItem">
                       <h3><i className="fa-solid fa-user-group"></i> 324</h3>
                       <p className="analyticLabel">Friends</p>
@@ -378,7 +389,7 @@ export default function ProfileUI(props) {
                       <h3><i className="fa-solid fa-paper-plane"></i> 30</h3>
                       <p className="analyticLabel">Posts</p>
                     </span>
-                  </div>
+                  </div> */}
                 </form>
               </>
             )
@@ -394,18 +405,18 @@ export default function ProfileUI(props) {
         <div className="profileInformationItemButtonGroup">
           {/* Expired or closed polls */}
 
-          <button className="profileControBtn" onClick={()=> viewFeed("Archived")}><i className="fa-solid fa-square-poll-horizontal"></i> Archived Polls</button>
+          <button className="profileControlBtn" onClick={()=> viewFeed("Archived")}>{/* <i className="fa-solid fa-square-poll-horizontal"></i>  */}Archived Polls</button>
 
           {/* Liked Posts */}
-          <button className="profileControBtn" onClick={()=> viewFeed("Liked")}><i className="fa-solid fa-comment"></i> Liked Posts</button>
+          <button className="profileControlBtn" onClick={()=> viewFeed("Liked")}>{/* <i className="fa-solid fa-comment"></i> */} Liked Posts</button>
         </div>
         <div className="profileInformationItemButtonGroup">
 
           {/* View Polls */}
-          <button className="profileControBtn" onClick={()=> viewFeed("Polls")}><i className="fa-solid fa-square-poll-horizontal"></i> Polls</button>
+          <button className="profileControlBtn" onClick={()=> viewFeed("Polls")}>{/* <i className="fa-solid fa-square-poll-horizontal"></i> */} Polls</button>
 
           {/* View Posts  */}
-          <button className="profileControBtn" onClick={()=> viewFeed("Posts")}><i className="fa-solid fa-comment"></i> Posts</button>
+          <button className="profileControlBtn" onClick={()=> viewFeed("Posts")}>{/* <i className="fa-solid fa-comment"></i> */} Posts</button>
         </div>
       </section>
 
