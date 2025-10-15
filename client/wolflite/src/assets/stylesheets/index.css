@@ -12,6 +12,7 @@
   --infoBtn: #2491ff;
   --background: #e2e2e2;
   --regBtn: #333333;
+  --mainFont: "Albert Sans"
 }
 
 .text-gradient {
@@ -29,14 +30,7 @@ body,
   min-height: 100vh;
   max-width: 100vw;
   background-color: var(--background);
-}
-
-/* PROFILE SECTION */
-#homeContainer {
-  display: flex;
-  justify-content: center;
-  padding: 1rem;
-  font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
+  font-family: var(--mainFont);
 }
 
 
@@ -49,11 +43,64 @@ body,
  -webkit-background-clip: text;
  -webkit-text-fill-color: transparent;
  letter-spacing: 0.2rem;
- font-family: "Arial";
+ font-family: var(--mainFont);
 }
 
 
-/* For BlogFeed */
+/* Loading animation */
+.loader {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: inline-block;
+  position: relative;
+  border: 2px solid var(--primary);
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+  margin: 0 auto;
+}
+.loader::after {
+  content: "";
+  box-sizing: border-box;
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  border: 2px solid var(--secondary);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+
+
+
+
+
+
+
+/*
+-----------------------------------------------
+  GENERAL POSTS FEED
+-----------------------------------------------
+*/
+
+/* small elements */
+hr { color: lightgrey; }
+.heartIcon { color: var(--primary); }
+.emptyHeartIcon { color: white; }
+.messageIcon { color: var(--secondary); }
+
+
+/* PROFILE SECTION */
+#homeContainer {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+  font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
+}
+
+
+/* flex container for the posts */
 #blogFeedContainer {
   padding: 1rem;
   display: flex;
@@ -63,8 +110,7 @@ body,
 
 }
 
-
-
+/* container that contains the post content  */
 #blogFeedContainer > .postContainer {
   display: flex;
   flex-direction: column;
@@ -104,9 +150,7 @@ body,
 }
 
 
-/* all posts */
 #blogFeedContainer > .postContainer > .postHeader > .nameAndProfilePicContainer > .postAuthor {
-  /* color: rgb(86, 86, 86); */
   font-weight: bold;
   display: flex;
   justify-content: space-between;
@@ -114,6 +158,7 @@ body,
   cursor: pointer;
 }
 
+/* Hover effect over the post author name if the user wants to go to post author's profile */
 #blogFeedContainer > .postContainer > .postHeader > .nameAndProfilePicContainer > .postAuthor:hover {
   color: var(--primary);
   text-decoration: underline;
@@ -121,7 +166,7 @@ body,
 }
 
 .postTimestamp {
-  font-family: "Comfortaa";
+  font-family: var(--mainFont);
   font-weight: bold;
 }
 
@@ -132,8 +177,10 @@ body,
 }
 
 
+
 /* LIKING AND COMMENTING */
 
+/* Post Functions container */
 .postInformation {
   display: flex;
   align-items: center;
@@ -141,6 +188,7 @@ body,
   justify-content: space-between;
 }
 
+/* Like and comment button container */
 .postFunctions {
   display: flex;
   gap: 0.5rem;
@@ -151,7 +199,7 @@ body,
   border: none;
   font-size: 1rem;
   cursor: pointer;
-  font-family: "Comfortaa";
+  font-family: var(--mainFont);
   color: white;
   border-radius: 1rem;
   transition: 150ms;
@@ -166,8 +214,13 @@ body,
   background-color: maroon;
 }
 
+.commentInput {
+  outline: none;
+}
+
 
 /* POLLS */
+
 .pollOption,
 .hasVoted {
   border: none;
@@ -182,7 +235,11 @@ body,
   gap: 4rem;
   background-color: var(--regBtn);
   background-color: color-mix(in srgb, var(--regBtn) 90%, transparent);
-  /* border: var(--secondary) 2px solid; */
+  color: white;
+}
+
+.hasVoted {
+  background-color: green;
   color: white;
 }
 
@@ -208,29 +265,425 @@ body,
   color: white;
 }
 
-.hasVoted {
-  background-color: green;
-  color: white;
-}
 
 .pollOption:hover {
   background-color: rgb(18, 47, 0);
 }
 
-/* CREATE POST MENU */
+
+/* votes and close poll btn containers */
+.checkAnswers {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.votePercentageContainer {
+  width: 120px;
+}
+
+.votePercentage {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  gap: 0.5rem;
+}
+
+.optionText {
+  font-size: 0.8rem;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.viewVotes {
+  color: white;
+  background-color: var(--infoBtn);
+  border: none;
+  padding: 0.3rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.checkAnswers > button:hover {
+  background-color: var(--regBtn);
+}
+
+#totalVotesCount {
+  color: grey;
+}
+
+/* VOTES POP UP STYLES */
+#moodleBackButton {
+  background: none;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 2rem;
+  color: white;
+  cursor: pointer;
+  transition: 150ms;
+  background-color: var(--primary);
+  align-self: start;
+}
+
+#moodleBackButton:hover {
+  background-color: var(--secondary);
+  color: white;
+}
+
+.openPostInformationMoodle {
+  width: clamp(60%, 500px, 40%);
+  height: 70%;
+  border-radius: 1rem;
+  background-color: white;
+  position: fixed;
+  z-index: 1000;
+  padding: 2rem;
+  pointer-events: all;
+  box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  font-family: var(--mainFont);
+}
+
+#pollInformationContainer{
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  background-color: rgb(234, 234, 234);
+  border-radius: 1rem;
+  padding: 1rem ;
+  overflow-y: auto;
+}
+
+
+#pollQuestionContainer {
+  width: 80%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-family: "Arial";
+  line-height: 1.3;
+}
+
+#votersContainer {
+  width: 40%;
+  overflow-y: auto;
+}
+
+/* VOTE MOODLE STYLES */
+.static {
+  opacity: 0;
+  display: none;
+}
+
+.voter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  /* border-top: 1px solid lightgrey; */
+  /* border-bottom: 1px solid lightgrey; */
+}
+
+.voter > img {
+  height: 30px;
+  width: 30px;
+  border-radius: 50%;
+}
+
+
+#listOfVotes {
+  display: flex;
+  flex-direction: column;
+  width: 60%;
+  padding: 0.5rem;
+  border-right: 1px lightgrey solid;
+  gap: 1rem;
+  overflow-y: auto;
+}
+
+.voteItem {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 1rem;
+  justify-content: space-between;
+  padding-inline: 0.3rem;
+  padding: 0.5rem;
+}
+
+.voteItem:hover {
+  border-radius: 0.5rem;
+  background-color: grey;
+  color: white;
+  cursor: pointer;
+}
+
+
+.selectOption {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+
+
+.optionVotes {
+  background-color: var(--primary);
+  max-width: 105px;
+  border-radius: 10px;
+  padding: 0.3rem;
+  color: white;
+  font-family: var(--mainFont);
+  word-break: normal;
+  white-space: nowrap;
+}
+
+
+
+/* each poll option in the menu */
+.selectOption {
+  cursor: pointer;
+  padding-inline: 0.2rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-radius: 0.5rem;
+  transition: 150ms;
+}
+
+
+.closePostInformationMoodle {
+  opacity: 0;
+  pointer-events: none;
+}
+
+
+
+
+
+
+
+
+
+/*
+------------------------------------
+  COMMENT STYLES
+------------------------------------
+*/
+/* For comments opening and closing */
+.commentsElementContainer {
+  display: none;
+  flex-direction: column;
+  background-color: rgb(255, 255, 255);
+  margin-top: 1rem;
+  width: 100%;
+  height: 500px;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+
+.commentContainer {
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.commentFunctions {
+  display: flex;
+  gap: 0.5rem
+}
+
+.comment {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.comment > .commentBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background-color: #ececec;
+  padding: 1rem;
+  border-radius: 1rem;
+  box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
+}
+
+.comment > .commentBlock > .commentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.comment > .commentBlock > .commentHeader > .commentWhoPostedContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.comment > .commentBlock > .commentHeader > .commentWhoPostedContainer > .commentProfilePic {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+
+.comment > .commentBlock > .commentText {
+  color: black;
+  border-radius: 1rem;
+  word-break: break-word;
+  white-space: pre-wrap;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+
+/* input field for comments */
+.commentFunctions > input {
+  width: 80%;
+  border-radius: 0.5rem;
+  border: 1px solid grey;
+  padding: 0.5rem;
+}
+
+.commentAuthor:hover {
+  text-decoration: underline;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.postCommentBtn {
+  --color: var(--primary);
+  font-family: inherit;
+  display: inline-block;
+  width: 8em;
+  height: 2.6em;
+  line-height: 2.5em;
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+  border: 2px solid var(--color);
+  transition: color 0.5s;
+  z-index: 1;
+  font-size: 15px;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  color: var(--color);
+}
+
+.postCommentBtn:before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  background: var(--color);
+  height: 150px;
+  width: 200px;
+  border-radius: 50%;
+}
+
+.postCommentBtn:hover {
+  color: #fff;
+}
+
+.postCommentBtn:before {
+  top: 100%;
+  left: 100%;
+  transition: all 0.7s;
+}
+
+.postCommentBtn:hover:before {
+  top: -30px;
+  left: -30px;
+}
+
+.postCommentBtn:active:before {
+  background: #3a0ca3;
+  transition: background 0s;
+}
+
+
+
+
+
+
+
+/*
+-----------------------------------
+  POPUP STYLES
+-----------------------------------
+*/
+
+.blackScreen {
+  background-color: black;
+  opacity: 0.8;
+  position: fixed;
+  z-index: 999;
+  height: 100vh;
+  width: 100vw;
+}
+
+
+#moodleContainer {
+  height: 100vh;
+  width: 100vw;
+  background: none;
+  position: fixed;
+  z-index: 999;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+/* Header container */
+#moodleTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  word-break: break-word;
+  gap: 5rem;
+}
+
+
+
+
+
+
+
+
+
+
+/*
+-----------------------------------
+  CREATE POST MENU
+-----------------------------------
+*/
+
+
+/* Header and content container */
 #elementContainer {
-  /* margin-top: rem; */
   width: clamp(300px, 60%, 800px);
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-family: "Comfortaa";
+  font-family: var(--mainFont);
 }
 
 /* menu title */
 .moodleTitle {
   padding: 0 0 1rem 0rem;
+}
+
+/* Form labels */
+.createPostFormLabel {
+  font-weight: bold;
 }
 
 #createMenuContainer {
@@ -240,10 +693,26 @@ body,
   max-height: 100vh;
 }
 
-.commentInput {
-  outline: none;
+/* CREATE POST/POLL FORM */
+#createPostForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
+  max-height: 600px;
 }
 
+#createPostForm > #imageInsertContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+  width: 100%;
+  gap: 1rem;
+}
+
+#createPostForm > #imageInsertContainer > input {
+  color: var(--secondary);
+}
 
 /* for image selection */
 #file{
@@ -257,6 +726,7 @@ body,
   border-radius: 1rem;
 }
 
+/* Select Image Btn */
 #selectImage {
   width: 30%;
   background-color: lightgrey;
@@ -270,6 +740,7 @@ body,
   color: white;
 }
 
+/* Post and poll creation options container */
 #createMenuOptions {
   display: flex;
   width: 50%;
@@ -279,6 +750,7 @@ body,
   margin-bottom: 1rem;
 }
 
+/* each creation option */
 #createMenuOptions > li {
   width: 50%;
   border: none;
@@ -288,13 +760,11 @@ body,
   background-color: #e1e6f9; /* Soft light blue for contrast */
   color: #6c2eb7;
   cursor: pointer;
-  /* margin-top: 0.5rem; */
   transition: background 0.2s, color 0.2s;
   text-align: left;
-  font-family: "Comfortaa";
+  font-family: var(--mainFont);
   font-size: 0.9rem;
 }
-
 
 
 #createMenuOptions > li:hover {
@@ -311,69 +781,13 @@ body,
   padding: 2rem;
 }
 
-.checkAnswers {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.closePollButton {
-  background-color: crimson;
-  border: none;
-  padding: 0.3rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  color: white;
-}
-
-.viewVotes {
-  color: white;
-  background-color: var(--infoBtn);
-  border: none;
-  padding: 0.3rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-}
-
-.checkAnswers > button:hover {
-  background-color: var(--regBtn);
-}
-
-/* POPUP FORM */
-#createPostForm {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  overflow-y: scroll;
-  max-height: 600px;
-}
-
-#createPostForm > #imageInsertContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: left;
-  width: 100%;
-  gap: 1rem;
-}
-
-#createPostForm > #imageInsertContainer > input {
-  color: var(--secondary);
-}
-
-
-
-/* Form labels */
-.createPostFormLabel {
-  font-weight: bold;
-}
-
 #createMenuContent {
   width: 100%;
   background-color: white;
   border-radius: 1rem;
 }
 
-/* Post Title input field */
+/* Post Title/poll question input field */
 .createPostFormInputTitle {
   width: 100%;
   height: 40px;
@@ -388,7 +802,7 @@ body,
   font-size: 1rem;
 }
 
-/* Post Body input field */
+/* Post Body/poll option input field */
 .createPostFormInput {
   padding: 0.5rem;
   border-radius: 1rem;
@@ -401,37 +815,12 @@ body,
   font-size: 1rem;
 }
 
+/* add answer container */
 #functionBtns {
   display: flex;
   flex-direction: column;
   gap: 1rem;
   margin-top: 1rem;
-}
-
-.emptyPostContainer {
-  display: flex;
-  justify-content: center;
-  background-color: var(--regBtn);
-  border-radius: 1rem;
-  color: white;
-  padding: 1rem;
-  font-family: "Comfortaa";
-  font-weight: bold;
-}
-
-/* Submit button */
-#submitTextBtn {
-  background-color: var(--primary);
-  color: white;
-  font-size: 1rem;
-  margin-left: auto;
-  /* width: 100px; */
-  padding: 0.5rem;
-  padding-inline: 1rem;
-  border: none;
-  font-weight: bold;
-  border-radius: 1rem;
-  cursor: pointer;
 }
 
 /* Add Poll Option button and remove Button */
@@ -460,22 +849,29 @@ body,
   background-color: var(--infoBtn);
 }
 
-.votePercentageContainer {
-  width: 120px;
-}
-
-.votePercentage {
+.emptyPostContainer {
   display: flex;
-  align-items: center;
-  justify-content: end;
-  gap: 0.5rem;
+  justify-content: center;
+  background-color: var(--regBtn);
+  border-radius: 1rem;
+  color: white;
+  padding: 1rem;
+  font-family: var(--mainFont);
+  font-weight: bold;
 }
 
-.optionText {
-  font-size: 0.8rem;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-  text-align: left;
+/* Submit button */
+#submitTextBtn {
+  background-color: var(--primary);
+  color: white;
+  font-size: 1rem;
+  margin-left: auto;
+  padding: 0.5rem;
+  padding-inline: 1rem;
+  border: none;
+  font-weight: bold;
+  border-radius: 1rem;
+  cursor: pointer;
 }
 
 #removePollOptionButton:hover {
@@ -495,54 +891,14 @@ body,
   color: green;
 }
 
-/* Loading animation */
-.loader {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: inline-block;
-  position: relative;
-  border: 2px solid var(--primary);
-  box-sizing: border-box;
-  animation: rotation 1s linear infinite;
-  margin: 0 auto;
-}
-.loader::after {
-  content: "";
-  box-sizing: border-box;
-  position: absolute;
-  left: 4px;
-  top: 4px;
-  border: 2px solid var(--secondary);
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
 
-@keyframes onLoad {
-  0% {
-    transform: translateY(0rem);
-    opacity: 0;
-  }
 
-  50% {
-    transform: translateY(1.5rem);
-  }
 
-  100% {
-    transform: translateY(0rem);
-    opacity: 1;
-  }
-}
 
-@keyframes rotation {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
+
+
+
+
 
 @media (max-width: 768px) {
   #createMenuContainer {
@@ -587,5 +943,62 @@ body,
     width: 100%;
     gap: 0.5rem;
     padding: 0.5rem;
+  }
+
+}
+
+/* Media Query for profile page */
+@media (max-width: 768px) {
+
+  #moodleContainer {
+    height: 100vh;
+    width: 100vw;
+    background: none;
+    position: fixed;
+    z-index: 999;
+    display: flex;
+    justify-content: center;
+    align-items: start;
+    margin-top: 10%;
+    pointer-events: none;
+
+  }
+
+  .openPostInformationMoodle {
+    max-width: none;
+    width: 98%;
+    height: 80%;
+    padding: 0rem;
+  }
+
+  #moodleTitle {
+    padding: 1rem;
+  }
+
+
+  #moodleBackButton {
+    background: none;
+    color: black;
+  }
+
+  #votersContainer {
+    width: 50%;
+  }
+
+  #listOfVotes {
+    width: 50%;
+  }
+
+  .voteItem {
+    flex-direction: column;
+    align-items: start;
+    padding: 0.5rem;
+  }
+
+  .openPostInformationMoodle > #pollInformationContainer {
+    background: none;
+    height: auto;
+    max-width: 100%;
+    padding: 0;
   }
 }

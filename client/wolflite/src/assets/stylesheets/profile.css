@@ -10,30 +10,29 @@
 #profileInformation {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 2rem;
-  width: 1000px;
+  max-width: 1000px;
+  gap: 1.5rem;
   margin: 0 auto;
   margin-top: 1%;
   border-radius: 2rem;
   margin-bottom: 2%;
-  background-color: white;
   padding: 2rem;
   color: black;
+  background-color: white;
   box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
 }
 
 .profileInformationItemPicForm {
   grid-column: 1 / span 3;
   display: flex;
-  justify-content: center;
+  justify-content: left;
   align-items: center;
   font-family: Arial, Helvetica, sans-serif;
   gap: 2rem;
-  padding: 1rem;
 }
 
 .profileInformationItemPicForm > h2 {
-  font-family: "Comfortaa";
+  font-family: var(--mainFont);
 }
 
 .profileInformationPic {
@@ -51,25 +50,37 @@
   gap: 0.5rem;
 }
 
+#profileDetailsUsername {
+  display: flex;
+  align-items: end;
+  gap: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 650;
+}
+
 /* Username and their @ */
 #nameAndAT {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 0.5rem;
 }
 
 /* permission badge if the user is an admin */
 .userPermissionAdmin {
-  background-color: crimson;
-  color: white;
+  background-color: rgb(248, 221, 226);
+  color: crimson;
   padding: 0.5rem;
-  border-radius: 1rem;
-  font-family: "Comfortaa";
+  border-radius: 0.5rem;
+  font-family: var(--mainFont);
+  font-size: 1rem;
 }
 
 
 #profileDetailsBio {
   line-height: 1.5;
+  background-color: #eaf1fe;
+  padding: 1rem;
+  border-radius: 10px;
 }
 
 #profileDetailsHeader {
@@ -111,7 +122,7 @@
 
 .analyticLabel {
   color: grey;
-  font-family: "Comfortaa";
+  font-family: var(--mainFont);
 }
 
 
@@ -121,44 +132,41 @@
 .profileInformationItem {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 1000px;
+  justify-content: left;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 1rem;
-  border-radius: 1rem;
-  background-color: color-mix(in srgb, var(--primary) 80%, white 20%);
-  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+  padding-bottom: 0.5rem;
 }
 
 /* flex item */
-.profileInformationItemButtonGroup {
+.profileInformationItemButtonGroupMain {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
 
 }
 
-.profileControBtn {
+/* DEVELOPING FOR MOBILE AND MAKING THE PROFILE PAGE RESPONSIVE */
+
+.profileControlBtn {
   border: none;
   cursor: pointer;
   z-index: 100;
   background-color: #e1e6f9;
   color: #6c2eb7;
   font-weight: bold;
-  font-family: "Comfortaa", sans-serif;
+  font-family: var(--mainFont), sans-serif;
   font-size: 1rem;
   padding: 0.5rem 1rem;
-  border-radius: 1rem;
-  box-shadow: rgba(0, 0, 0, 0.07) 0px 1px 2px, rgba(0, 0, 0, 0.07) 0px 2px 4px;
+  border-radius: 0.3rem;
   transition: background 150ms, color 150ms, transform 150ms;
 }
 
 /* When the button is selected */
-.profileControBtn:focus {
+.profileControlBtn:focus {
   background-color: var(--secondary);
   color: white;
 }
-
 
 
 /* FEED STYLES */
@@ -194,17 +202,20 @@
   background-color: #f3eaff;
   color: #6c2eb7;
   font-weight: bold;
-  font-family: "Comfortaa", sans-serif;
+  font-family: var(--mainFont), sans-serif;
   font-size: 1rem;
   padding: 0.5rem 1rem;
-  border-radius: 1rem;
+  border-radius: 0.5rem;
   transition: background 150ms, color 150ms, transform 150ms;
-  box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 5px 0px, rgba(0, 0, 0, 0.1) 0px 0px 1px 0px;
 }
 
+.profilePictureSelectorLabel:hover {
+  background-color: var(--secondary);
+  color: white;
 
-.profilePictureSelectorLabel:hover,
-.profileControBtn:hover {
+}
+
+.profileControlBtn:hover {
   background-color: var(--secondary);
   color: white;
   transform: translateY(-3px);
@@ -214,3 +225,57 @@
   color: grey;
   font-size: 0.8em;
 }
+
+.closePollButton {
+  background-color: crimson;
+  border: none;
+  padding: 0.3rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  #profileInformation {
+    background: none;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    padding-inline: 1rem;
+  }
+
+  #formButtonGroup {
+    flex-direction: column;
+  }
+
+  .userInformation {
+    justify-content: center;
+  }
+
+  .profileInformationItem {
+    justify-content: center;
+    padding-inline: 0rem;
+    font-size: 0.2rem;
+  }
+  .profilePictureSelectorLabel {
+    font-size: 0.8rem;
+  }
+
+  .profileInformationItemButtonGroup {
+    display: flex;
+    flex-direction: row;
+  }
+  .profileInformationItemButtonGroupMain {
+    justify-content: center;
+  }
+
+
+  .profileControlBtn {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.8rem;
+  }
+}
+
+
+/* PROFILE SETTINGS */
