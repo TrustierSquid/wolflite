@@ -114,13 +114,14 @@ def create_app(test_config=None):
 
         try:
             currentUser = cursor.execute(
-                "SELECT username, filename FROM user WHERE id = ?", (user_id,)
+                "SELECT username, created, filename FROM user WHERE id = ?", (user_id,)
             ).fetchone()
 
 
             return jsonify({
-                "currentUserName": currentUser['username'],
+                "currentUserName": currentUser["username"],
                 "currentUserPfPicture": currentUser["filename"],
+                "joinedDate": currentUser["created"],
                 "currentUserID": g.user[0]
             })
         except sqlite3.IntegrityError:

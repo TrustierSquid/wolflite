@@ -293,14 +293,19 @@ def retrieveLoggedInUserPost():
       })
 
 
+    joinedDate = None
     if allLoggedInUserPosts:
       queried_username = allLoggedInUserPosts[0]["username"]
       profilePicture = allLoggedInUserPosts[0]["profilePic"]
+      # Fetch joined date from user table
+      user_row = cursor.execute("SELECT created FROM user WHERE id = ?", (user_id,)).fetchone()
+      joinedDate = user_row["created"] if user_row else None
     else:
       # If user has no posts, fetch username separately
-      user_row = cursor.execute("SELECT username, filename AS profilePic FROM user WHERE id = ?", (user_id,)).fetchone()
+      user_row = cursor.execute("SELECT username, created, filename AS profilePic FROM user WHERE id = ?", (user_id,)).fetchone()
       queried_username = user_row["username"] if user_row else None
       profilePicture = user_row["profilePic"] if user_row else None
+      joinedDate = user_row["created"] if user_row else None
 
     return jsonify({
       "allUserPosts": allLoggedInUserPosts,
@@ -309,6 +314,7 @@ def retrieveLoggedInUserPost():
       "likedPosts": allLikedPosts,
       "username": queried_username,
       "userProfilePic": profilePicture,
+      "joinedDate": joinedDate
     }), 200
 
   except sqlite3.IntegrityError:
