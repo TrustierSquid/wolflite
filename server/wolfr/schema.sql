@@ -11,6 +11,7 @@ CREATE TABLE user (
    username TEXT UNIQUE NOT NULL,
    password TEXT NOT NULL,
    created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+   bio TEXT NULL, -- profile bio
    filename TEXT NULL, --profile picture
    profileBackground TEXT NULL --coming soon
 );
