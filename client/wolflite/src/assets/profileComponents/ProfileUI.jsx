@@ -44,7 +44,7 @@ export default function ProfileUI(props) {
         return
       }
 
-      // If the user has no session cookie
+      // If the user has no session cookie, redirect to login
       if(response.status === 401) {
         window.location.href = "/login"
         return
