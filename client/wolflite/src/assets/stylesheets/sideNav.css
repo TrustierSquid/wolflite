@@ -63,15 +63,14 @@
   align-items: center;
   justify-content: left;
   gap: 0.5rem;
-  font-family: "Comfortaa";
+  font-family: var(--mainFont);
   font-size: 0.9rem;
   color: color-mix(in srgb, var(--primary) 70%, black 30%);
   border-radius: 2rem;
-  font-family: "Arial";
 }
 
 #sideNavTitle {
-  font-family: "Arial";
+  font-family: var(--mainFont);
   color: grey;
   margin-top: 1rem;
 }
