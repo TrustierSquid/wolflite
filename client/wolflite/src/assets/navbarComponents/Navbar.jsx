@@ -2,9 +2,12 @@ import React, { useEffect } from "react";
 import { useState } from "react";
 
 
-function Navbar() {
+function Navbar(props) {
   const [isNavOpen, setIsNavOpen] = useState(false)
+  const [currentLoggedInData, setCurrentLoggedInData] = useState(null)
 
+
+  // opening and closing mobile navbar
   function openNav(){
     setIsNavOpen(prev => true)
     document.body.style.overflow = "hidden";
@@ -15,6 +18,44 @@ function Navbar() {
     }
 
   }
+
+
+  let mappedData = []
+  const endpoint = window.location.pathname;
+  // Fetches the Username and UID for the logged in user
+  useEffect(()=> {
+    async function getUserData(){
+      try {
+        const response = await fetch("/getUserData", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if(response.status === 401) {
+          window.location.href = "/login"
+        }
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! ${response.status}`);
+        }
+
+        const data = await response.json()
+        setCurrentLoggedInData({
+          username: data.currentUserName,
+          userId: data.currentUserID,
+          userPfPic: data.currentUserPfPicture,
+          joinedDate: data.joinedDate
+        });
+
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    getUserData()
+  }, [])
+
+
 
   return (
     <>
@@ -38,12 +79,31 @@ function Navbar() {
       </nav>
 
       <menu className={isNavOpen ? "navBarOpen animate__animated animate__fadeInLeft" : "navMobileMenu" }>
+        <div id="mobileNavUserInformation">
+          <img src={
+              currentLoggedInData?.userPfPic
+              ? `${import.meta.env.VITE_SERVER}${currentLoggedInData?.userPfPic}`
+              : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
+            }
+            alt="pic"
+            id="mobileNavPfPic"
+            />
+            <h3>{currentLoggedInData?.username}</h3>
+            <p id="navJoinedDate">
+              {`Joined WOLFLITE: ` + new Date(currentLoggedInData?.joinedDate).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric"
+              })}
+            </p>
+        </div>
+
         <h4 id="mobileNavTitle">MENU</h4>
         <ul id="mobileNavList">
           <li onClick={()=> {window.location.href = '/blog'}}>
             <a href="#" ><i className="fa-solid fa-house"></i> Home</a>
           </li>
-          <li onClick={()=> {window.location.href = '/profile'}}>
+          <li onClick={()=> {window.location.href = `/profile?id=${currentLoggedInData.userId}`}}>
             <a href="#"><i className="fa-solid fa-user"></i> Profile</a>
           </li>
           <li  onClick={()=> {window.location.href = '/create'}}>
