@@ -340,6 +340,7 @@ export default function BlogFeed() {
                         >
                           <h3>{post?.title}</h3>
                           <p>{post?.body}</p>
+                          <br />
                           {post.filename && (
                             <>
 
