@@ -7,7 +7,9 @@ export default function ProfileSettings(props){
   const [successMessageChangeUsername, setSuccessMessageUsername] = useState(null)
   const [successMessageChangePicture, setSuccessMessageChangePicture] = useState(null)
   const [successMessageChangeBio, setSuccessMessageChangeBio] = useState(null)
+  const [successMessageDeleteAccount, setSuccessMessageDeleteAccount] = useState(null)
   const [editingMode, setEditingMode] = useState(false)
+  const [deleteMode, setDeleteMode] = useState(false)
 
   async function changeUsername(e){
     e.preventDefault()
@@ -164,6 +166,32 @@ export default function ProfileSettings(props){
   }
 
 
+  async function deleteProfile(){
+    let response = await fetch('/profileInfo/deleteProfile', {
+      method: "DELETE",
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({userToDelete: `${props.currentLoggedInUserId}`})
+    })
+
+
+    if (response.status === 401) {
+        window.location.href = "/login"
+      }
+
+    if (!response.ok) {
+      alert("Bio change failed");
+      console.log(response);
+      return;
+    }
+
+    setSuccessMessageDeleteAccount(<><i class="fa-solid fa-face-frown"></i> Deleted Account!</>)
+
+
+
+  }
+
+
+
   return (
     <>
       <main id="homeContainer" className="animate__animated animate__fadeInLeft">
@@ -233,7 +261,20 @@ export default function ProfileSettings(props){
             <hr />
             <br />
             <div className="settingsFunctionBtns">
-              <button id="deleteAccountBtn"><i className="fa-solid fa-eraser"></i> Delete Your Account</button>
+
+              {
+                deleteMode ? (
+                  <>
+                    <span id='confirmDelete'>
+                      <h4>Are you sure? <br /> (You will not be able to recover {props.currentLoggedInUsername}!)</h4>
+                      <button id="deleteAccountBtn" onClick={()=> deleteProfile()}><i className="fa-solid fa-face-frown"></i> DELETE ACCOUNT</button>
+                      <p className='successMessage'>{successMessageDeleteAccount}</p>
+                    </span>
+                  </>
+                ) : (
+                  <button id="deleteAccountBtnCheck" onClick={(e) => setDeleteMode(prev => !prev)}><i className="fa-solid fa-eraser"></i> Delete Your Account</button>
+                )
+              }
               <button className="settingsBtn" onClick={()=> window.location.href = '/login'}><i className="fa-solid fa-right-from-bracket"></i> Log Out</button>
             </div>
           </section>

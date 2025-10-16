@@ -4,6 +4,7 @@ from wolfr.db import get_db
 from werkzeug.utils import secure_filename
 import os
 import datetime
+from flask import session
 
 # All endpoints are prefixed with /post (e.g /profileInfo/newendpoint)
 profile_page = Blueprint("profileInfo", __name__, url_prefix="/profileInfo")
@@ -455,5 +456,31 @@ def changeBio():
     db.commit()
 
     return jsonify({"message": f"{currentUser} Updated their bio"})
+
+  return 200
+
+
+
+@profile_page.route('/deleteProfile', methods=['DELETE'])
+def deleteUser():
+  db = get_db()
+  cursor = db.cursor()
+  data = request.get_json()
+  userToDelete = data["userToDelete"]
+
+  if request.method == 'DELETE':
+    cursor.execute(
+      """
+      DELETE FROM user
+      WHERE id = ?
+      """, (userToDelete)
+    )
+
+    db.commit()
+
+    session.clear()
+    redirect("/login")
+
+    return jsonify({"message": f"deleted {userToDelete}"}), 200
 
   return 200
