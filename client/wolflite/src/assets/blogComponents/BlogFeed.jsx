@@ -412,7 +412,7 @@ export default function BlogFeed() {
                         </span>
                       </div>
                       <form className="commentFunctions" onSubmit={(e) => addCommentToPost(e, post.id, post.isPoll)}>
-                        <img src={currentLoggedInUserProfilePic ? `${import.meta.env.VITE_SERVER}${currentLoggedInUserProfilePic}` : null} alt="pic" className="profilePictures" />
+                        <img src={currentLoggedInUserProfilePic ? `${import.meta.env.VITE_SERVER}${currentLoggedInUserProfilePic}` : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`} alt="pic" className="profilePictures" />
                         <input type="text" required name="userComment" placeholder="Leave a comment...  " className="commentInput"/>
                         <button type="submit" className="postCommentBtn">Post <i className="fa-solid fa-paper-plane"></i></button>
                       </form>
