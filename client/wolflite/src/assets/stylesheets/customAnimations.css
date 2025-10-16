@@ -1,3 +1,9 @@
+/* small elements */
+hr { color: lightgrey; }
+.heartIcon { color: var(--primary); }
+.emptyHeartIcon { color: white; }
+.messageIcon { color: var(--secondary); }
+
 
 @keyframes likeAnimation {
   0% {

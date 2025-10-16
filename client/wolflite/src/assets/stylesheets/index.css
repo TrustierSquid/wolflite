@@ -80,11 +80,7 @@ body,
 -----------------------------------------------
 */
 
-/* small elements */
-hr { color: lightgrey; }
-.heartIcon { color: var(--primary); }
-.emptyHeartIcon { color: white; }
-.messageIcon { color: var(--secondary); }
+
 
 
 /* PROFILE SECTION */
@@ -891,6 +887,11 @@ hr { color: lightgrey; }
 #carefulText {
   font-weight: bold;
   color: orangered;
+}
+
+.attentionText {
+  color: crimson;
+  font-weight: bold;
 }
 
 
