@@ -138,7 +138,7 @@ export default function SideNav(props) {
                 onClick={() => (window.location.href = "/create")}
               >
                 <i className="fa-solid fa-plus"></i>
-                <h3>Create</h3>
+                <h3>Create Post</h3>
               </button>
               <button
                 className="sideNavButton"
