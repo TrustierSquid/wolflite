@@ -204,11 +204,10 @@ def retrievePosts():
             "likesByPoll": likes_by_poll.get(poll["id"], [])
          })
 
-
-         combined_results = postResults + pollResults
-         # Sort by 'created' field (descending: newest first)
-         combined_results.sort(key=lambda x: x["created"], reverse=True)
-
+      # Move combined_results and sorting outside the for loop
+      combined_results = postResults + pollResults
+      # Sort by 'created' field (descending: newest first)
+      combined_results.sort(key=lambda x: x["created"], reverse=True)
 
       return (
          jsonify(
