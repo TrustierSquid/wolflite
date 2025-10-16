@@ -130,3 +130,28 @@
 .informationText {
   text-align: left;
 }
+
+
+@media (max-width: 768px) {
+  .loginTextContainer {
+    gap: 1rem;
+  }
+
+
+  #loginContainer {
+    height: 100%;
+    width: 100%;
+    box-shadow: none;
+    border-radius: 0rem;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  #loginSection1 {
+    height: 100%;
+  }
+
+  #loginSection2 {
+    height: 100%;
+  }
+}
