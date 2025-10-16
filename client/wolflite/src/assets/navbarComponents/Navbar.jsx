@@ -116,6 +116,9 @@ function Navbar(props) {
           <li  onClick={()=> {window.location.href = '/create'}}>
             <a href="#" ><i className="fa-solid fa-plus"></i> Create</a>
           </li>
+          <li  onClick={() => (window.location.href = "/login")}>
+            <a href="#" ><i className="fa-solid fa-right-from-bracket"></i> Log out</a>
+          </li>
         </ul>
       </menu>
     </>
