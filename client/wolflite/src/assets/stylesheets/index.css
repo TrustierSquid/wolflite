@@ -885,9 +885,11 @@ hr { color: lightgrey; }
 
 .successMessage {
   color: green;
+  font-weight: bold;
 }
 
 #carefulText {
+  font-weight: bold;
   color: orangered;
 }
 
