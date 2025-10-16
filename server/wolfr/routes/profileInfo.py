@@ -321,6 +321,10 @@ def retrieveLoggedInUserPost():
     return jsonify({"error": "user does not exist"})
 
 
+
+
+
+
 @profile_page.route('/closePoll/<int:pollToClose>', methods=['DELETE'])
 def closePoll(pollToClose):
   db = get_db()
@@ -373,3 +377,28 @@ def closePoll(pollToClose):
     return jsonify({"message": f"Successfully closed poll {pollToClose}"}), 200
   except sqlite3.IntegrityError:
     return jsonify({"message": "Failed to close poll"}), 500
+
+
+
+
+@profile_page.route('/changeUsername', methods=['PUT'])
+def changeUsername():
+  db = get_db()
+  cursor = db.cursor()
+  data = request.get_json()
+  newUsername = data['newUsername'].replace(" ", "")
+
+  if request.method == 'PUT':
+
+    cursor.execute(
+      """
+      UPDATE user
+      SET username = ?
+      WHERE id = ?
+      """, (newUsername, g.user['id'])
+    )
+
+    db.commit()
+
+
+    return jsonify({"message": "Username change endpoint called"}), 200

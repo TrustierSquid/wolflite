@@ -1,6 +1,39 @@
-
+import {useState, useRef} from 'react'
 
 export default function ProfileSettings(props){
+  const changeUsernameRef = useRef(null)
+  const changeBioRef = useRef(null)
+  const [successMessageChangeUsername, setSuccessMessageUsername] = useState(null)
+
+  async function changeUsername(e){
+    e.preventDefault()
+    const formData = new FormData(changeUsernameRef.current);
+    const formObj = Object.fromEntries(formData.entries());
+    const newUsername = formObj.newUsername;
+
+    if (newUsername.length < 4) {
+      setSuccessMessageUsername(<><span id='carefulText'><i className="fa-solid fa-circle-exclamation"></i> Username needs to be at least 4 characters</span></>)
+      return
+    }
+
+
+    try {
+      let response = await fetch('/profileInfo/changeUsername', {
+        method: 'PUT',
+        headers: {'Content-type': 'application/json'},
+        body: JSON.stringify(formObj)
+      });
+
+      let data = await response.json();
+
+      e.target.reset()
+      setSuccessMessageUsername(<><i className="fa-solid fa-square-check"></i> Username changed!</>)
+
+    } catch (error) {
+      console.log(error)
+    }
+
+  }
 
 
   return (
@@ -23,7 +56,10 @@ export default function ProfileSettings(props){
                   ? `${import.meta.env.VITE_SERVER}${props?.currentLoggedInUserProfilePic}`
                   : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
                 } alt="" />
-              <h4>Profile Picture</h4>
+              <span>
+                <h3>{props.currentLoggedInUsername}</h3>
+                <p style={{color: "grey"}}>Profile Picture</p>
+              </span>
             </div>
 
             <div className="settingsFunctionBtns">
@@ -32,22 +68,23 @@ export default function ProfileSettings(props){
             </div>
           </section>
 
-          <section className="sectionContent">
+          <form className="sectionContent" onSubmit={changeUsername} ref={changeUsernameRef}>
             <h2 className="universalHeader">User Information</h2>
             <hr />
             <br />
             <label htmlFor=""><b>Change Username</b></label>
-            <input type="Text" id="changeUsernameInput" maxLength={30}/>
+            <input type="Text" id="changeUsernameInput" maxLength={25} onFocus={() => setSuccessMessageUsername('')} name="newUsername" placeholder='New Username' />
 
             <div className="settingsFunctionBtns">
-              <button className="settingsBtn"><i className="fa-solid fa-address-card"></i> Change Username</button>
+              <button type="submit" className="settingsBtn"><i className="fa-solid fa-address-card"></i> Change Username</button>
+              <p className='successMessage'>{successMessageChangeUsername}</p>
             </div>
-          </section>
+          </form>
 
-          <section className="sectionContent">
-            <label htmlFor="">Bio</label>
+          <section className="sectionContent" ref={changeBioRef}>
+            <label htmlFor=""><b>Change Bio</b></label>
             <div id="bioDisplay">
-                Lorem ipsum dolor sit amet consectetur, adipisicing elit. Odio, adipisci laboriosam illum accusantium reiciendis saepe ducimus beatae maxime quasi fuga.
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Odio, adipisci laboriosam illum accusantium reiciendis saepe ducimus beatae maxime quasi fuga.
             </div>
 
             <div className="settingsFunctionBtns">
