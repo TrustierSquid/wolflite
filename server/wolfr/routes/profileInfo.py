@@ -401,6 +401,32 @@ def changeUsername():
     db.commit()
 
 
-    return jsonify({"message": "Username change endpoint called"}), 200
+    return jsonify({"message": "Username change"}), 200
+
+  return 200
+
+
+
+@profile_page.route('/deleteProfilePic', methods=['PUT'])
+def deleteProfilePicture():
+  db = get_db()
+  cursor = db.cursor()
+  data = request.get_json()
+  currentUser = data['currentUser']
+
+
+  if request.method == 'PUT':
+    cursor.execute(
+      """
+      UPDATE user
+      SET filename = null
+      WHERE id = ?
+      """, (currentUser)
+    )
+
+    db.commit()
+
+    return jsonify({"message": f"{currentUser} deleted profle picture"}), 200
+
 
   return 200

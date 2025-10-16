@@ -26,6 +26,17 @@ export default function ProfileSettings(props){
         body: JSON.stringify(formObj)
       });
 
+      if (response.status === 401) {
+        window.location.href = "/login"
+      }
+
+
+      if (!response.ok) {
+        alert("Username change failed");
+        console.log(response);
+        return;
+      }
+
       let data = await response.json();
 
       e.target.reset()
@@ -79,6 +90,37 @@ export default function ProfileSettings(props){
 
   }
 
+  async function deleteProfilePicture(e){
+    e.preventDefault()
+
+    try {
+      let response = await fetch(`/profileInfo/deleteProfilePic`, {
+        method: "PUT",
+        headers: {'Content-type': 'application/json'},
+        body: JSON.stringify({currentUser: `${props.currentLoggedInUserId}`})
+      })
+
+
+      if (response.status === 401) {
+        window.location.href = "/login"
+      }
+
+      if (!response.ok) {
+        alert("Deletion failed");
+        console.log(response);
+        return;
+      }
+
+      setSuccessMessageChangePicture(<><i className="fa-solid fa-square-check"></i> Profile Picture Deleted!</>)
+
+
+      let data = response.json()
+    } catch (error){
+      console.log(error)
+    }
+
+  }
+
 
   return (
     <>
@@ -110,7 +152,7 @@ export default function ProfileSettings(props){
             <form className="settingsFunctionBtns" ref={changeProfilePicRef}>
               <input id="file" type="file" name='file' onChange={changeProfilePicture}/>
               <label htmlFor='file' className="settingsBtn"><i className="fa-solid fa-image"></i> Upload New Picture</label>
-              <button className="settingsDeletePfPic"><i className="fa-solid fa-trash"></i> Delete</button>
+              <button className="settingsDeletePfPic" onClick={(e)=> deleteProfilePicture(e)}><i className="fa-solid fa-trash"></i> Delete</button>
             </form>
           </section>
 
