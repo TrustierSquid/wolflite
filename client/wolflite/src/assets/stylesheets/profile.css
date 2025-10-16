@@ -78,9 +78,12 @@
 
 #profileDetailsBio {
   line-height: 1.5;
-  background-color: #eaf1fe;
   padding: 1rem;
   border-radius: 10px;
+}
+
+.bioExists {
+  background-color: #eaf1fe;
 }
 
 #profileDetailsHeader {
