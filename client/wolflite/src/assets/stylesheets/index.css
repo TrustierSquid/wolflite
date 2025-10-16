@@ -616,18 +616,19 @@ body,
   background-color: black;
   opacity: 0.8;
   position: fixed;
-  z-index: 999;
+  top: 0;
+  z-index: 1000;
   height: 100vh;
   width: 100vw;
 }
 
 
 #moodleContainer {
-  height: 100vh;
+  height: 80vh;
   width: 100vw;
   background: none;
   position: fixed;
-  z-index: 999;
+  z-index: 1001;
   display: grid;
   place-items: center;
   pointer-events: none;
@@ -903,13 +904,26 @@ body,
 
 
 @media (max-width: 768px) {
+
+  #elementContainer{
+    width: 98%;
+    padding: 0.5rem;
+  }
+
   #createMenuContainer {
     background-color: white;
-    padding: 1rem;
-    /* gap: 15rem; */
+    padding: 0rem;
     display: flex;
     flex-direction: column;
     border-radius: 1rem;
+  }
+
+  #selectImage {
+    width: 100%;
+  }
+
+  #createMenuOptions {
+    width: 100%;
   }
 
   #profileSection {
@@ -957,11 +971,11 @@ body,
     width: 100vw;
     background: none;
     position: fixed;
-    z-index: 999;
+    z-index: 1000;
     display: flex;
     justify-content: center;
     align-items: start;
-    margin-top: 10%;
+    margin-top: 0%;
     pointer-events: none;
 
   }
@@ -971,6 +985,7 @@ body,
     width: 98%;
     height: 80%;
     padding: 0rem;
+    position: relative;
   }
 
   #moodleTitle {

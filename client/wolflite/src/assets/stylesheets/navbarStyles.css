@@ -38,7 +38,9 @@
   display: flex;
   justify-content: space-between;
   font-family: "Comfortaa";
-  z-index: 1000;
+  z-index: 999;
+  margin-bottom: 2rem;
+box-shadow: rgba(50, 50, 93, 0.25) 0px 30px 60px -12px inset, rgba(0, 0, 0, 0.3) 0px 18px 36px -18px inset;
 }
 
 .navContainerSection {
@@ -98,6 +100,7 @@
   opacity: 0;
   pointer-events: none;
   display: none;
+  z-index: 1001;
 }
 
 .navBarOpen {
@@ -174,10 +177,13 @@
 /* Responsive Design for mobile devices */
 @media (max-width: 768px) {
   #navContainer {
+    top: 0;
+    width: 100%;
+    border-radius: 0;
     justify-content: space-between;
   }
 
-  #navContainer > .navContainerSection > h2 {
-    /* display: none; */
+  .navMobileMenu {
+
   }
 }
