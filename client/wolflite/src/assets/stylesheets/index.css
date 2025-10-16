@@ -10,7 +10,7 @@
   --primary: #ff4167;
   --secondary: #a454ff;
   --infoBtn: #2491ff;
-  --background: #e2e2e2;
+  --background: #d7d7d7;
   --regBtn: #333333;
   --mainFont: "Albert Sans"
 }
@@ -114,7 +114,6 @@ body,
   box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
   object-fit: contain;
   position: relative;
-  word-break: break-all;
   overflow-wrap: anywhere;
 }
 
@@ -126,6 +125,7 @@ body,
 .postContainer > h3 {
   word-break: break-word;
   overflow-wrap: anywhere;
+  margin-bottom: 0.5rem;
 }
 
 
