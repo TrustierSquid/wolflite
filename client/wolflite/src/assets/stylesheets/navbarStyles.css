@@ -12,8 +12,8 @@
 }
 
 #navImg {
-  height: 50px;
-  width: 50px;
+  height: 35px;
+  width: 35px;
   cursor: pointer;
 }
 
@@ -28,13 +28,15 @@
 
 #navContainer {
   background-color: #333;
+  width: 80%;
+  margin: 0 auto;
   position: sticky;
-  top: 0;
-  border-bottom: 1px solid var(--primaryFaded);
-  padding: 0.2rem;
+  top: 5px;
+  border-radius: 3rem;
+  padding: 0.5rem;
   padding-inline: 1rem;
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   font-family: "Comfortaa";
   z-index: 1000;
 }
@@ -44,7 +46,9 @@
   align-items: center;
   gap: 0.5rem;
   color: var(--primary);
-  color: white;
+  background-color: white;
+  padding: 0.5rem;
+  border-radius: 50%;
 }
 
 .navContainerSectionLinks {
@@ -54,9 +58,18 @@
   gap: 2rem;
 }
 
+.navLink {
+}
+
+#navTitle {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .navContainerSectionLinks > li > a {
   text-decoration: none;
-  color: var(--primary);
+  color: white;
 }
 
 .navContainerSectionLinks > li > a:hover {
@@ -65,9 +78,9 @@
 
 #navCreatePost {
   background-color: var(--primary);
-  padding: 0.5rem;
+  padding: 0.7rem;
   transition: 150ms;
-  border-radius: 0.5rem;
+  border-radius: 2rem;
 }
 
 #navCreatePost:hover {

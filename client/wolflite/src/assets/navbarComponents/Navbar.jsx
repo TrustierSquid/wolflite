@@ -6,7 +6,6 @@ function Navbar(props) {
   const [isNavOpen, setIsNavOpen] = useState(false)
   const [currentLoggedInData, setCurrentLoggedInData] = useState(null)
 
-
   // opening and closing mobile navbar
   function openNav(){
     setIsNavOpen(prev => true)
@@ -60,20 +59,28 @@ function Navbar(props) {
   return (
     <>
       <nav id="navContainer">
-        <section className="navContainerSection" onClick={()=> window.location.href = '/login'}>
-          <img id="navImg" src={`${import.meta.env.VITE_SERVER}/static/uploads/wolfLogo.png`} alt="" />
-          <h2>WOLFLITE</h2>
-        </section>
+        <div id="navTitle">
+          <section className="navContainerSection" onClick={()=> window.location.href = '/login'}>
+            <img id="navImg" src={`${import.meta.env.VITE_SERVER}/static/uploads/wolfLogo.png`} alt="" />
+          </section>
+          <h1 className="universalHeader" style={{color: "var(--primary)"}}>
+            {endpoint === '/blog' ? `Home` : endpoint === '/profile' ? `Profile` : endpoint === `/create` ? `Create` : endpoint === `/settings` ? `Settings` : '' }
+          </h1>
+        </div>
+
 
         {/* Mobile Nav Button */}
         <button id="mobileNavButton" onClick={()=> openNav()}><i className="fa-solid fa-bars"></i></button>
 
         <ul className="navContainerSectionLinks">
-          <li onClick={()=> {window.location.href = '/blog'}}>
+          <li className="navLink" onClick={()=> {window.location.href = '/blog'}}>
             <a href="#" >Home</a>
           </li>
+          <li className="navLink" onClick={()=> {window.location.href = `/profile?id=${currentLoggedInData.userId}`}}>
+            <a href="#">Profile</a>
+          </li>
           <li id="navCreatePost" onClick={()=> {window.location.href = '/create'}}>
-            <a href="#" ><i className="fa-solid fa-plus"></i> Create</a>
+            <a href="#" >Create Post</a>
           </li>
         </ul>
       </nav>
