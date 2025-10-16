@@ -110,7 +110,6 @@ function LoginCreate() {
                       placeholder="Username"
                       required
                     />
-                    <br />
                     <input
                       ref={passwordRef}
                       className="textBox"
@@ -154,7 +153,6 @@ function LoginCreate() {
                       placeholder="Enter a username"
                       required
                     />
-                    <br />
                     <input
                       ref={passwordRef}
                       className="textBox"
