@@ -296,7 +296,10 @@ hr {
 }
 
 #settingsPfPic {
-  width: 75px;
+  height: 85px;
+  width: 85px;
+  object-fit: cover;
+  aspect-ratio: 1 / 1;
   border-radius: 50%;
 }
 

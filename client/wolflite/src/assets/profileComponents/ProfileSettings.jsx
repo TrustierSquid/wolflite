@@ -3,7 +3,9 @@ import {useState, useRef} from 'react'
 export default function ProfileSettings(props){
   const changeUsernameRef = useRef(null)
   const changeBioRef = useRef(null)
+  const changeProfilePicRef = useRef(null)
   const [successMessageChangeUsername, setSuccessMessageUsername] = useState(null)
+  const [successMessageChangePicture, setSuccessMessageChangePicture] = useState(null)
 
   async function changeUsername(e){
     e.preventDefault()
@@ -36,6 +38,48 @@ export default function ProfileSettings(props){
   }
 
 
+
+  async function changeProfilePicture(){
+    const fileInput = changeProfilePicRef.current.querySelector('input[type="file"]')
+    const file = fileInput.files[0]
+    console.log(fileInput)
+
+    if (!file) {
+      alert("No file selected");
+      return;
+    }
+
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const response = await fetch(`/post/updateProfilePicture/${props.currentLoggedInUserId}`, {
+        method: "PUT",
+        body: formData,
+      })
+
+      if (response.status === 401) {
+        window.location.href = "/login"
+      }
+
+
+      if (!response.ok) {
+        alert("Upload failed");
+        console.log(response);
+        return;
+      }
+
+      setSuccessMessageChangePicture(<><i className="fa-solid fa-square-check"></i> Profile Picture Changed!</>)
+
+    } catch (error) {
+      console.log(error)
+    }
+
+
+
+  }
+
+
   return (
     <>
       <main id="homeContainer" className="animate__animated animate__fadeInLeft">
@@ -59,13 +103,15 @@ export default function ProfileSettings(props){
               <span>
                 <h3>{props.currentLoggedInUsername}</h3>
                 <p style={{color: "grey"}}>Profile Picture</p>
+                <p className='successMessage'>{successMessageChangePicture}</p>
               </span>
             </div>
 
-            <div className="settingsFunctionBtns">
-              <button className="settingsBtn"><i className="fa-solid fa-image"></i> Upload New Picture</button>
+            <form className="settingsFunctionBtns" ref={changeProfilePicRef}>
+              <input id="file" type="file" name='file' onChange={changeProfilePicture}/>
+              <label htmlFor='file' className="settingsBtn"><i className="fa-solid fa-image"></i> Upload New Picture</label>
               <button className="settingsDeletePfPic"><i className="fa-solid fa-trash"></i> Delete</button>
-            </div>
+            </form>
           </section>
 
           <form className="sectionContent" onSubmit={changeUsername} ref={changeUsernameRef}>
