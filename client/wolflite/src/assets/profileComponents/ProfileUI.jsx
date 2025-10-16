@@ -332,7 +332,7 @@ export default function ProfileUI(props) {
               </p>
             </span>
             {/* <p id="profileDetailsBio">Exploring ideas, sharing stories, and connecting with communities. Welcome to my profile!</p> */}
-            <p id="profileDetailsBio">Exploring ideas, sharing stories</p>
+            <p id="profileDetailsBio" className={props.currentLoggedInUserBio ? "bioExists" : ""}>{props.currentLoggedInUserBio}</p>
             <h4 style={{ color: "Green", textAlign: "left" }}>
               {successMessage}
             </h4>
