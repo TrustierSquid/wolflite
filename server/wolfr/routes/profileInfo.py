@@ -402,3 +402,5 @@ def changeUsername():
 
 
     return jsonify({"message": "Username change endpoint called"}), 200
+
+  return 200
