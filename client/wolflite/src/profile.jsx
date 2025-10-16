@@ -41,7 +41,8 @@ function StageUserData() {
           username: data.currentUserName,
           userId: data.currentUserID,
           userPfPic: data.currentUserPfPicture,
-          joinedDate: data.joinedDate
+          joinedDate: data.joinedDate,
+          bio: data.bio
         });
 
       } catch (error) {
@@ -65,6 +66,7 @@ function StageUserData() {
               currentLoggedInUsername={currentLoggedInData?.username}
               currentLoggedInUserProfilePic={currentLoggedInData?.userPfPic}
               userJoinedDate={currentLoggedInData?.joinedDate}
+              currentLoggedInUserBio={currentLoggedInData?.bio}
             />
           )
         ) : (
@@ -73,6 +75,7 @@ function StageUserData() {
             currentLoggedInUsername={currentLoggedInData?.username}
             currentLoggedInUserProfilePic={currentLoggedInData?.userPfPic}
             userJoinedDate={currentLoggedInData?.joinedDate}
+            currentLoggedInUserBio={currentLoggedInData?.bio}
           />
         )
       }
