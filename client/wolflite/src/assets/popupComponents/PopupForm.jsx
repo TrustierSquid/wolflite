@@ -199,7 +199,7 @@ export default function PopupForm() {
                     type="text"
                     name="postContent"
                     placeholder="Enter a post Body"
-                    maxLength={700}
+                    maxLength={1000}
                     required
                   />
                 </div>
