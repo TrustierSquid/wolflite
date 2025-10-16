@@ -317,7 +317,7 @@ export default function ProfileUI(props) {
 
           <div id="profileDetails">
             <span id="nameAndAT">
-              <p id="profileDetailsUsername">{allUserPosts.username} <span className="userPermissionAdmin">Admin</span> </p>
+              <p id="profileDetailsUsername">{allUserPosts.username}</p>
               <p id="profileDetailsHeader">
                 Joined <></>
                 <span>
