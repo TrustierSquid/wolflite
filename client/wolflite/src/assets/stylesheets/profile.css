@@ -379,13 +379,38 @@ hr {
 }
 
 
-#bioDisplay {
+
+
+#changeBioField {
+  border: 1px solid lightgrey;
+  max-width: 100%;
+  min-width: 100%;
+  max-height: 50%;
+  font-family: "Arial";
+}
+
+.hideDisplay {
+  display: none;
+}
+
+.bioDisplay {
   line-height: 1.5;
   background-color: #eaf1fe;
   padding: 1rem;
   border-radius: 1rem;
+  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 
+#changeBioBtn {
+
+}
+
+
+#saveBioButton {
+  background-color: rgb(206, 255, 206);
+  color: green;
+}
 
 #deleteAccountBtn {
   background-color: #ffeaea;
@@ -405,6 +430,12 @@ hr {
     margin-top: 0rem;
     font-size: 0.8rem;
     border-radius: 0rem;
+  }
+
+  .settingsBtn,
+  .settingsDeletePfPic,
+  #deleteAccountBtn {
+    font-size: 0.8rem;
   }
 
   .sectionContent:nth-of-type(2) {

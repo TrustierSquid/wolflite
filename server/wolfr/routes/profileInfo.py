@@ -430,3 +430,30 @@ def deleteProfilePicture():
 
 
   return 200
+
+
+
+
+@profile_page.route('/changeBio', methods=['PUT'])
+def changeBio():
+  db = get_db()
+  cursor = db.cursor()
+  data = request.get_json()
+
+  newBio = data['newBio']
+  currentUser = data['currentUser']
+
+  if request.method == 'PUT':
+    cursor.execute(
+      """
+      UPDATE user
+      SET bio = ?
+      WHERE id = ?
+      """, (newBio, currentUser)
+    )
+
+    db.commit()
+
+    return jsonify({"message": f"{currentUser} Updated their bio"})
+
+  return 200

@@ -6,6 +6,8 @@ export default function ProfileSettings(props){
   const changeProfilePicRef = useRef(null)
   const [successMessageChangeUsername, setSuccessMessageUsername] = useState(null)
   const [successMessageChangePicture, setSuccessMessageChangePicture] = useState(null)
+  const [successMessageChangeBio, setSuccessMessageChangeBio] = useState(null)
+  const [editingMode, setEditingMode] = useState(false)
 
   async function changeUsername(e){
     e.preventDefault()
@@ -40,7 +42,7 @@ export default function ProfileSettings(props){
       let data = await response.json();
 
       e.target.reset()
-      setSuccessMessageUsername(<><i className="fa-solid fa-square-check"></i> Username changed!</>)
+      setSuccessMessageUsername(<><i className="fa-solid fa-circle-check"></i> Username changed!</>)
 
     } catch (error) {
       console.log(error)
@@ -53,7 +55,6 @@ export default function ProfileSettings(props){
   async function changeProfilePicture(){
     const fileInput = changeProfilePicRef.current.querySelector('input[type="file"]')
     const file = fileInput.files[0]
-    console.log(fileInput)
 
     if (!file) {
       alert("No file selected");
@@ -80,7 +81,7 @@ export default function ProfileSettings(props){
         return;
       }
 
-      setSuccessMessageChangePicture(<><i className="fa-solid fa-square-check"></i> Profile Picture Changed!</>)
+      setSuccessMessageChangePicture(<><i className="fa-solid fa-circle-check"></i> Profile Picture Changed!</>)
 
     } catch (error) {
       console.log(error)
@@ -111,13 +112,54 @@ export default function ProfileSettings(props){
         return;
       }
 
-      setSuccessMessageChangePicture(<><i className="fa-solid fa-square-check"></i> Profile Picture Deleted!</>)
+      setSuccessMessageChangePicture(<><i className="fa-solid fa-circle-check"></i> Profile Picture Deleted!</>)
 
 
       let data = response.json()
     } catch (error){
       console.log(error)
     }
+
+  }
+
+
+  async function changeBio(e){
+    e.preventDefault()
+    const formData = new FormData(changeBioRef.current);
+    const formObj = Object.fromEntries(formData.entries());
+
+
+    try {
+      let response = await fetch(`/profileInfo/changeBio`, {
+        method: "PUT",
+        headers: {'Content-type': 'application/json'},
+        body: JSON.stringify(
+          {
+            currentUser: `${props.currentLoggedInUserId}`,
+            newBio: `${formObj.changeBioField}`
+          }
+        )
+      })
+
+      if (response.status === 401) {
+        window.location.href = "/login"
+      }
+
+      if (!response.ok) {
+        alert("Bio change failed");
+        console.log(response);
+        return;
+      }
+
+
+      setSuccessMessageChangeBio(<><i className="fa-solid fa-circle-check"></i> Changed Bio!</>)
+
+    } catch (error) {
+      console.log(error)
+    }
+
+
+    let data = response.json()
 
   }
 
@@ -160,8 +202,8 @@ export default function ProfileSettings(props){
             <h2 className="universalHeader">User Information</h2>
             <hr />
             <br />
-            <label htmlFor=""><b>Change Username</b></label>
-            <input type="Text" id="changeUsernameInput" maxLength={25} onFocus={() => setSuccessMessageUsername('')} name="newUsername" placeholder='New Username' />
+            <label><b>Change Username</b></label>
+            <input type="Text" id="changeUsernameInput" maxLength={25} onFocus={() => setSuccessMessageUsername('')} name="newUsername" placeholder={props.currentLoggedInUsername} />
 
             <div className="settingsFunctionBtns">
               <button type="submit" className="settingsBtn"><i className="fa-solid fa-address-card"></i> Change Username</button>
@@ -169,15 +211,21 @@ export default function ProfileSettings(props){
             </div>
           </form>
 
-          <section className="sectionContent" ref={changeBioRef}>
-            <label htmlFor=""><b>Change Bio</b></label>
-            <div id="bioDisplay">
-              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Odio, adipisci laboriosam illum accusantium reiciendis saepe ducimus beatae maxime quasi fuga.
+          <section className="sectionContent">
+            <label><b>Change Bio</b></label>
+            <div className={editingMode ? "hideDisplay" : "bioDisplay"}>
+              {props.currentLoggedInUserBio}
             </div>
 
-            <div className="settingsFunctionBtns">
-                <button className="settingsBtn"><i className="fa-solid fa-square-pen"></i> Change Bio</button>
-            </div>
+            <form ref={changeBioRef} onSubmit={changeBio}>
+              <textarea name="changeBioField" maxLength={500} id="changeBioField" className={editingMode ? 'bioDisplay' : 'hideDisplay'} placeholder='Change your bio 📝'></textarea>
+
+              <div className="settingsFunctionBtns">
+                  <button className={editingMode ? "settingsBtn hideDisplay" : "settingsBtn"} id='changeBioBtn' type='button' onClick={(e) => setEditingMode(prev => !prev)}><i className="fa-solid fa-square-pen"></i> Change Bio</button>
+                  <button className={editingMode ? "settingsBtn" : "settingsBtn hideDisplay"} id='saveBioButton' type="submit" onClick={(e) => {setEditingMode(prev => !prev)}}><i className="fa-solid fa-floppy-disk"></i> Save</button>
+                  <p className='successMessage'>{successMessageChangeBio}</p>
+              </div>
+            </form>
           </section>
 
           <section className="sectionContent">
