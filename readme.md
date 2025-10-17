@@ -132,7 +132,7 @@ $ npm run dev
 ### Docker Setup
 Build and Run:
 ```
-$ docker-compose up --build
+$ docker-compose up -d --build
 ```
 
 Delete and tear down container and image:
