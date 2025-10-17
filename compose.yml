@@ -14,3 +14,11 @@ services:
       - ./data:/app/instance
       - ./uploads:/app/static/uploads
     restart: unless-stopped
+
+  cloudFlared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel run flasktunnel
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
