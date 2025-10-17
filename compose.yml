@@ -15,7 +15,7 @@ services:
       - ./uploads:/app/static/uploads
     restart: unless-stopped
 
-  cloudFlared:
+  cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
     restart: unless-stopped
