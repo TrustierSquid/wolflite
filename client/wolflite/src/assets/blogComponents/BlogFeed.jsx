@@ -261,60 +261,60 @@ export default function BlogFeed() {
                           {post?.options?.map((option) => {
                             return (
                               <>
-                                <button
-                                  onClick={() => {
-                                    addVote(post?.id, option.id, post.isOpen);
+                              <button
+                                onClick={() => {
+                                addVote(post?.id, option.id, post.isOpen);
+                                }}
+                                className={
+                                post?.isOpen ? (
+                                  option.voters.includes(currentLoggedInUserId)
+                                  ? "hasVoted"
+                                  : "pollOption"
+                                ) : (
+                                  "pollClosed"
+                                )
+                                }
+                              >
+                                <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                                <h5 className="optionText">{option?.option_text}</h5>
+
+
+                                {/* Progress bar */}
+                                <div
+                                  style={{
+                                  background: "#e0e0e0",
+                                  borderRadius: "8px",
+                                  height: "8px",
+                                  width: "100%",
+                                  margin: "8px 0",
+                                  overflow: "hidden",
                                   }}
-                                  className={
-                                    post?.isOpen ? (
-                                      option.voters.includes(currentLoggedInUserId)
-                                        ? "hasVoted"
-                                        : "pollOption"
-                                    ) : (
-                                      "pollClosed"
-                                    )
-                                  }
                                 >
-                                  <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
-                                    <h5 className="optionText">{option?.option_text}</h5>
+                                  <div
+                                  style={{
+                                    background: option.voters.includes(currentLoggedInUserId)
+                                    ? "#4caf50"
+                                    : "#2196f3",
+                                    width: post.totalVotes
+                                    ? `${Math.floor((option.user_voted / post.totalVotes) * 100)}%`
+                                    : "0%",
+                                    height: "100%",
+                                    transition: "width 0.4s",
+                                  }}
+                                  ></div>
+                                </div>
+                                <span className="votePercentage" style={{ display: "flex", justifyContent: "space-between" }}>
+                                  <p>{option.user_voted} votes</p>
+                                  <h4>
+                                  {post.totalVotes
+                                    ? `${Math.floor((option.user_voted / post.totalVotes) * 100)}%`
+                                    : "0%"}
+                                  </h4>
+                                </span>
 
 
-                                    {/* Progress bar */}
-                                    <div
-                                      style={{
-                                        background: "#e0e0e0",
-                                        borderRadius: "8px",
-                                        height: "8px",
-                                        width: "100%",
-                                        margin: "8px 0",
-                                        overflow: "hidden",
-                                      }}
-                                    >
-                                      <div
-                                        style={{
-                                          background: option.voters.includes(currentLoggedInUserId)
-                                            ? "#4caf50"
-                                            : "#2196f3",
-                                          width: post.totalVotes
-                                            ? `${(option.user_voted / post.totalVotes) * 100}%`
-                                            : "0%",
-                                          height: "100%",
-                                          transition: "width 0.4s",
-                                        }}
-                                      ></div>
-                                    </div>
-                                    <span className="votePercentage" style={{ display: "flex", justifyContent: "space-between" }}>
-                                      <p>{option.user_voted} votes</p>
-                                      <h4>
-                                        {post.totalVotes
-                                          ? `${((option.user_voted / post.totalVotes) * 100)}%`
-                                          : "0%"}
-                                      </h4>
-                                    </span>
-
-
-                                  </div>
-                                </button>
+                                </div>
+                              </button>
 
                               </>
                             );

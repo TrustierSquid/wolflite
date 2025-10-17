@@ -695,7 +695,7 @@ export default function ProfileUI(props) {
                                             ? "#4caf50"
                                             : "#2196f3",
                                           width: poll.totalVotes
-                                            ? `${(option.user_voted / poll.totalVotes) * 100}%`
+                                            ? `${Math.floor((option.user_voted / poll.totalVotes) * 100)}%`
                                             : "0%",
                                           height: "100%",
                                           transition: "width 0.4s",
