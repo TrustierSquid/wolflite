@@ -133,6 +133,8 @@ function LoginCreate() {
                   <h1>Welcome! 👋 </h1>
                   <h3>Create a new user and begin this journey with us!</h3>
                   <button className="submitBtn" onClick={()=> window.location.href = '/'}>Create user</button>
+                  <p>Guest Login: HiringGuest</p>
+                  <p>Guest Password: PassWord01%</p>
                 </section>
               </>
 
@@ -176,6 +178,8 @@ function LoginCreate() {
                   <h1>Hey There! 👋 </h1>
                   <h3>Welcome back! Let’s pick up right where you left off.</h3>
                   <button className="submitBtn" onClick={()=> window.location.href = '/login'}>Login</button>
+                  <p>Guest Login: HiringGuest</p>
+                  <p>Guest Password: PassWord01%</p>
                 </section>
               </>
             )
