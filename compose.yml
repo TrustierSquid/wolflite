@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  wolflite:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - FLASK_ENV=production
+      - DB_KEY=${DB_KEY}
+    volumes:
+      - ./data:/app/instance
+      - ./uploads:/app/static/uploads
+    restart: unless-stopped
