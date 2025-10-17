@@ -35,11 +35,12 @@ def create_app(test_config=None):
         static_folder=os.path.join(BASE_DIR, "static"),
     )
 
-    # For development Only
     app.config.update(
         SESSION_COOKIE_HTTPONLY=True,
-        SESSION_COOKIE_SAMESITE="Lax",  # allow cross-site
-        SESSION_COOKIE_SECURE=False      # keep False in dev if no HTTPS
+        SESSION_COOKIE_SAMESITE="Lax",
+        SESSION_COOKIE_SECURE=True,     # HTTPS required in production
+        DEBUG=False,
+        TESTING=False
     )
 
     app.config.from_mapping(
