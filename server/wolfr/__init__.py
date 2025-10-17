@@ -17,7 +17,9 @@ from werkzeug.utils import secure_filename
 from wolfr.db import get_db
 
 # loading environment variables
-load_dotenv()
+# load_dotenv()
+env_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
+load_dotenv(env_path)
 db_key = os.getenv("DB_KEY")
 
 # Creating the flask instance
