@@ -934,9 +934,7 @@ body,
     display: block;
   }
 
-  .navContainerSectionLinks {
-    display: none;
-  }
+
 
   #createMenuOptions {
     flex-direction: row;
