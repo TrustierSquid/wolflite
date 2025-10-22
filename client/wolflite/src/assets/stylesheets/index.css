@@ -39,8 +39,7 @@ body,
 .universalHeader {
  color: var(--secondary);
  font-weight: bold;
- letter-spacing: 0.1rem;
- font-family: var(--mainFont);
+ font-family: "Comfortaa";
 }
 
 
