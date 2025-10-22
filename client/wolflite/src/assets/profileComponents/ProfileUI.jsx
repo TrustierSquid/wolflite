@@ -331,7 +331,6 @@ export default function ProfileUI(props) {
                 </span>
               </p>
             </span>
-            {/* <p id="profileDetailsBio">Exploring ideas, sharing stories, and connecting with communities. Welcome to my profile!</p> */}
             <p id="profileDetailsBio" className={props.currentLoggedInUserBio ? "bioExists" : ""}>{props.currentLoggedInUserBio}</p>
             <h4 style={{ color: "Green", textAlign: "left" }}>
               {successMessage}
@@ -363,34 +362,12 @@ export default function ProfileUI(props) {
                     <label className="profilePictureSelectorLabel" onClick={()=> window.location.href = '/settings'}><i className="fa-solid fa-gear"></i> Profile Settings</label>
                   </div>
 
-                  {/* <div className="userInformation">
-                    <span className="userAnalyticsItem">
-                      <h3>324</h3>
-                      <p className="analyticLabel">Friends</p>
-                    </span>
-                    <span className="userAnalyticsItem">
-                      <h3>30</h3>
-                      <p className="analyticLabel">Posts</p>
-                    </span>
-                  </div> */}
-
 
                 </form>
             </>
             ) : (
               <>
-                <form action="" id="formButtonGroup">
-                  {/* <div className="userInformation">
-                    <span className="userAnalyticsItem">
-                      <h3><i className="fa-solid fa-user-group"></i> 324</h3>
-                      <p className="analyticLabel">Friends</p>
-                    </span>
-                    <span className="userAnalyticsItem">
-                      <h3><i className="fa-solid fa-paper-plane"></i> 30</h3>
-                      <p className="analyticLabel">Posts</p>
-                    </span>
-                  </div> */}
-                </form>
+                <form action="" id="formButtonGroup"></form>
               </>
             )
           }
@@ -405,18 +382,18 @@ export default function ProfileUI(props) {
         <div className="profileInformationItemButtonGroup">
           {/* Expired or closed polls */}
 
-          <button className="profileControlBtn" onClick={()=> viewFeed("Archived")}>{/* <i className="fa-solid fa-square-poll-horizontal"></i>  */}Archived Polls</button>
+          <button className="profileControlBtn" onClick={()=> viewFeed("Archived")}>Archived Polls</button>
 
           {/* Liked Posts */}
-          <button className="profileControlBtn" onClick={()=> viewFeed("Liked")}>{/* <i className="fa-solid fa-comment"></i> */} Liked Posts</button>
+          <button className="profileControlBtn" onClick={()=> viewFeed("Liked")}>Liked Posts</button>
         </div>
         <div className="profileInformationItemButtonGroup">
 
           {/* View Polls */}
-          <button className="profileControlBtn" onClick={()=> viewFeed("Polls")}>{/* <i className="fa-solid fa-square-poll-horizontal"></i> */} Polls</button>
+          <button className="profileControlBtn" onClick={()=> viewFeed("Polls")}>Polls</button>
 
           {/* View Posts  */}
-          <button className="profileControlBtn" onClick={()=> viewFeed("Posts")}>{/* <i className="fa-solid fa-comment"></i> */} Posts</button>
+          <button className="profileControlBtn" onClick={()=> viewFeed("Posts")}>Posts</button>
         </div>
       </section>
 

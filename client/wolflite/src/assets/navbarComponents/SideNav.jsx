@@ -160,10 +160,6 @@ export default function SideNav(props) {
 
           </div>
         </section>
-        {/* <div id="scrollButtons" className="animate__animated animate__fadeInLeft">
-          <a href="#postView" onClick={e => handleSmoothScroll(e, "postView")}><i className="fa-solid fa-comment-nodes"></i>  Posts <i className="fa-solid fa-arrow-down"></i></a>
-          <a href="#pollView" onClick={e => handleSmoothScroll(e, "pollView")}><i className="fa-solid fa-square-poll-horizontal"></i> Polls <i className="fa-solid fa-arrow-up"></i></a>
-        </div> */}
       </nav>
     </>
   );

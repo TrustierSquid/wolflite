@@ -94,8 +94,6 @@ export default function PopupForm() {
 
       const data = await response.json()
       setSuccessMessage("Upload Successful");
-      // setQuestion("");
-      // setOptions([""]);
       setTimeout(() => {
         window.location.href = "/blog";
       }, 1000);
@@ -155,7 +153,6 @@ export default function PopupForm() {
                       id="imagePreview"
                       src={imageUrl.startsWith("data:") ? imageUrl : `http://localhost:5000${imageUrl}`}
                       alt="Preview"
-                      // style={{ maxWidth: "200px", marginTop: "10px" }}
                     />
                   )}
                   {imageUrl && imageUrl.startsWith("data:video") && (
@@ -163,7 +160,6 @@ export default function PopupForm() {
                       id="videoPreview"
                       src={imageUrl}
                       controls
-                      // style={{ maxWidth: "200px", marginTop: "10px" }}
                     />
                   )}
                 </div>
@@ -247,7 +243,6 @@ export default function PopupForm() {
                       className="createPostFormInputTitle"
                       name="pollQuestion"
                       type="text"
-                      // style={{ maxWidth: '590px', maxHeight: '200px' }}
                       onChange={handleQuestionChange}
                       required
                       placeholder="Enter a post title"

@@ -63,9 +63,9 @@ function Navbar(props) {
           <section className="navContainerSection" onClick={()=> window.location.href = '/login'}>
             <img id="navImg" src={`${import.meta.env.VITE_SERVER}/static/uploads/wolfLogo.png`} alt="" />
           </section>
-          <h1 className="universalHeader" style={{color: "var(--primary)"}}>
+          <h2 className="universalHeader" style={{color: "var(--primary)"}}>
             {endpoint === '/blog' ? `Home` : endpoint === '/profile' ? `Profile` : endpoint === `/create` ? `Create` : endpoint === `/settings` ? `Settings` : '' }
-          </h1>
+          </h2>
         </div>
 
 
