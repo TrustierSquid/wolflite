@@ -223,7 +223,7 @@ export default function BlogFeed() {
           postScrollRef={postScrollRef}
           pollScrollRef={pollScrollRef}
         />
-        <section id="blogFeedContainer" className="animate__animated animate__fadeInRight">
+        <section id="blogFeedContainer" className="animate__animated animate__fadeInUp">
 
           {
             allPosts ? (

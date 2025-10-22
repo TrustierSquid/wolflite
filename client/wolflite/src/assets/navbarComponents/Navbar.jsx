@@ -58,7 +58,7 @@ function Navbar(props) {
 
   return (
     <>
-      <nav id="navContainer">
+      <nav id="navContainer" className="animate__animated animate__fadeInDown">
         <div id="navTitle">
           <section className="navContainerSection" onClick={()=> window.location.href = '/login'}>
             <img id="navImg" src={`${import.meta.env.VITE_SERVER}/static/uploads/wolfLogo.png`} alt="" />
