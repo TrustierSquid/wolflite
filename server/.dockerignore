@@ -1,0 +1,27 @@
+# Ignore VCS
+.git
+.gitignore
+
+# Node / Python deps and virtual envs
+node_modules
+client/node_modules
+venv
+.env
+*.pyc
+__pycache__
+
+# Local build artifacts you don't want baked into the image
+dist
+build
+*.log
+*.sqlite
+data
+uploads
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker / compose files not needed in image (optional)
+docker-compose.yml
+compose.yml

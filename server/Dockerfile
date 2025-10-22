@@ -20,7 +20,7 @@ ENV FLASK_APP=wolfr
 ENV FLASK_ENV=production
 
 RUN echo '#!/bin/bash\n\
-if [ ! -f /app/instance/database.db ]; then\n\
+if [ ! -f /app/instance/wolfr.sqlite ]; then\n\
   flask --app wolfr init-db\n\
 fi\n\
 # Copy defaults if they don'\''t exist in mounted volume\n\
