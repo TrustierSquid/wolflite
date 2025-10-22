@@ -86,7 +86,7 @@ function LoginCreate() {
   return (
     <>
       <section id="loginBox">
-        <main id="loginContainer" className="animate__bounceInLeft animate__animated">
+        <main id="loginContainer" className="animate__fadeInUp animate__animated ">
           {
             // LOGIN ENDPOINT
             window.location.pathname == '/login' ? (
