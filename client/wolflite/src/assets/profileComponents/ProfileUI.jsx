@@ -302,7 +302,7 @@ export default function ProfileUI(props) {
 
 
 
-      <article id="profileInformation" className="animate__animated animate__fadeInRight">
+      <article id="profileInformation" className="animate__animated animate__fadeInLeft">
         <section className="profileInformationItemPicForm">
           <img
             className="profileInformationPic"
@@ -378,7 +378,7 @@ export default function ProfileUI(props) {
 
       </article>
 
-      <section className="profileInformationItem animate__animated animate__fadeInLeft">
+      <section className="profileInformationItem animate__animated animate__fadeInUp">
         <div className="profileInformationItemButtonGroup">
           {/* Expired or closed polls */}
 
@@ -437,7 +437,7 @@ export default function ProfileUI(props) {
                         userPolls.length > 0 ? (
                           userPolls.map((poll, pollIndex) => (
 
-                            <section key={poll?._id || pollIndex} className="postContainer animate__animated  animate__fadeInRight">
+                            <section key={poll?._id || pollIndex} className="postContainer animate__animated  animate__fadeInUp">
 
                               <div className="postHeader">
                                 <span className="nameAndProfilePicContainer">
@@ -607,7 +607,7 @@ export default function ProfileUI(props) {
                       feedToView === 'Archived' ? (
                         userArchivedPolls.length > 0 ? (
                           userArchivedPolls.map((poll, pollIndex) => (
-                            <section key={poll?._id || pollIndex} className="postContainer animate__animated  animate__fadeInRight">
+                            <section key={poll?._id || pollIndex} className="postContainer animate__animated  animate__fadeInUp">
 
                               <div className="postHeader">
                                 <span className="nameAndProfilePicContainer">
@@ -780,7 +780,7 @@ export default function ProfileUI(props) {
                     feedToView === 'Liked' ? (
                       likedPosts.length > 0 ? (
                         likedPosts.map((post, postIndex) => (
-                          <section key={post?._id || postIndex} className="postContainer animate__animated  animate__fadeInRight">
+                          <section key={post?._id || postIndex} className="postContainer animate__animated  animate__fadeInUp">
                             <div className="postHeader">
                               <span className="nameAndProfilePicContainer">
                                 <img
@@ -880,7 +880,7 @@ export default function ProfileUI(props) {
                     feedToView === 'Posts' ? (
                       userPosts.length > 0 ? (
                         userPosts.map((post, postIndex) => (
-                          <section key={post?._id || postIndex} className="postContainer animate__animated  animate__fadeInRight">
+                          <section key={post?._id || postIndex} className="postContainer animate__animated  animate__fadeInUp">
                             <div className="postHeader">
                               <span className="nameAndProfilePicContainer">
                                 <img
