@@ -24,11 +24,6 @@ function LoginCreate() {
       // parse the response as json
       const response = await request.json();
 
-
-      // usernameRef.current.value = ''
-
-
-
       if (Object.keys(response).includes("sanitationError")){
         setErrorMessage(response.sanitationError)
         passwordRef.current.value = ``
