@@ -160,3 +160,4 @@ DB_KEY="your-secret-key"
 - Make your changes
 - Test thoroughly
 - Submit a pull request
+- Delete previous branch
