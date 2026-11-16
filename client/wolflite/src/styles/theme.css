@@ -1,0 +1,475 @@
+/*
+  WOLFLITE THEME
+  Every color, radius and font in the app comes from these tokens.
+  Change a value here and it changes everywhere.
+
+  Dark mode: follows the OS by default. A saved preference from Settings sets
+  data-theme="light" or data-theme="dark" on <html>, which wins over the OS.
+*/
+
+:root {
+  --font: "Albert Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* Brand */
+  --primary: #fc1e1e;
+  --primary-hover: #dc1414;
+  --primary-soft: rgba(252, 30, 30, 0.1);
+  --secondary: #861efc;
+  --secondary-soft: rgba(134, 30, 252, 0.1);
+  --info: #2491ff;
+  --success: #16a34a;
+  --on-primary: #ffffff;
+
+  /* Surfaces & text */
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f4f4f5;
+  --surface-3: #e8e8eb;
+  --border: #e4e4e7;
+  --text: #18181b;
+  --text-muted: #6b6b76;
+  --overlay: rgba(0, 0, 0, 0.5);
+
+  /* Shape */
+  --radius: 8px;
+  --radius-sm: 6px;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.18);
+  --nav-height: 56px;
+
+  color-scheme: light;
+}
+
+/* Dark theme: OS is dark and the user hasn't picked "light" */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --primary: #ff4545;
+    --primary-hover: #ff6363;
+    --primary-soft: rgba(255, 69, 69, 0.16);
+    --secondary: #a454ff;
+    --secondary-soft: rgba(164, 84, 255, 0.16);
+    --info: #4ea8ff;
+    --success: #22c55e;
+
+    --bg: #0e0e10;
+    --surface: #17171a;
+    --surface-2: #212125;
+    --surface-3: #2b2b30;
+    --border: #2c2c31;
+    --text: #f4f4f5;
+    --text-muted: #a1a1aa;
+    --overlay: rgba(0, 0, 0, 0.7);
+
+    --shadow: none;
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+
+    color-scheme: dark;
+  }
+}
+
+/* Dark theme: picked manually in Settings (same values as above) */
+:root[data-theme="dark"] {
+  --primary: #ff4545;
+  --primary-hover: #ff6363;
+  --primary-soft: rgba(255, 69, 69, 0.16);
+  --secondary: #a454ff;
+  --secondary-soft: rgba(164, 84, 255, 0.16);
+  --info: #4ea8ff;
+  --success: #22c55e;
+
+  --bg: #0e0e10;
+  --surface: #17171a;
+  --surface-2: #212125;
+  --surface-3: #2b2b30;
+  --border: #2c2c31;
+  --text: #f4f4f5;
+  --text-muted: #a1a1aa;
+  --overlay: rgba(0, 0, 0, 0.7);
+
+  --shadow: none;
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+
+  color-scheme: dark;
+}
+
+
+/* ---------- Base ---------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+h1, h2, h3, h4 {
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+ul {
+  list-style: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Hidden visually, still available to screen readers and labels (file inputs) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+
+/* ---------- Layout ---------- */
+
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 1.5rem 16px 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.page-title {
+  font-size: 1.375rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+
+/* ---------- Buttons ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 120ms, border-color 120ms, color 120ms;
+}
+
+/* Upload buttons are <label>s wrapping a hidden file input: show focus on the label */
+label.btn:focus-within {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.btn-secondary {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--surface-3);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.btn-danger {
+  background: transparent;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--primary-soft);
+}
+
+.btn-sm {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.875rem;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 120ms, color 120ms;
+}
+
+.icon-btn:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.link-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--info);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}
+
+
+/* ---------- Forms ---------- */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.hint {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color 120ms, box-shadow 120ms;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+
+/* ---------- Small pieces ---------- */
+
+.avatar {
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--surface-2);
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.status-success {
+  color: var(--success);
+}
+
+.status-error {
+  color: var(--primary);
+}
+
+.empty-state {
+  padding: 2.5rem 1rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Two-ring spinner in the brand colors */
+.loader {
+  position: relative;
+  display: block;
+  width: 40px;
+  height: 40px;
+  margin: 3rem auto;
+  border: 2px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loader::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--secondary);
+  border-radius: 50%;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Small "pop" when liking something */
+@keyframes pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.pop {
+  animation: pop 300ms ease;
+}
+
+/* Segmented control (Post / Poll, theme picker) */
+.segmented {
+  display: inline-flex;
+  align-self: flex-start; /* don't stretch to full width inside flex columns */
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.segmented button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.9rem;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: var(--text-muted);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.segmented button:hover {
+  color: var(--text);
+}
+
+.segmented button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

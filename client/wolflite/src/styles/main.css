@@ -1,0 +1,4 @@
+/* Every page imports this one file */
+@import "./theme.css";
+@import "./components.css";
+@import "./pages.css";
