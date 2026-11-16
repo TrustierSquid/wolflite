@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Avatar from "../components/Avatar";
 import Status from "../components/Status";
 import { api } from "../lib/api";
 import { useCurrentUser } from "../lib/currentUser";
 import { logout } from "../lib/logout";
-import { getThemePreference, setThemePreference } from "../lib/theme";
+import { ACCENTS, THEME_MODES, getAppearance, setAppearance, syncAppearanceAcrossTabs } from "../lib/theme";
+import type { Appearance } from "../lib/theme";
 
 // Same rule the server uses when creating an account
 const USERNAME_RULE = /^[A-Za-z0-9._-]{5,30}$/;
@@ -189,35 +190,58 @@ function BioSection({ user, onUpdate }) {
 }
 
 
-const THEME_OPTIONS = [
-  { value: "system", label: "System", icon: "fa-desktop" },
-  { value: "light", label: "Light", icon: "fa-sun" },
-  { value: "dark", label: "Dark", icon: "fa-moon" },
-];
-
 function AppearanceSection() {
-  const [theme, setTheme] = useState(getThemePreference);
+  const [appearance, setAppearanceState] = useState<Appearance>(getAppearance);
 
-  function choose(value) {
-    setTheme(value);
-    setThemePreference(value);
+  // If the theme is changed in another tab, show the new choice here too
+  useEffect(() => syncAppearanceAcrossTabs(setAppearanceState), []);
+
+  function choose(changes: Partial<Appearance>) {
+    setAppearanceState(setAppearance(changes));
   }
 
   return (
     <section className="card settings-section">
-      <SectionHeader title="Appearance" description="System follows your device's light or dark setting." />
-      <div className="segmented" role="group" aria-label="Theme">
-        {THEME_OPTIONS.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            aria-pressed={theme === option.value}
-            onClick={() => choose(option.value)}
-          >
-            <i className={`fa-solid ${option.icon}`} aria-hidden="true"></i> {option.label}
-          </button>
-        ))}
+      <SectionHeader title="Appearance" description="Saved on this device. Changes apply instantly." />
+
+      <div className="appearance-group">
+        <span className="label" id="theme-label">Theme</span>
+        <div className="segmented" role="group" aria-labelledby="theme-label">
+          {THEME_MODES.map((mode) => (
+            <button
+              key={mode.id}
+              type="button"
+              aria-pressed={appearance.mode === mode.id}
+              onClick={() => choose({ mode: mode.id })}
+            >
+              <i className={`fa-solid ${mode.icon}`} aria-hidden="true"></i> {mode.label}
+            </button>
+          ))}
+        </div>
+        <p className="hint">System follows your device's light or dark setting.</p>
       </div>
+
+      <fieldset className="appearance-group">
+        <legend className="label">Accent color</legend>
+        <div className="accent-options">
+          {ACCENTS.map((accent) => (
+            <label key={accent.id} className="accent-option" data-accent={accent.id}>
+              <input
+                type="radio"
+                name="accent"
+                value={accent.id}
+                className="sr-only"
+                checked={appearance.accent === accent.id}
+                onChange={() => choose({ accent: accent.id })}
+              />
+              <span className="accent-swatch" aria-hidden="true">
+                <i className="fa-solid fa-check"></i>
+              </span>
+              <span className="accent-name">{accent.label}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
     </section>
   );
 }
@@ -259,7 +283,7 @@ function AccountSection({ user }) {
             Delete <strong>@{user.username}</strong>? This can't be undone.
           </p>
           <div className="button-row">
-            <button type="button" className="btn btn-primary" onClick={deleteAccount} disabled={deleting}>
+            <button type="button" className="btn btn-danger-solid" onClick={deleteAccount} disabled={deleting}>
               Yes, delete my account
             </button>
             <button type="button" className="btn btn-ghost" onClick={() => setConfirming(false)} disabled={deleting}>

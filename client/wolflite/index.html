@@ -6,11 +6,14 @@
     <meta name="color-scheme" content="light dark" />
     <title>Wolflite</title>
     <link rel="icon" type="image/png" href="/src/assets/imgs/wolfLogo.png" />
-    <!-- Apply the saved theme before anything renders (no flash of the wrong theme) -->
+    <!-- Apply the saved theme and accent before anything renders (no flash of the wrong colors).
+         Keys must match src/lib/theme.ts -->
     <script>
       try {
         var theme = localStorage.getItem("wolflite-theme");
         if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+        var accent = localStorage.getItem("wolflite-accent");
+        if (accent && /^[a-z]+$/.test(accent)) document.documentElement.dataset.accent = accent;
       } catch (e) {}
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />

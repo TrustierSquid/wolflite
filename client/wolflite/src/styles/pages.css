@@ -129,8 +129,92 @@
   min-width: 0;
 }
 
+/* Appearance: theme + accent pickers */
+.appearance-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  border: none;
+}
+
+.accent-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+/* Each accent is a label wrapping a hidden radio button, a swatch and a name.
+   data-accent on the label gives it that accent's --accent-* colors. */
+.accent-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  width: 64px;
+  padding: 0.5rem 0.25rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.accent-option:hover {
+  background: var(--surface-2);
+}
+
+.accent-swatch {
+  --swatch: var(--accent-light);
+  --swatch-on: var(--accent-light-on);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--swatch);
+  color: var(--swatch-on);
+  font-size: 0.875rem;
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px transparent;
+  transition: box-shadow 120ms;
+}
+
+/* Swatches show the version of the accent that the current theme will use */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .accent-swatch {
+    --swatch: var(--accent-dark);
+    --swatch-on: var(--accent-dark-on);
+  }
+}
+
+:root[data-theme="dark"] .accent-swatch {
+  --swatch: var(--accent-dark);
+  --swatch-on: var(--accent-dark-on);
+}
+
+.accent-swatch i {
+  visibility: hidden;
+}
+
+.accent-option input:checked + .accent-swatch {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--swatch);
+}
+
+.accent-option input:checked + .accent-swatch i {
+  visibility: visible;
+}
+
+.accent-option input:checked ~ .accent-name {
+  color: var(--text);
+}
+
+.accent-option input:focus-visible + .accent-swatch {
+  outline: 2px solid var(--text);
+  outline-offset: 5px;
+}
+
 .danger-zone {
-  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
 }
 
 .confirm-box {
@@ -139,7 +223,7 @@
   gap: 0.75rem;
   padding: 0.75rem 1rem;
   border-radius: var(--radius-sm);
-  background: var(--primary-soft);
+  background: var(--danger-soft);
 }
 
 @media (max-width: 480px) {

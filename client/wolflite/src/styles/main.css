@@ -1,4 +1,5 @@
 /* Every page imports this one file */
+@import "./accents.css";
 @import "./theme.css";
 @import "./components.css";
 @import "./pages.css";

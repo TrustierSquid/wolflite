@@ -1,0 +1,81 @@
+/*
+  ACCENT COLORS (picked in Settings > Appearance)
+
+  The chosen accent is set as data-accent="..." on <html>. Each accent defines:
+    --accent-light / --accent-light-hover / --accent-light-on   used in the light theme
+    --accent-dark  / --accent-dark-hover  / --accent-dark-on    used in the dark theme
+  "-on" is the text color on a solid accent button. Light variants are dark
+  enough for white text; dark variants are bright enough to read on dark
+  backgrounds, so most of them use dark text.
+
+  theme.css turns these into --primary, --primary-hover, --on-primary and
+  --primary-soft for the active theme. The same attribute on a swatch in
+  Settings gives that swatch its colors.
+
+  To add an accent: add a block here and an entry in ACCENTS in src/lib/theme.ts.
+  Red must stay first: it's the default when no accent is set.
+*/
+
+:root,
+[data-accent="red"] {
+  --accent-light: #fc1e1e;
+  --accent-light-hover: #dc1414;
+  --accent-light-on: #ffffff;
+  --accent-dark: #ff4545;
+  --accent-dark-hover: #ff6363;
+  --accent-dark-on: #ffffff;
+}
+
+[data-accent="orange"] {
+  --accent-light: #c2410c;
+  --accent-light-hover: #9a3412;
+  --accent-light-on: #ffffff;
+  --accent-dark: #fb923c;
+  --accent-dark-hover: #fdba74;
+  --accent-dark-on: #18181b;
+}
+
+[data-accent="green"] {
+  --accent-light: #15803d;
+  --accent-light-hover: #166534;
+  --accent-light-on: #ffffff;
+  --accent-dark: #4ade80;
+  --accent-dark-hover: #86efac;
+  --accent-dark-on: #18181b;
+}
+
+[data-accent="teal"] {
+  --accent-light: #0f766e;
+  --accent-light-hover: #115e59;
+  --accent-light-on: #ffffff;
+  --accent-dark: #2dd4bf;
+  --accent-dark-hover: #5eead4;
+  --accent-dark-on: #18181b;
+}
+
+[data-accent="blue"] {
+  --accent-light: #2563eb;
+  --accent-light-hover: #1d4ed8;
+  --accent-light-on: #ffffff;
+  --accent-dark: #60a5fa;
+  --accent-dark-hover: #93c5fd;
+  --accent-dark-on: #18181b;
+}
+
+[data-accent="purple"] {
+  --accent-light: #7c3aed;
+  --accent-light-hover: #6d28d9;
+  --accent-light-on: #ffffff;
+  --accent-dark: #a78bfa;
+  --accent-dark-hover: #c4b5fd;
+  --accent-dark-on: #18181b;
+}
+
+[data-accent="pink"] {
+  --accent-light: #db2777;
+  --accent-light-hover: #be185d;
+  --accent-light-on: #ffffff;
+  --accent-dark: #f472b6;
+  --accent-dark-hover: #f9a8d4;
+  --accent-dark-on: #18181b;
+}

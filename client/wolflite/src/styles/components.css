@@ -142,12 +142,12 @@
 
 .dropdown-item.is-danger,
 .dropdown-item.is-danger i {
-  color: var(--primary);
+  color: var(--danger);
 }
 
 .dropdown-item.is-danger:hover,
 .dropdown-item.is-danger:focus-visible {
-  background: var(--primary-soft);
+  background: var(--danger-soft);
 }
 
 

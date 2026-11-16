@@ -5,20 +5,29 @@
 
   Dark mode: follows the OS by default. A saved preference from Settings sets
   data-theme="light" or data-theme="dark" on <html>, which wins over the OS.
+
+  Accent: the --primary colors come from the accent picked in Settings
+  (see accents.css). Use --danger, not --primary, for errors and
+  destructive actions so they stay red whatever accent is chosen.
 */
 
 :root {
   --font: "Albert Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
-  /* Brand */
-  --primary: #fc1e1e;
-  --primary-hover: #dc1414;
-  --primary-soft: rgba(252, 30, 30, 0.1);
+  /* Accent (light theme versions; the dark blocks below switch them) */
+  --primary: var(--accent-light);
+  --primary-hover: var(--accent-light-hover);
+  --on-primary: var(--accent-light-on);
+  --primary-soft: color-mix(in srgb, var(--primary) 10%, transparent);
+
+  /* Fixed colors */
   --secondary: #861efc;
   --secondary-soft: rgba(134, 30, 252, 0.1);
   --info: #2491ff;
   --success: #16a34a;
-  --on-primary: #ffffff;
+  --danger: #dc2626;
+  --on-danger: #ffffff;
+  --danger-soft: color-mix(in srgb, var(--danger) 10%, transparent);
 
   /* Surfaces & text */
   --bg: #ffffff;
@@ -43,13 +52,17 @@
 /* Dark theme: OS is dark and the user hasn't picked "light" */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --primary: #ff4545;
-    --primary-hover: #ff6363;
-    --primary-soft: rgba(255, 69, 69, 0.16);
+    --primary: var(--accent-dark);
+    --primary-hover: var(--accent-dark-hover);
+    --on-primary: var(--accent-dark-on);
+    --primary-soft: color-mix(in srgb, var(--primary) 16%, transparent);
     --secondary: #a454ff;
     --secondary-soft: rgba(164, 84, 255, 0.16);
     --info: #4ea8ff;
     --success: #22c55e;
+    --danger: #f87171;
+    --on-danger: #18181b;
+    --danger-soft: color-mix(in srgb, var(--danger) 16%, transparent);
 
     --bg: #0e0e10;
     --surface: #17171a;
@@ -69,13 +82,17 @@
 
 /* Dark theme: picked manually in Settings (same values as above) */
 :root[data-theme="dark"] {
-  --primary: #ff4545;
-  --primary-hover: #ff6363;
-  --primary-soft: rgba(255, 69, 69, 0.16);
+  --primary: var(--accent-dark);
+  --primary-hover: var(--accent-dark-hover);
+  --on-primary: var(--accent-dark-on);
+  --primary-soft: color-mix(in srgb, var(--primary) 16%, transparent);
   --secondary: #a454ff;
   --secondary-soft: rgba(164, 84, 255, 0.16);
   --info: #4ea8ff;
   --success: #22c55e;
+  --danger: #f87171;
+  --on-danger: #18181b;
+  --danger-soft: color-mix(in srgb, var(--danger) 16%, transparent);
 
   --bg: #0e0e10;
   --surface: #17171a;
@@ -243,12 +260,22 @@ label.btn:focus-within {
 
 .btn-danger {
   background: transparent;
-  border-color: var(--primary);
-  color: var(--primary);
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: var(--primary-soft);
+  background: var(--danger-soft);
+}
+
+/* Solid red button for confirming something destructive */
+.btn-danger-solid {
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
+.btn-danger-solid:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger) 85%, var(--text));
 }
 
 .btn-sm {
@@ -380,7 +407,7 @@ label.btn:focus-within {
 }
 
 .status-error {
-  color: var(--primary);
+  color: var(--danger);
 }
 
 .empty-state {
