@@ -77,10 +77,10 @@ export default function ProfileUI(props) {
     setAnimateIndex(index)
 
     try {
-      const response = await fetch(`/post/addLike/${userId}/${postID}/${isPoll}`, {
+      const response = await fetch(`/post/addLike/${postID}/${isPoll}`, {
         method: "POST",
         headers: { "Content-Type": "application/json"},
-        body: JSON.stringify({"authorOfLike": userId})
+        body: JSON.stringify({})
       })
 
       if(response.status === 401) {
@@ -156,7 +156,7 @@ export default function ProfileUI(props) {
 
     try {
       const response = await fetch(
-        `/post/updateProfilePicture/${props.currentLoggedInUserId}`,
+        `/post/updateProfilePicture`,
         {
           method: "PUT",
           body: formData,
@@ -203,7 +203,6 @@ export default function ProfileUI(props) {
         body: JSON.stringify(
           {
             commentBody: commentBody,
-            commentAuthor: props?.currentLoggedInUserId,
             postID: postIndex,
             isPoll: isPoll
           }
@@ -309,8 +308,8 @@ export default function ProfileUI(props) {
             id=""
             src={
               allUserPosts?.userProfilePic
-                ? `${import.meta.env.VITE_SERVER}${allUserPosts.userProfilePic}`
-                : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
+                ? `${allUserPosts.userProfilePic}`
+                : `/static/uploads/defaultUser.jpg`
             }
             alt=""
           />
@@ -445,8 +444,8 @@ export default function ProfileUI(props) {
                                     className="profilePictures"
                                     src={
                                       poll.profilePic
-                                        ? `${import.meta.env.VITE_SERVER}${poll.profilePic}`
-                                        : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
+                                        ? `${poll.profilePic}`
+                                        : `/static/uploads/defaultUser.jpg`
                                     }
                                     alt=""
                                   />
@@ -564,7 +563,7 @@ export default function ProfileUI(props) {
                                               <div className="commentBlock">
                                                 <div className="commentHeader">
                                                   <section className="commentWhoPostedContainer">
-                                                    <img className="commentProfilePic" src={comment.profilePic ? `${import.meta.env.VITE_SERVER}${comment.profilePic}` : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`} alt="" />
+                                                    <img className="commentProfilePic" src={comment.profilePic ? `${comment.profilePic}` : `/static/uploads/defaultUser.jpg`} alt="" />
                                                     <h4 className="commentAuthor" onClick={()=> window.location.href = `/profile?id=${comment.author_id}`} >{comment.author_username}</h4>
                                                   </section>
                                                   <h5>{timeAgo(comment.created)}</h5>
@@ -615,8 +614,8 @@ export default function ProfileUI(props) {
                                     className="profilePictures"
                                     src={
                                       poll.profilePic
-                                        ? `${import.meta.env.VITE_SERVER}${poll.profilePic}`
-                                        : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
+                                        ? `${poll.profilePic}`
+                                        : `/static/uploads/defaultUser.jpg`
                                     }
                                     alt=""
                                   />
@@ -734,7 +733,7 @@ export default function ProfileUI(props) {
                                               <div className="commentBlock">
                                                 <div className="commentHeader">
                                                   <section className="commentWhoPostedContainer">
-                                                    <img className="commentProfilePic" src={comment.profilePic ? `${import.meta.env.VITE_SERVER}${comment.profilePic}` : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`} alt="" />
+                                                    <img className="commentProfilePic" src={comment.profilePic ? `${comment.profilePic}` : `/static/uploads/defaultUser.jpg`} alt="" />
                                                     <h4 className="commentAuthor" onClick={()=> window.location.href = `/profile?id=${comment.author_id}`} >{comment.author_username}</h4>
                                                   </section>
                                                   <h5>{timeAgo(comment.created)}</h5>
@@ -787,8 +786,8 @@ export default function ProfileUI(props) {
                                   className="profilePictures"
                                   src={
                                     post.profilePic
-                                      ? `${import.meta.env.VITE_SERVER}${post.profilePic}`
-                                      : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
+                                      ? `${post.profilePic}`
+                                      : `/static/uploads/defaultUser.jpg`
                                   }
                                   alt=""
                                 />
@@ -809,12 +808,12 @@ export default function ProfileUI(props) {
                                 {
                                   post.postPic.includes('.mp4') ? (
                                     <video controls className="postMedia">
-                                      <source src={`${import.meta.env.VITE_SERVER}${post.postPic}`} type="video/mp4" />
+                                      <source src={`${post.postPic}`} type="video/mp4" />
                                       Your browser does not support the video tag.
                                     </video>
                                   ) : (
                                     <img
-                                      src={`${import.meta.env.VITE_SERVER}${post.postPic}`}
+                                      src={`${post.postPic}`}
                                       alt="postPic"
                                       style={postImgLoaded ? {} : { display: "none" }}
                                       onLoad={() => setpostImgLoaded(true)}
@@ -844,7 +843,7 @@ export default function ProfileUI(props) {
                                         <div className="commentBlock" key={comment._id}>
                                           <div className="commentHeader" >
                                             <section className="commentWhoPostedContainer" >
-                                              <img className="commentProfilePic" src={comment.profilePic ? `${import.meta.env.VITE_SERVER}${comment.profilePic}` : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`} alt="" />
+                                              <img className="commentProfilePic" src={comment.profilePic ? `${comment.profilePic}` : `/static/uploads/defaultUser.jpg`} alt="" />
                                               <h4 className="commentAuthor" onClick={()=> window.location.href = `/profile?id=${comment.author_id}`}>{comment.author_username}</h4>
                                             </section>
                                             <h5>{timeAgo(comment.created)}</h5>
@@ -887,8 +886,8 @@ export default function ProfileUI(props) {
                                   className="profilePictures"
                                   src={
                                     post.profilePic
-                                      ? `${import.meta.env.VITE_SERVER}${post.profilePic}`
-                                      : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
+                                      ? `${post.profilePic}`
+                                      : `/static/uploads/defaultUser.jpg`
                                   }
                                   alt=""
                                 />
@@ -909,12 +908,12 @@ export default function ProfileUI(props) {
                                 {
                                   post.postPic.includes('.mp4') ? (
                                     <video controls className="postMedia">
-                                      <source src={`${import.meta.env.VITE_SERVER}${post.postPic}`} type="video/mp4" />
+                                      <source src={`${post.postPic}`} type="video/mp4" />
                                       Your browser does not support the video tag.
                                     </video>
                                   ) : (
                                     <img
-                                      src={`${import.meta.env.VITE_SERVER}${post.postPic}`}
+                                      src={`${post.postPic}`}
                                       alt="postPic"
                                       style={postImgLoaded ? {} : { display: "none" }}
                                       onLoad={() => setpostImgLoaded(true)}
@@ -944,7 +943,7 @@ export default function ProfileUI(props) {
                                         <div className="commentBlock" key={comment._id}>
                                           <div className="commentHeader" >
                                             <section className="commentWhoPostedContainer" >
-                                              <img className="commentProfilePic" src={comment.profilePic ? `${import.meta.env.VITE_SERVER}${comment.profilePic}` : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`} alt="" />
+                                              <img className="commentProfilePic" src={comment.profilePic ? `${comment.profilePic}` : `/static/uploads/defaultUser.jpg`} alt="" />
                                               <h4 className="commentAuthor" onClick={()=> window.location.href = `/profile?id=${comment.author_id}`}>{comment.author_username}</h4>
                                             </section>
                                             <h5>{timeAgo(comment.created)}</h5>

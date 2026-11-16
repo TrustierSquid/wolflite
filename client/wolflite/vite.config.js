@@ -1,23 +1,29 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+// Flask dev server. Every API route and /static (uploads, images) is proxied here
+// so the browser only ever talks to the Vite dev server (same origin, cookies work).
+const FLASK_DEV_SERVER = 'http://localhost:5000'
+
+const proxiedPaths = [
+  '/formSubmission',
+  '/loginUser',
+  '/logout',
+  '/getUserData',
+  '/post',
+  '/profileInfo',
+  '/static',
+]
+
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [react()],
-  base: '/static/dist/', /* Comment out if you are working on vite dev server */
+
+  // Production build is served by Flask from /static/dist/, dev server serves from /
+  base: command === 'build' ? '/static/dist/' : '/',
+
   server: {
-    proxy: {
-      '/formSubmission': 'http://localhost:5000',
-      '/loginUser': 'http://localhost:5000',
-      '/post': 'http://localhost:5000',
-      '/uploadImg': 'http://localhost:5000',
-      '/getUserData': 'http://localhost:5000',
-      '/updateProfilePicture': 'http://localhost:5000',
-      '/profileInfo': 'http://localhost:5000',
-      '/addLike': 'http://localhost:5000',
-      '/addComment': 'http://localhost:5000',
-      '/postComment': 'http://localhost:5000'
-    }
+    proxy: Object.fromEntries(proxiedPaths.map((path) => [path, FLASK_DEV_SERVER])),
   },
 
   build: {
@@ -33,4 +39,4 @@ export default defineConfig({
       }
     }
   }
-})
+}))

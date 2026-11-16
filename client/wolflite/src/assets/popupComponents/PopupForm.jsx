@@ -148,10 +148,10 @@ export default function PopupForm() {
 
                   <label htmlFor="file" id="selectImage"><i className="fa-solid fa-image"></i> Upload Media</label>
 
-                  {imageUrl && (
+                  {imageUrl && !imageUrl.startsWith("data:video") && (
                     <img
                       id="imagePreview"
-                      src={imageUrl.startsWith("data:") ? imageUrl : `http://localhost:5000${imageUrl}`}
+                      src={imageUrl}
                       alt="Preview"
                     />
                   )}

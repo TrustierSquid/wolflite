@@ -19,8 +19,5 @@ server/wolfr/.env
 data/wolfr.sqlite
 data/*.db
 
-# User uploads (but keep default images)
-uploads/*
-!uploads/defaultUser.jpg
-!uploads/wolfLogo.png
-!uploads/.gitkeep
+# User uploads (default images live in server/wolfr/defaults)
+uploads/

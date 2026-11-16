@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { logout } from "../utils/logout";
 import { useState } from "react";
 
 
@@ -60,8 +61,8 @@ function Navbar(props) {
     <>
       <nav id="navContainer" className="animate__animated animate__fadeInDown">
         <div id="navTitle">
-          <section className="navContainerSection" onClick={()=> window.location.href = '/login'}>
-            <img id="navImg" src={`${import.meta.env.VITE_SERVER}/static/uploads/wolfLogo.png`} alt="" />
+          <section className="navContainerSection" onClick={()=> window.location.href = '/blog'}>
+            <img id="navImg" src={`/static/uploads/wolfLogo.png`} alt="" />
           </section>
           <h2 className="universalHeader" style={{color: "var(--primary)"}}>
             {endpoint === '/blog' ? `Home` : endpoint === '/profile' ? `Profile` : endpoint === `/create` ? `Create` : endpoint === `/settings` ? `Settings` : '' }
@@ -89,8 +90,8 @@ function Navbar(props) {
         <div id="mobileNavUserInformation">
           <img src={
               currentLoggedInData?.userPfPic
-              ? `${import.meta.env.VITE_SERVER}${currentLoggedInData?.userPfPic}`
-              : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
+              ? `${currentLoggedInData?.userPfPic}`
+              : `/static/uploads/defaultUser.jpg`
             }
             alt="pic"
             id="mobileNavPfPic"
@@ -116,7 +117,7 @@ function Navbar(props) {
           <li  onClick={()=> {window.location.href = '/create'}}>
             <a href="#" ><i className="fa-solid fa-plus"></i> Create</a>
           </li>
-          <li  onClick={() => (window.location.href = "/login")}>
+          <li onClick={logout}>
             <a href="#" ><i className="fa-solid fa-right-from-bracket"></i> Log out</a>
           </li>
         </ul>

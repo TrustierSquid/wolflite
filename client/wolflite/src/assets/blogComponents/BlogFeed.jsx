@@ -109,10 +109,10 @@ export default function BlogFeed() {
     setAnimateIndex(index)
 
     try {
-      const response = await fetch(`/post/addLike/${userID}/${postID}/${isPoll}`, {
+      const response = await fetch(`/post/addLike/${postID}/${isPoll}`, {
         method: "POST",
         headers: { "Content-Type": "application/json"},
-        body: JSON.stringify({"authorOfLike": userID})
+        body: JSON.stringify({})
       })
 
 
@@ -146,7 +146,6 @@ export default function BlogFeed() {
       body: JSON.stringify(
         {
           commentBody: commentBody,
-          commentAuthor: currentLoggedInUserId,
           postID: postIndex,
           isPoll: isPoll
         }
@@ -239,8 +238,8 @@ export default function BlogFeed() {
                           className="profilePictures"
                           src={
                             post.profilePic
-                              ? `${import.meta.env.VITE_SERVER}${post.profilePic}`
-                              : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
+                              ? `${post.profilePic}`
+                              : `/static/uploads/defaultUser.jpg`
                           }
                           alt=""
                         />
@@ -347,13 +346,13 @@ export default function BlogFeed() {
                               {
                                 post.filename.includes('.mp4') ? (
                                   <video controls className="postMedia">
-                                    <source src={`${import.meta.env.VITE_SERVER}${post.filename}`} type="video/mp4" />
+                                    <source src={`${post.filename}`} type="video/mp4" />
                                     Your browser does not support the video tag.
                                   </video>
                                 ) : (
                                   <img
                                     className="postMedia"
-                                    src={`${import.meta.env.VITE_SERVER}${post.filename}`}
+                                    src={`${post.filename}`}
                                     alt="Post"
                                     style={imgLoaded ? {} : { display: "none" }}
                                     onLoad={() => setImgLoaded(true)}
@@ -390,7 +389,7 @@ export default function BlogFeed() {
                                     <div className="commentBlock">
                                       <div className="commentHeader">
                                         <section className="commentWhoPostedContainer">
-                                          <img className="commentProfilePic" src={comment.profilePic ? `${import.meta.env.VITE_SERVER}${comment.profilePic}` : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`} alt="" />
+                                          <img className="commentProfilePic" src={comment.profilePic ? `${comment.profilePic}` : `/static/uploads/defaultUser.jpg`} alt="" />
                                           <h4 className="commentAuthor" onClick={()=> window.location.href = `/profile?id=${comment.author_id}`} >{comment.author_username}</h4>
                                         </section>
                                         <h5>{timeAgo(comment.created)}</h5>
@@ -413,7 +412,7 @@ export default function BlogFeed() {
                         </span>
                       </div>
                       <form className="commentFunctions" onSubmit={(e) => addCommentToPost(e, post.id, post.isPoll)}>
-                        <img src={currentLoggedInUserProfilePic ? `${import.meta.env.VITE_SERVER}${currentLoggedInUserProfilePic}` : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`} alt="pic" className="profilePictures" />
+                        <img src={currentLoggedInUserProfilePic ? `${currentLoggedInUserProfilePic}` : `/static/uploads/defaultUser.jpg`} alt="pic" className="profilePictures" />
                         <input type="text" required name="userComment" placeholder="Leave a comment...  " className="commentInput"/>
                         <button type="submit" className="postCommentBtn">Post <i className="fa-solid fa-paper-plane"></i></button>
                       </form>

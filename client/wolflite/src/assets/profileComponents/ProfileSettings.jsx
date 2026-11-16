@@ -1,4 +1,5 @@
 import {useState, useRef} from 'react'
+import { logout } from '../utils/logout'
 
 export default function ProfileSettings(props){
   const changeUsernameRef = useRef(null)
@@ -67,7 +68,7 @@ export default function ProfileSettings(props){
     formData.append('file', file)
 
     try {
-      const response = await fetch(`/post/updateProfilePicture/${props.currentLoggedInUserId}`, {
+      const response = await fetch(`/post/updateProfilePicture`, {
         method: "PUT",
         body: formData,
       })
@@ -100,7 +101,7 @@ export default function ProfileSettings(props){
       let response = await fetch(`/profileInfo/deleteProfilePic`, {
         method: "PUT",
         headers: {'Content-type': 'application/json'},
-        body: JSON.stringify({currentUser: `${props.currentLoggedInUserId}`})
+        body: JSON.stringify({})
       })
 
 
@@ -137,7 +138,6 @@ export default function ProfileSettings(props){
         headers: {'Content-type': 'application/json'},
         body: JSON.stringify(
           {
-            currentUser: `${props.currentLoggedInUserId}`,
             newBio: `${formObj.changeBioField}`
           }
         )
@@ -159,35 +159,31 @@ export default function ProfileSettings(props){
     } catch (error) {
       console.log(error)
     }
-
-
-    let data = response.json()
-
   }
 
 
   async function deleteProfile(){
     let response = await fetch('/profileInfo/deleteProfile', {
       method: "DELETE",
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({userToDelete: `${props.currentLoggedInUserId}`})
     })
 
-
     if (response.status === 401) {
-        window.location.href = "/login"
-      }
+      window.location.href = "/login"
+      return
+    }
 
     if (!response.ok) {
-      alert("Bio change failed");
+      alert("Account deletion failed");
       console.log(response);
       return;
     }
 
-    setSuccessMessageDeleteAccount(<><i class="fa-solid fa-face-frown"></i> Deleted Account!</>)
+    setSuccessMessageDeleteAccount(<><i className="fa-solid fa-face-frown"></i> Deleted Account!</>)
 
-
-
+    // The server already ended the session, send them back to the login page
+    setTimeout(() => {
+      window.location.href = "/login"
+    }, 1500)
   }
 
 
@@ -209,8 +205,8 @@ export default function ProfileSettings(props){
                 id="settingsPfPic"
                 src={
                   props.currentLoggedInUserProfilePic
-                  ? `${import.meta.env.VITE_SERVER}${props?.currentLoggedInUserProfilePic}`
-                  : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
+                  ? `${props?.currentLoggedInUserProfilePic}`
+                  : `/static/uploads/defaultUser.jpg`
                 } alt="" />
               <span>
                 <h3>{props.currentLoggedInUsername}</h3>
@@ -275,7 +271,7 @@ export default function ProfileSettings(props){
                   <button id="deleteAccountBtnCheck" onClick={(e) => setDeleteMode(prev => !prev)}><i className="fa-solid fa-eraser"></i> Delete Your Account</button>
                 )
               }
-              <button className="settingsBtn" onClick={()=> window.location.href = '/login'}><i className="fa-solid fa-right-from-bracket"></i> Log Out</button>
+              <button className="settingsBtn" onClick={logout}><i className="fa-solid fa-right-from-bracket"></i> Log Out</button>
             </div>
           </section>
         </div>

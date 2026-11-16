@@ -60,7 +60,7 @@ export default function PopupInformation(props){
 
                       return (
                         <span key={idx} className="voter">
-                          <img src={voterInfo && voterInfo.profilePic ? `${import.meta.env.VITE_SERVER}${voterInfo.profilePic}` : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`} alt="" />
+                          <img src={voterInfo && voterInfo.profilePic ? `${voterInfo.profilePic}` : `/static/uploads/defaultUser.jpg`} alt="" />
                           <p>
                             {voterInfo ? `${voterInfo.username} ` : voter}
                           </p>

@@ -1,8 +1,8 @@
 import sqlite3
 from flask import Blueprint, g, request, jsonify, redirect, current_app
 from wolfr.db import get_db
-from werkzeug.utils import secure_filename
 import os
+import uuid
 
 # All endpoints are prefixed with /post (e.g /post/newendpoint)
 blog_page = Blueprint("post", __name__, url_prefix="/post")
@@ -220,155 +220,94 @@ def retrievePosts():
 
 
 # Allowed file extensions to be uploaded to the server
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "mp4", "mov", "avi", "webm"}
+IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
+VIDEO_EXTENSIONS = {"mp4", "mov", "avi", "webm"}
+MEDIA_EXTENSIONS = IMAGE_EXTENSIONS | VIDEO_EXTENSIONS
 
 
-# FILE/IMAGE UPLOAD HANDLING: When a filename is passed in from the client, this checks if its a valid img file.
-def allowed_file(filename):
-   return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+def file_extension(filename):
+   return filename.rsplit(".", 1)[1].lower() if "." in filename else ""
 
-# Update Profile Picture
-@blog_page.route('/updateProfilePicture/<int:user_id>', methods=(["PUT"]))
-def updateProfilePicture(user_id):
+
+# Saves an uploaded file under a random name and returns its public URL,
+# or None if the file type is not allowed.
+# The original filename is never used on disk: two users uploading "photo.jpg"
+# (or someone uploading "defaultUser.jpg") would otherwise overwrite each other's files.
+def save_upload(file, allowed_extensions):
+   extension = file_extension(file.filename or "")
+   if extension not in allowed_extensions:
+      return None
+
+   filename = f"{uuid.uuid4().hex}.{extension}"
+   file.save(os.path.join(current_app.config["UPLOAD_FOLDER"], filename))
+   return f"/static/uploads/{filename}"
+
+
+# Update the logged in user's profile picture
+@blog_page.route('/updateProfilePicture', methods=["PUT"])
+def updateProfilePicture():
+   file = request.files.get("file")
+   if file is None:
+      return jsonify({"error": "No file uploaded"}), 400
+
+   file_url = save_upload(file, IMAGE_EXTENSIONS)
+   if file_url is None:
+      return jsonify({"error": "Profile pictures must be an image (png, jpg, gif, webp)"}), 400
+
    db = get_db()
-   cursor = db.cursor()
+   db.execute("UPDATE user SET filename = ? WHERE id = ?", (file_url, g.user["id"]))
+   db.commit()
 
-   if request.method == "PUT":
-      try:
-         if len(request.files) == 0 or None:
-            return {"error": "No file uploaded"}
-
-         file = request.files["file"]
-
-         if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(
-               current_app.config["UPLOAD_FOLDER"], filename
-            )
-
-            file_url = f"/static/uploads/{filename}"
-
-            file.save(filepath)
-            cursor.execute("""
-               UPDATE user
-               SET filename = ?
-               WHERE id = ?
-            """, (file_url, user_id))
-
-            db.commit()
-
-            return jsonify({"profileImg": file_url}), 201
-      except sqlite3.IntegrityError:
-         return jsonify({"error": "user does not exist"})
+   return jsonify({"profileImg": file_url}), 201
 
 
-
-
-
-# Adding a like to a post
-@blog_page.route("/addLike/<int:user_id>/<int:item_id>/<is_poll>", methods=(["POST"]))
-def addLike(user_id, item_id, is_poll):
+# Toggles the logged in user's like on a post or poll
+@blog_page.route("/addLike/<int:item_id>/<is_poll>", methods=["POST"])
+def addLike(item_id, is_poll):
    db = get_db()
-   cursor = db.cursor()
-   is_poll = is_poll.lower() == "true"
+   user_id = g.user["id"]
 
-   if is_poll:
-      # Check if user already liked the poll
-      existing_like = cursor.execute("""
-         SELECT 1 FROM likes WHERE author_id = ? AND poll_id = ?
-      """, (user_id, item_id)).fetchone()
+   # Column name comes from this whitelist, never from user input, so the f-strings below are safe
+   column = "poll_id" if is_poll.lower() == "true" else "post_id"
 
-      if existing_like:
-         cursor.execute("""
-            DELETE FROM likes WHERE author_id = ? AND poll_id = ?
-         """, (user_id, item_id))
-         db.commit()
-         return jsonify({"success": 200})
+   existing_like = db.execute(
+      f"SELECT 1 FROM likes WHERE author_id = ? AND {column} = ?", (user_id, item_id)
+   ).fetchone()
 
-      if request.method == "POST":
-         cursor.execute("""
-            INSERT INTO likes (author_id, poll_id) VALUES (?, ?)
-         """, (user_id, item_id))
-         db.commit()
-         return jsonify({"success": 200})
-
+   if existing_like:
+      db.execute(f"DELETE FROM likes WHERE author_id = ? AND {column} = ?", (user_id, item_id))
    else:
-      # Check if user already liked the post
-      existing_like = cursor.execute("""
-         SELECT 1 FROM likes WHERE author_id = ? AND post_id = ?
-      """, (user_id, item_id)).fetchone()
+      db.execute(f"INSERT INTO likes (author_id, {column}) VALUES (?, ?)", (user_id, item_id))
 
-      if existing_like:
-         cursor.execute("""
-            DELETE FROM likes WHERE author_id = ? AND post_id = ?
-         """, (user_id, item_id))
-         db.commit()
-         return jsonify({"success": 200})
-
-      if request.method == "POST":
-         cursor.execute("""
-            INSERT INTO likes (author_id, post_id) VALUES (?, ?)
-         """, (user_id, item_id))
-         db.commit()
-         return jsonify({"success": 200})
-
+   db.commit()
    return jsonify({"success": 200})
 
 
-
-
-
 # Creates a new post
-@blog_page.route("/create", methods=(["GET", "POST"]))
+@blog_page.route("/create", methods=["POST"])
 def handleImages():
-    db = get_db()
+   postTitle = request.form.get("postTitle", "").strip()
+   postContent = request.form.get("postContent", "").strip()
 
-    if request.method == "POST":
-        try:
-            postTitle = request.form["postTitle"]
-            postContent = request.form["postContent"]
+   if not postTitle or not postContent:
+      return jsonify({"error": "A post needs a title and a body"}), 400
 
-            if postContent is None:
-                postContent = None
+   # The media file is optional
+   file_url = None
+   file = request.files.get("file")
+   if file and file.filename:
+      file_url = save_upload(file, MEDIA_EXTENSIONS)
+      if file_url is None:
+         return jsonify({"error": "Invalid file"}), 400
 
-            # If no photo was uploaded, then just post what data was given
-            if len(request.files) == 0 or None:
-                cursor = db.cursor()
+   db = get_db()
+   db.execute(
+      "INSERT INTO posts (author_id, title, body, filename) VALUES (?, ?, ?, ?)",
+      (g.user["id"], postTitle, postContent, file_url),
+   )
+   db.commit()
 
-                cursor.execute(
-                    "INSERT INTO posts (author_id, title, body) VALUES (?, ?, ?)",
-                    (g.user[0], postTitle, postContent),
-                )
-                db.commit()
-
-                return {"success": True}, 201
-            else:
-                # Image handling
-                file = request.files["file"]
-
-                if file and allowed_file(file.filename):
-                    filename = secure_filename(file.filename)
-                    filepath = os.path.join(
-                        current_app.config["UPLOAD_FOLDER"], filename
-                    )
-                    file_url = f"/static/uploads/{filename}"
-
-                    file.save(filepath)
-
-                    # Cursor for sqlite so we can make SQL commands
-                    cursor = db.cursor()
-                    cursor.execute(
-                        "INSERT INTO posts (author_id, title, body, filename) VALUES (?, ?, ?, ?)",
-                        (g.user[0], postTitle, postContent, file_url),
-                    )
-                    db.commit()
-
-                    return {"url": file_url}, 201
-
-        except sqlite3.IntegrityError:
-            return jsonify({"message": "something went wrong"})
-
-    return {"error": "Invalid file"}, 400
+   return jsonify({"success": True, "url": file_url}), 201
 
 
 
@@ -427,9 +366,15 @@ def trackUserFeedback():
          option_ID = data["optionID"]
          cursor = db.cursor()
 
-         print(f"PollID: {poll_ID} and optionID: {option_ID} ")
+         # The option must belong to this poll, and the poll must still be open
+         valid_option = cursor.execute("""
+            SELECT 1 FROM poll_options
+            JOIN polls ON polls.id = poll_options.poll_id
+            WHERE poll_options.id = ? AND polls.id = ? AND polls.isOpen = 1
+         """, (option_ID, poll_ID)).fetchone()
 
-
+         if valid_option is None:
+            return jsonify({"error": "This poll is closed or the option is invalid"}), 400
 
          # Find if the user already voted on this poll, and delete their previous vote
          # Find the previous option the user voted for
@@ -474,47 +419,24 @@ def trackUserFeedback():
 
 
 
-@blog_page.route("/postComment", methods=(["POST"]))
+# Adds a comment from the logged in user to a post or poll
+@blog_page.route("/postComment", methods=["POST"])
 def postComment():
+   data = request.get_json(silent=True) or {}
+   commentBody = str(data.get("commentBody") or "").strip()
+   postID = data.get("postID")
+
+   if not commentBody or postID is None:
+      return jsonify({"error": "A comment needs a body and a post"}), 400
+
+   # Column name comes from this whitelist, never from user input
+   column = "poll_id" if data.get("isPoll") else "post_id"
+
    db = get_db()
-   cursor = db.cursor()
+   db.execute(
+      f"INSERT INTO comments (author_id, {column}, commentBody) VALUES (?, ?, ?)",
+      (g.user["id"], postID, commentBody),
+   )
+   db.commit()
 
-   if request.method == "POST":
-      try:
-         data = request.get_json()
-         # Information about the user and the post the comment was made on
-         commentBody = data["commentBody"]
-         commentAuthor = data["commentAuthor"]
-         postID = data["postID"]
-         print(data)
-
-         if data["isPoll"] is False:
-            try:
-               print("is not a poll")
-               cursor.execute("""
-                  INSERT INTO comments (author_id, post_id, commentBody)
-                  VALUES (?, ?, ?)
-               """, (commentAuthor, postID, commentBody))
-
-               db.commit()
-               return jsonify({"success": True}), 200
-            except sqlite3.IntegrityError:
-               print("Failed to send comment to post")
-
-         else:
-            try:
-               print("is a poll")
-               cursor.execute("""
-                  INSERT INTO comments (author_id, poll_id, commentBody)
-                  VALUES (?, ?, ?)
-               """, (commentAuthor, postID, commentBody))
-
-               db.commit()
-               return jsonify({"success": True}), 200
-            except sqlite3.IntegrityError:
-               print("Failed to send comment to poll")
-
-      except sqlite3.IntegrityError:
-         return jsonify({"error": "failed to save comment"})
-
-   return {"success": 200}
+   return jsonify({"success": True}), 200

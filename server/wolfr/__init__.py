@@ -1,5 +1,6 @@
 import os
 import re
+import shutil
 import sqlite3
 from dotenv import load_dotenv
 from flask import (
@@ -52,8 +53,19 @@ def create_app(test_config=None):
     # Setting this config for file uploads
     app.config["UPLOAD_FOLDER"] = os.path.join(app.static_folder, "uploads")
 
+    # Reject request bodies (uploads) bigger than this with a 413
+    app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50 MB
+
     # ensures that the static/uploads directories exists
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
+    # Default images (logo, default profile picture) live in wolfr/defaults.
+    # Copy them into the uploads folder if missing (fresh dev clone or empty docker volume).
+    defaults_dir = os.path.join(os.path.dirname(__file__), "defaults")
+    for default_file in os.listdir(defaults_dir):
+        target = os.path.join(app.config["UPLOAD_FOLDER"], default_file)
+        if not os.path.exists(target):
+            shutil.copy(os.path.join(defaults_dir, default_file), target)
 
     if test_config is None:
         # load the instance config, if it exists, when not testing
@@ -73,63 +85,51 @@ def create_app(test_config=None):
 
     # LOGIN/CREATE USER
 
-    # middleware. Having quick access to the logged in users data
+    # Endpoints that work without being logged in
+    PUBLIC_ENDPOINTS = {"login", "createUser", "logout", "serve_index", "static"}
+
+    # HTML pages. Logged out visitors get redirected to /login, while API
+    # endpoints answer with a 401 that the frontend can handle.
+    PAGE_ENDPOINTS = {"serve_blog", "serve_profile", "serve_create", "serve_settings"}
+
+    # middleware. Loads the logged in user into g.user for every request.
+    # Routes must take the user's id from g.user["id"], NEVER from the request
+    # (URL, query string or body), otherwise anyone could act as any user.
     @app.before_request
     def load_user():
-        db = get_db()
-        cursor = db.cursor()
+        g.user = None
 
-        # Skip auth for static files and index
-        # This if statement prevents this middleware to run on endpoints where prior user is not required
-        if (
-            request.endpoint in ("login", "createUser", "serve_index")
-            or request.path.startswith(app.static_url_path)
-            or request.path.startswith("/uploads/")
-            or request.endpoint == "static"
-        ):
+        if request.endpoint in PUBLIC_ENDPOINTS or request.path.startswith(app.static_url_path):
             return
 
         user_id = session.get("user_id")
+        if user_id is not None:
+            g.user = get_db().execute("SELECT * FROM user WHERE id = ?", (user_id,)).fetchone()
 
-        # if request.endpoint in these, give the session the user id, so it can be used later
-        # For all endpoints except those explicitly skipped above, require login
-        if user_id is None:
-            g.user = None
-            print("redirecting.. no session")
-            return redirect("/login")
-        else:
-            g.user = (
-                cursor.execute("SELECT * FROM user WHERE id = ?", (user_id,)).fetchone()
-            )
+        # No session, or the session points at a user that no longer exists
+        if g.user is None:
+            session.clear()
+            if request.endpoint in PAGE_ENDPOINTS:
+                return redirect("/login")
+            return jsonify({"error": "Not logged in"}), 401
 
 
-
-
-
-    # Fetehes currently logged in user data (userid, picture and username. etc)
+    # Fetches currently logged in user data (userid, picture and username. etc)
     @app.route("/getUserData", methods=(["GET"]))
     def fetchUserData():
-        user_id = session.get("user_id")
+        return jsonify({
+            "currentUserName": g.user["username"],
+            "currentUserPfPicture": g.user["filename"],
+            "joinedDate": g.user["created"],
+            "bio": g.user["bio"],
+            "currentUserID": g.user["id"]
+        })
 
 
-        db = get_db()
-        cursor = db.cursor()
-
-        try:
-            currentUser = cursor.execute(
-                "SELECT username, created, filename, bio FROM user WHERE id = ?", (user_id,)
-            ).fetchone()
-
-
-            return jsonify({
-                "currentUserName": currentUser["username"],
-                "currentUserPfPicture": currentUser["filename"],
-                "joinedDate": currentUser["created"],
-                "bio": currentUser["bio"],
-                "currentUserID": g.user[0]
-            })
-        except sqlite3.IntegrityError:
-            return {"error": "no user here"}, 400
+    @app.route("/logout", methods=["POST"])
+    def logout():
+        session.clear()
+        return jsonify({"message": "Logged out"}), 200
 
 
 
@@ -150,19 +150,16 @@ def create_app(test_config=None):
             )
             user = cursor.fetchone()
 
-            if user is None:
-                return jsonify({"message": "Username or Password Incorrect!"})
+            # Same message whether the username or the password is wrong, so the
+            # login form can't be used to find out which usernames exist
+            if user is None or not check_password_hash(user["password"], password):
+                return jsonify({"message": "Username or Password Incorrect!"}), 200
 
-            storedhash = user[0]
+            # Start a fresh session for the logged in user
+            session.clear()
+            session["user_id"] = user["id"]
 
-            if check_password_hash(storedhash, password):
-
-                # Creating session data
-                session["user_id"] = user[1]
-
-                return jsonify({"success": "Welcome"}), 200
-            else:
-                return jsonify({"message": "Incorrect password!"}), 200
+            return jsonify({"success": "Welcome"}), 200
 
         except sqlite3.IntegrityError as error:
             return jsonify({"errorMessage": "Username doesnt exist"})

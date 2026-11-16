@@ -15,10 +15,10 @@ def retrieveLoggedInUserPost():
   cursor = db.cursor()
 
   # using Query string to  search a profile by user's ID
-  user_id = int(request.args.get("id"))
+  user_id = request.args.get("id", type=int)
 
   if not user_id:
-    return jsonify({"error": "No user id provided"}), 204
+    return jsonify({"error": "No user id provided"}), 400
 
 
   # If the user searched in the query string does not exist, send back error
@@ -331,6 +331,13 @@ def closePoll(pollToClose):
   db = get_db()
   cursor = db.cursor()
 
+  # Only the poll's author can close it
+  poll = cursor.execute("SELECT author_id FROM polls WHERE id = ?", (pollToClose,)).fetchone()
+  if poll is None:
+    return jsonify({"message": "Poll not found"}), 404
+  if poll["author_id"] != g.user["id"]:
+    return jsonify({"message": "You can only close your own polls"}), 403
+
   try:
     if request.method == "DELETE":
 
@@ -408,79 +415,36 @@ def changeUsername():
 
 
 
+# Removes the logged in user's profile picture (falls back to the default picture)
 @profile_page.route('/deleteProfilePic', methods=['PUT'])
 def deleteProfilePicture():
   db = get_db()
-  cursor = db.cursor()
-  data = request.get_json()
-  currentUser = data['currentUser']
+  db.execute("UPDATE user SET filename = null WHERE id = ?", (g.user["id"],))
+  db.commit()
+
+  return jsonify({"message": "Deleted profile picture"}), 200
 
 
-  if request.method == 'PUT':
-    cursor.execute(
-      """
-      UPDATE user
-      SET filename = null
-      WHERE id = ?
-      """, (currentUser)
-    )
-
-    db.commit()
-
-    return jsonify({"message": f"{currentUser} deleted profle picture"}), 200
-
-
-  return 200
-
-
-
-
+# Changes the logged in user's bio
 @profile_page.route('/changeBio', methods=['PUT'])
 def changeBio():
+  data = request.get_json(silent=True) or {}
+  newBio = str(data.get("newBio") or "").strip()[:500]
+
   db = get_db()
-  cursor = db.cursor()
-  data = request.get_json()
+  db.execute("UPDATE user SET bio = ? WHERE id = ?", (newBio, g.user["id"]))
+  db.commit()
 
-  newBio = data['newBio']
-  currentUser = data['currentUser']
-
-  if request.method == 'PUT':
-    cursor.execute(
-      """
-      UPDATE user
-      SET bio = ?
-      WHERE id = ?
-      """, (newBio, currentUser)
-    )
-
-    db.commit()
-
-    return jsonify({"message": f"{currentUser} Updated their bio"})
-
-  return 200
+  return jsonify({"message": "Updated bio"}), 200
 
 
-
+# Deletes the logged in user's account and logs them out
 @profile_page.route('/deleteProfile', methods=['DELETE'])
 def deleteUser():
   db = get_db()
-  cursor = db.cursor()
-  data = request.get_json()
-  userToDelete = data["userToDelete"]
+  db.execute("DELETE FROM user WHERE id = ?", (g.user["id"],))
+  db.commit()
 
-  if request.method == 'DELETE':
-    cursor.execute(
-      """
-      DELETE FROM user
-      WHERE id = ?
-      """, (userToDelete)
-    )
+  session.clear()
 
-    db.commit()
-
-    session.clear()
-    redirect("/login")
-
-    return jsonify({"message": f"deleted {userToDelete}"}), 200
-
-  return 200
+  return jsonify({"message": "Deleted account"}), 200

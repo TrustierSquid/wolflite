@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { logout } from "../utils/logout";
 
 export default function SideNav(props) {
   const [imageUrl, setImageUrl] = useState(null);
@@ -36,7 +37,7 @@ export default function SideNav(props) {
 
     try {
       const response = await fetch(
-        `/post/updateProfilePicture/${props.loggedInUserId}`,
+        `/post/updateProfilePicture`,
         {
           method: "PUT",
           body: formData,
@@ -111,8 +112,8 @@ export default function SideNav(props) {
                   id="defaultPfPic"
                   src={
                     props?.currentLoggedInUserProfilePic
-                      ? `${import.meta.env.VITE_SERVER}${props?.currentLoggedInUserProfilePic}`
-                      : `${import.meta.env.VITE_SERVER}/static/uploads/defaultUser.jpg`
+                      ? `${props?.currentLoggedInUserProfilePic}`
+                      : `/static/uploads/defaultUser.jpg`
                   }
                   alt=""
                 />
@@ -149,7 +150,7 @@ export default function SideNav(props) {
               </button>
               <button
                 className="sideNavButton"
-                onClick={() => (window.location.href = "/login")}
+                onClick={logout}
               >
                 <i className="fa-solid fa-right-from-bracket"></i>
                 <h3>Logout</h3>
