@@ -11,7 +11,8 @@ const TABS = [
   { key: "posts", label: "Posts", field: "allUserPosts", empty: "No posts yet." },
   { key: "polls", label: "Polls", field: "allUserPolls", empty: "No polls yet." },
   { key: "liked", label: "Liked", field: "likedPosts", empty: "No liked posts yet." },
-  { key: "archived", label: "Archived", field: "archivedPolls", empty: "No archived polls." },
+  // Only shown on your own profile: archived items are hidden from everyone else
+  { key: "archived", label: "Archived", field: "archived", empty: "Nothing archived. Use the ⋮ menu on a post or poll to archive it.", ownerOnly: true },
 ];
 
 const newestFirst = (items) => [...(items ?? [])].sort((a, b) => new Date(b.created) - new Date(a.created));
@@ -84,7 +85,8 @@ export default function ProfilePage() {
   }
 
   const isOwnProfile = currentUser?.id === profile.userId;
-  const activeTab = TABS.find((t) => t.key === tab);
+  const visibleTabs = TABS.filter((t) => !t.ownerOnly || isOwnProfile);
+  const activeTab = visibleTabs.find((t) => t.key === tab) ?? visibleTabs[0];
   const items = newestFirst(profile[activeTab.field]);
 
   return (
@@ -116,13 +118,13 @@ export default function ProfilePage() {
       </section>
 
       <div className="tabs" role="tablist" aria-label="Profile content">
-        {TABS.map((t) => (
+        {visibleTabs.map((t) => (
           <button
             key={t.key}
             type="button"
             role="tab"
             className="tab"
-            aria-selected={tab === t.key}
+            aria-selected={activeTab.key === t.key}
             onClick={() => setTab(t.key)}
           >
             {t.label}

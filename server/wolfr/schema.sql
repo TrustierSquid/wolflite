@@ -24,6 +24,7 @@ CREATE TABLE posts (
    title TEXT NOT NULL,
    body TEXT NOT NULL,
    filename TEXT,
+   isArchived BOOLEAN NOT NULL DEFAULT 0,
    FOREIGN KEY (author_id) REFERENCES user (id)
 );
 

@@ -1,6 +1,7 @@
 import click
 from flask import current_app, g
 
+import os
 import sqlite3
 from datetime import datetime
 
@@ -34,6 +35,30 @@ def init_db():
       db.executescript(f.read().decode('utf8'))
 
 
+# Columns added after the first release. upgrade_db() adds any that are missing,
+# so existing databases (including production) keep their data instead of
+# needing `init-db`, which wipes everything.
+# When you add a column to schema.sql, add it here too: (table, column, definition)
+ADDED_COLUMNS = [
+   ("posts", "isArchived", "BOOLEAN NOT NULL DEFAULT 0"),
+]
+
+
+def upgrade_db():
+   db = get_db()
+   for table, column, definition in ADDED_COLUMNS:
+      existing = {row["name"] for row in db.execute(f"PRAGMA table_info({table})")}
+      # A table missing entirely means the db was never initialised; init-db handles that
+      if existing and column not in existing:
+         try:
+            db.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+         except sqlite3.OperationalError as error:
+            # Another gunicorn worker added it at the same moment
+            if "duplicate column" not in str(error):
+               raise
+   db.commit()
+
+
 @click.command('init-db')
 def init_db_command():
    # wipes existing data and creates a new db instance
@@ -51,3 +76,8 @@ def init_app(app):
 
    # adds a new command that can be called with the flask command.
    app.cli.add_command(init_db_command)
+
+   # Bring an existing database up to date with the schema on every start
+   if os.path.exists(app.config['DATABASE']):
+      with app.app_context():
+         upgrade_db()

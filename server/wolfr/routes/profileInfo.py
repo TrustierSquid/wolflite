@@ -172,10 +172,9 @@ def retrieveLoggedInUserPost():
         "username": row["username"],
         "likesByPost": likes_by_post.get(row["id"], []),
         "comments": comments_by_post.get(row["id"], []),
-        "isPoll": False
+        "isPoll": False,
+        "isArchived": bool(row["isArchived"])
       })
-
-
 
 
     # Map for all of the logged in users poll
@@ -220,46 +219,20 @@ def retrieveLoggedInUserPost():
         "comments": comments_by_poll.get(row["id"], []),
         "isPoll": True,
         "isOpen": row["isOpen"],
-        "isArchived": row["isArchived"],
+        "isArchived": bool(row["isArchived"]),
         "archive_at": row["archive_at"],
         "whoVoted": voters
       })
 
-    # GET ALL POLLS THAT THE USER HAS ARCHIVED
-    archivedPolls = cursor.execute(
-      """
-      SELECT polls.*, user.username, user.filename AS userProfilePic,
-      COUNT(likes.id) AS likeCount
-      FROM polls
-      JOIN user ON polls.author_id = user.id
-      LEFT JOIN likes ON polls.id = likes.poll_id
-      WHERE user.id = ? AND polls.isArchived = 0
-      GROUP BY polls.id
-      """, (user_id,)
-    ).fetchall()
-
-    allArchivedPolls = []
-
-    for row in archivedPolls:
-      allArchivedPolls.append({
-        "id": row["id"],
-        "author_id": row["author_id"],
-        "created": row["created"],
-        "question": row["question"],
-        "username": row["username"],
-        # appended the blueprint of the options map
-        "options": option_map.get(row["id"], []),
-        "totalVotes": total_votes,
-        "profilePic": row["userProfilePic"],
-        "likeCount": row["likeCount"],
-        "likesByPoll": likes_by_poll.get(row["id"], []),
-        "comments": comments_by_poll.get(row["id"], []),
-        "isPoll": True,
-        "isOpen": row["isOpen"],
-        "isArchived": row["isArchived"],
-        "archive_at": row["archive_at"],
-        "whoVoted": voters
-      })
+    # Archived posts and polls are hidden from the public profile and only
+    # returned (in their own list) to the profile's owner
+    isOwner = g.user["id"] == user_id
+    activePosts = [post for post in allLoggedInUserPosts if not post["isArchived"]]
+    activePolls = [poll for poll in allLoggedInUserPolls if not poll["isArchived"]]
+    archivedItems = (
+      [item for item in allLoggedInUserPosts + allLoggedInUserPolls if item["isArchived"]]
+      if isOwner else []
+    )
 
     # FETCHING ALL POSTS THAT THE USER HAS LIKED
     likedPosts = cursor.execute(
@@ -268,7 +241,7 @@ def retrieveLoggedInUserPost():
         (SELECT COUNT(*) FROM likes WHERE likes.post_id = posts.id) AS PostLikeCount
       FROM posts
       JOIN user ON posts.author_id = user.id
-      WHERE posts.id IN (
+      WHERE posts.isArchived = 0 AND posts.id IN (
         SELECT post_id FROM likes WHERE author_id = ?
         );
       """, (user_id,)
@@ -296,9 +269,9 @@ def retrieveLoggedInUserPost():
 
     # Details of the profile being viewed (findUser was loaded at the top)
     return jsonify({
-      "allUserPosts": allLoggedInUserPosts,
-      "allUserPolls": allLoggedInUserPolls,
-      "archivedPolls": allArchivedPolls,
+      "allUserPosts": activePosts,
+      "allUserPolls": activePolls,
+      "archived": archivedItems,
       "likedPosts": allLikedPosts,
       "userId": findUser["id"],
       "username": findUser["username"],

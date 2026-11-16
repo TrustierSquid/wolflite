@@ -1,6 +1,8 @@
 import { useState } from "react";
 import Avatar from "./Avatar";
 import CommentSection from "./CommentSection";
+import DropdownMenu from "./DropdownMenu";
+import type { MenuItem } from "./DropdownMenu";
 import Status from "./Status";
 import { api } from "../lib/api";
 import { timeAgo } from "../lib/time";
@@ -22,6 +24,8 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters }) 
   const [error, setError] = useState(null);
 
   const currentUserId = currentUser?.id;
+  const isOwner = currentUserId !== undefined && item.author_id === currentUserId;
+  const kind = item.isPoll ? "poll" : "post";
   const likes = (item.isPoll ? item.likesByPoll : item.likesByPost) ?? [];
   const isLiked = likes.some((like) => like.author_id === currentUserId);
   const commentCount = item.comments?.length ?? 0;
@@ -55,6 +59,28 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters }) 
     run(() => api(`/profileInfo/closePoll/${item.id}`, { method: "DELETE" }));
   }
 
+  function toggleArchive() {
+    run(() =>
+      api(`/post/archive/${item.id}/${item.isPoll}`, { method: "PUT", json: { archived: !item.isArchived } })
+    );
+  }
+
+  function deleteItem() {
+    if (!window.confirm(`Delete this ${kind}? This can't be undone.`)) return;
+    run(() => api(`/post/delete/${item.id}/${item.isPoll}`, { method: "DELETE" }));
+  }
+
+  // Options in the ⋮ menu. Add future options here; the menu hides itself when the list is empty.
+  const menuItems: MenuItem[] = [];
+  if (isOwner) {
+    menuItems.push(
+      item.isArchived
+        ? { label: "Unarchive", icon: "fa-box-open", onSelect: toggleArchive }
+        : { label: "Archive", icon: "fa-box-archive", onSelect: toggleArchive },
+      { label: "Delete", icon: "fa-trash", onSelect: deleteItem, danger: true }
+    );
+  }
+
   return (
     <article className="card post">
       <header className="post-header">
@@ -67,11 +93,18 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters }) 
             {timeAgo(item.created)}
           </time>
         </div>
+        {item.isArchived && (
+          <span className="tag">
+            <i className="fa-solid fa-box-archive" aria-hidden="true"></i> Archived
+          </span>
+        )}
+        <DropdownMenu items={menuItems} label={`${kind === "poll" ? "Poll" : "Post"} options`} />
       </header>
 
       {item.isPoll ? (
         <PollBody
           poll={item}
+          isOwner={isOwner}
           currentUserId={currentUserId}
           busy={busy}
           onVote={vote}
@@ -136,9 +169,8 @@ function PostBody({ post }) {
 }
 
 
-function PollBody({ poll, currentUserId, busy, onVote, onClose, onShowVoters }) {
+function PollBody({ poll, isOwner, currentUserId, busy, onVote, onClose, onShowVoters }) {
   const total = poll.totalVotes || 0;
-  const isOwner = currentUserId !== undefined && poll.author_id === currentUserId;
 
   return (
     <>

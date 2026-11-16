@@ -22,6 +22,7 @@ def retrievePosts():
          "FROM posts "
          "JOIN user ON posts.author_id = user.id "
          "LEFT JOIN likes ON likes.post_id = posts.id "
+         "WHERE posts.isArchived = 0 "
          "GROUP BY posts.id "
       ).fetchall()
 
@@ -31,6 +32,7 @@ def retrievePosts():
          "COUNT(likes.id) AS likeCount "
          "FROM polls JOIN user ON polls.author_id = user.id "
          "LEFT JOIN likes ON likes.poll_id = polls.id "
+         "WHERE polls.isArchived = 0 "
          "GROUP BY polls.id"
       ).fetchall()
 
@@ -154,7 +156,8 @@ def retrievePosts():
                "likeCount": row["likeCount"],
                "likesByPost": likes_by_post.get(row["id"], []),
                "comments": comments_by_post.get(row["id"], []),
-               "isPoll": False
+               "isPoll": False,
+               "isArchived": bool(row["isArchived"])
             }
          )
 
@@ -198,6 +201,7 @@ def retrievePosts():
             "profilePic": poll["userProfilePic"],
             "isPoll": True,
             "isOpen": poll["isOpen"],
+            "isArchived": bool(poll["isArchived"]),
             "likeCount": poll["likeCount"],
             "comments": comments_by_poll.get(poll["id"], []),
             "whoVoted": votes_by_poll.get(poll["id"], []),
@@ -281,6 +285,71 @@ def addLike(item_id, is_poll):
 
    db.commit()
    return jsonify({"success": 200})
+
+
+# Looks up a post or poll that the logged in user wants to change.
+# Returns (table, error_response): the error is set when the item doesn't exist
+# or belongs to someone else.
+def find_own_item(item_id, is_poll):
+   # Table name comes from this whitelist, never from user input
+   table = "polls" if is_poll.lower() == "true" else "posts"
+
+   item = get_db().execute(f"SELECT author_id FROM {table} WHERE id = ?", (item_id,)).fetchone()
+   if item is None:
+      return table, (jsonify({"error": "Not found"}), 404)
+   if item["author_id"] != g.user["id"]:
+      return table, (jsonify({"error": "You can only change your own posts"}), 403)
+   return table, None
+
+
+# Archives (hides from the feed and public profile) or unarchives a post / poll
+@blog_page.route("/archive/<int:item_id>/<is_poll>", methods=["PUT"])
+def archiveItem(item_id, is_poll):
+   table, error = find_own_item(item_id, is_poll)
+   if error:
+      return error
+
+   data = request.get_json(silent=True) or {}
+   archived = bool(data.get("archived", True))
+
+   db = get_db()
+   db.execute(f"UPDATE {table} SET isArchived = ? WHERE id = ?", (int(archived), item_id))
+   db.commit()
+
+   return jsonify({"isArchived": archived}), 200
+
+
+# Permanently deletes a post / poll and everything attached to it
+@blog_page.route("/delete/<int:item_id>/<is_poll>", methods=["DELETE"])
+def deleteItem(item_id, is_poll):
+   table, error = find_own_item(item_id, is_poll)
+   if error:
+      return error
+
+   db = get_db()
+   if table == "polls":
+      db.execute("DELETE FROM votes WHERE poll_id = ?", (item_id,))
+      db.execute("DELETE FROM poll_options WHERE poll_id = ?", (item_id,))
+      db.execute("DELETE FROM likes WHERE poll_id = ?", (item_id,))
+      db.execute("DELETE FROM comments WHERE poll_id = ?", (item_id,))
+      media = None
+   else:
+      media = db.execute("SELECT filename FROM posts WHERE id = ?", (item_id,)).fetchone()["filename"]
+      db.execute("DELETE FROM likes WHERE post_id = ?", (item_id,))
+      db.execute("DELETE FROM comments WHERE post_id = ?", (item_id,))
+
+   db.execute(f"DELETE FROM {table} WHERE id = ?", (item_id,))
+   db.commit()
+
+   # Remove the uploaded media file too (never the shared default images)
+   if media and media.startswith("/static/uploads/"):
+      filename = os.path.basename(media)
+      defaults = os.listdir(os.path.join(os.path.dirname(os.path.dirname(__file__)), "defaults"))
+      path = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
+      if filename not in defaults and os.path.isfile(path):
+         os.remove(path)
+
+   return jsonify({"message": "Deleted"}), 200
 
 
 # Creates a new post

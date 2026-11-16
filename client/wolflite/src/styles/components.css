@@ -92,6 +92,65 @@
 }
 
 
+/* ---------- Dropdown menu (⋮) ---------- */
+
+.dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dropdown-item i {
+  width: 1rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus-visible {
+  outline: none;
+  background: var(--surface-2);
+}
+
+.dropdown-item.is-danger,
+.dropdown-item.is-danger i {
+  color: var(--primary);
+}
+
+.dropdown-item.is-danger:hover,
+.dropdown-item.is-danger:focus-visible {
+  background: var(--primary-soft);
+}
+
+
 /* ---------- Post / poll card ---------- */
 
 .post {
@@ -105,6 +164,11 @@
   display: flex;
   align-items: center;
   gap: 0.625rem;
+}
+
+/* Pushes the ⋮ menu to the right edge of the header */
+.post-header .dropdown {
+  margin-left: auto;
 }
 
 .post-meta {

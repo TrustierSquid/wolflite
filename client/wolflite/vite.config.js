@@ -3,7 +3,8 @@ import react from '@vitejs/plugin-react'
 
 // Flask dev server. Every API route and /static (uploads, images) is proxied here
 // so the browser only ever talks to the Vite dev server (same origin, cookies work).
-const FLASK_DEV_SERVER = 'http://localhost:5000'
+// Override with the FLASK_URL environment variable if Flask runs elsewhere (e.g. port 5000 is taken).
+const FLASK_DEV_SERVER = process.env.FLASK_URL || 'http://localhost:5000'
 
 const proxiedPaths = [
   '/formSubmission',
