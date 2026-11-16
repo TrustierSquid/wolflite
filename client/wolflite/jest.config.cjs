@@ -3,5 +3,5 @@ module.exports = {
   transform: {
     "^.+\\.[jt]sx?$": "babel-jest"
   },
-  moduleFileExtensions: ["js", "jsx"],
+  moduleFileExtensions: ["js", "jsx", "ts", "tsx"],
 };

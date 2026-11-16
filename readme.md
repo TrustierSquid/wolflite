@@ -194,8 +194,11 @@ pytest
 
 Frontend (from `client/wolflite/`):
 ```
-npm test
+npm test            # Jest tests
+npm run typecheck   # TypeScript type checking (tsc)
+npm run lint        # ESLint
 ```
+> `npm run build` and `npm run dev` don't type check (Vite only strips the types), so run `typecheck` before committing.
 
 
 ## Production Deployment
