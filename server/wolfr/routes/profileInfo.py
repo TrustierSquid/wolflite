@@ -1,7 +1,7 @@
 import sqlite3
 from flask import Blueprint, g, request, jsonify, redirect, current_app
 from wolfr.db import get_db
-from wolfr.routes.blog import build_feed_items, get_stashed_ids, get_stash_counts
+from wolfr.routes.blog import build_feed_items, get_stashed_ids
 from werkzeug.utils import secure_filename
 import os
 import datetime
@@ -15,8 +15,16 @@ def retrieveLoggedInUserPost():
   db = get_db()
   cursor = db.cursor()
 
-  # using Query string to  search a profile by user's ID
+  # The profile to show: ?id=<user id>, or ?username=<name> (used by @mention links,
+  # which only know the name; matched ignoring case)
   user_id = request.args.get("id", type=int)
+  username = request.args.get("username", "").strip()
+
+  if not user_id and username:
+    found = cursor.execute("SELECT id FROM user WHERE username = ? COLLATE NOCASE", (username,)).fetchone()
+    if found is None:
+      return '', 204
+    user_id = found["id"]
 
   if not user_id:
     return jsonify({"error": "No user id provided"}), 400
@@ -33,268 +41,34 @@ def retrieveLoggedInUserPost():
     return '', 204
 
 
-  try:
-    # Querying all posts from the current logged in user, selecting both filenames
-    userPostedPosts = cursor.execute(
-      """
-      SELECT posts.*, posts.filename AS postPic, user.filename AS profilePic, user.username,
-      COUNT(likes.id) AS likeCount
-      FROM posts
-      JOIN user ON posts.author_id = user.id
-      LEFT JOIN likes ON posts.id = likes.post_id
-      WHERE user.id = ?
-      GROUP BY posts.id
-      """, (user_id,)
-    ).fetchall()
+  # Everything the user posted, in every den
+  their_items = build_feed_items(author_id=user_id)
 
-    userPostedPolls = cursor.execute(
-      """
-      SELECT polls.*, user.username, user.filename AS userProfilePic,
-      COUNT(likes.id) AS likeCount
-      FROM polls
-      JOIN user ON polls.author_id = user.id
-      LEFT JOIN likes ON polls.id = likes.poll_id
-      WHERE user.id = ?
-      GROUP BY polls.id
-      """, (user_id,)
-    ).fetchall()
+  # The stash list is private: only returned when viewing your own profile.
+  # It can contain anyone's posts and polls.
+  stashed_items = []
+  if g.user and g.user["id"] == user_id:
+    stashed_post_ids, stashed_poll_ids = get_stashed_ids(user_id)
+    stashed_items = build_feed_items(post_ids=stashed_post_ids, poll_ids=stashed_poll_ids)
 
-    # Selecting all poll options
-    options = cursor.execute(
-        "SELECT * FROM poll_options"
-    ).fetchall()
+  # Posts the user liked
+  liked_post_ids = [row["post_id"] for row in cursor.execute(
+    "SELECT post_id FROM likes WHERE author_id = ? AND post_id IS NOT NULL", (user_id,)
+  )]
+  liked_items = build_feed_items(post_ids=liked_post_ids)
 
-    # Blueprint FOR POLLS Results
-    option_map = {}
-    for opt in options:
-        # Fetch user IDs who voted for this option
-        voters = cursor.execute(
-        "SELECT user_id FROM votes WHERE option_id = ?", (opt["id"],)
-        ).fetchall()
-        voter_ids = [v["user_id"] for v in voters]
-
-        option_map.setdefault(opt["poll_id"], []).append({
-          "id": opt["id"],
-          "option_text": opt["option_text"],
-          "user_voted": opt["users_voted"],
-          "voters": voter_ids,
-        })
-
-    comments = cursor.execute("""
-      SELECT comments.id, comments.parent_id, comments.edited, comments.author_id, comments.post_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
-      FROM comments
-      JOIN user ON comments.author_id = user.id
-    """).fetchall()
-
-    pollComments = cursor.execute("""
-      SELECT comments.id, comments.parent_id, comments.edited, comments.author_id, comments.poll_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
-      FROM comments
-      JOIN user ON comments.author_id = user.id
-    """).fetchall()
-
-    # Organize comments by post_id
-    comments_by_post = {}
-    for comment in comments:
-      post_id = comment["post_id"]
-      comments_by_post.setdefault(post_id, []).append({
-        "author_id": comment["author_id"],
-        "author_username": comment["username"],
-        "profilePic": comment["userProfilePic"],
-        "post_id": comment["post_id"],
-        "created": comment["created"],
-        "commentBody": comment["commentBody"],
-        "id": comment["id"],
-        "edited": comment["edited"],
-        "parent_id": comment["parent_id"]
-      })
-
-    # Organize comments by poll_id
-    comments_by_poll = {}
-    for comment in pollComments:
-      poll_id = comment["poll_id"]
-      comments_by_poll.setdefault(poll_id, []).append({
-        "author_id": comment["author_id"],
-        "author_username": comment["username"],
-        "profilePic": comment["userProfilePic"],
-        "poll_id": comment["poll_id"],
-        "created": comment["created"],
-        "commentBody": comment["commentBody"],
-        "id": comment["id"],
-        "edited": comment["edited"],
-        "parent_id": comment["parent_id"]
-      })
-
-    # Get all likes per post with like author id and username
-    likesMembers = cursor.execute("""
-        SELECT likes.post_id, likes.author_id, user.username
-        FROM likes
-        JOIN user ON likes.author_id = user.id
-    """).fetchall()
-
-    likesMembersPoll = cursor.execute(
-      """
-      SELECT likes.poll_id, likes.author_id, user.username
-      FROM likes
-      JOIN user ON likes.author_id = user.id
-      """
-    ).fetchall()
-
-    # map for likes (lists all users by id and username who liked a post)
-    likes_by_post = {}
-    for like in likesMembers:
-        post_id = like["post_id"]
-
-        if post_id not in likes_by_post:
-          likes_by_post[post_id] = []
-        likes_by_post[post_id].append({
-          "author_id": like["author_id"],
-          "username": like["username"]
-        })
-
-    # map for likes (lists all users by id and username who liked a poll)
-    likes_by_poll = {}
-    for like in likesMembersPoll:
-      poll_id = like["poll_id"]
-
-      if poll_id not in likes_by_poll:
-          likes_by_poll[poll_id] = []
-      likes_by_poll[poll_id].append({
-        "author_id": like["author_id"],
-        "username": like["username"]
-      })
-
-
-    # Stash state is about the person VIEWING the profile: which items they stashed,
-    # plus how many users stashed each item
-    stashed_post_ids, stashed_poll_ids = get_stashed_ids(g.user["id"])
-    post_stash_counts, poll_stash_counts = get_stash_counts()
-
-    # Map for all of the logged in users posts
-    allLoggedInUserPosts = []
-    for row in userPostedPosts:
-      allLoggedInUserPosts.append({
-        "id": row["id"],
-        "author_id": row["author_id"],
-        "created": row["created"],
-        "title": row["title"],
-        "body": row["body"],
-        "postPic": row["postPic"],
-        "profilePic": row["profilePic"],
-        "likeCount": row["likeCount"],
-        "username": row["username"],
-        "likesByPost": likes_by_post.get(row["id"], []),
-        "comments": comments_by_post.get(row["id"], []),
-        "isPoll": False,
-        "isStashed": row["id"] in stashed_post_ids,
-        "stashCount": post_stash_counts.get(row["id"], 0)
-      })
-
-
-    # Map for all of the logged in users poll
-    allLoggedInUserPolls = []
-
-    for row in userPostedPolls:
-      # Getting total votes for each poll
-      result = cursor.execute("""
-        SELECT SUM(users_voted) AS total_votes FROM poll_options WHERE poll_id = ? """, (row["id"],)
-      ).fetchone()
-
-      total_votes = result["total_votes"] if result and result["total_votes"] is not None else 0
-
-      # For each poll, get all voters with their profile pic and username
-      voters_info = cursor.execute("""
-        SELECT DISTINCT user.id, user.username, user.filename AS profilePic
-        FROM votes
-        JOIN user ON votes.user_id = user.id
-        WHERE votes.poll_id = ?
-      """, (row["id"],)).fetchall()
-      voters = [
-        {
-          "id": voter["id"],
-          "username": voter["username"],
-          "profilePic": voter["profilePic"]
-        }
-        for voter in voters_info
-      ]
-
-      allLoggedInUserPolls.append({
-        "id": row["id"],
-        "author_id": row["author_id"],
-        "created": row["created"],
-        "question": row["question"],
-        "username": row["username"],
-        # appended the blueprint of the options map
-        "options": option_map.get(row["id"], []),
-        "totalVotes": total_votes,
-        "profilePic": row["userProfilePic"],
-        "likeCount": row["likeCount"],
-        "likesByPoll": likes_by_poll.get(row["id"], []),
-        "comments": comments_by_poll.get(row["id"], []),
-        "isPoll": True,
-        "isOpen": row["isOpen"],
-        "archive_at": row["archive_at"],
-        "whoVoted": voters,
-        "isStashed": row["id"] in stashed_poll_ids,
-        "stashCount": poll_stash_counts.get(row["id"], 0)
-      })
-
-    # The stash list is private: only returned when viewing your own profile.
-    # It can contain anyone's posts and polls, so it reuses the feed builder.
-    if g.user["id"] == user_id:
-      stashedItems = [item for item in build_feed_items() if item["isStashed"]]
-    else:
-      stashedItems = []
-
-    # FETCHING ALL POSTS THAT THE USER HAS LIKED
-    likedPosts = cursor.execute(
-      """
-      SELECT posts.*, posts.filename AS postPic, user.username, user.filename AS profilePic,
-        (SELECT COUNT(*) FROM likes WHERE likes.post_id = posts.id) AS PostLikeCount
-      FROM posts
-      JOIN user ON posts.author_id = user.id
-      WHERE posts.id IN (
-        SELECT post_id FROM likes WHERE author_id = ?
-        );
-      """, (user_id,)
-    ).fetchall()
-
-
-    allLikedPosts = []
-
-    for row in likedPosts:
-      allLikedPosts.append({
-        "id": row["id"],
-        "author_id": row["author_id"],
-        "created": row["created"],
-        "title": row["title"],
-        "body": row["body"],
-        "postPic": row["postPic"],
-        "username": row["username"],
-        "profilePic": row["profilePic"],
-        "likeCount": row["PostLikeCount"],
-        "isPoll": False,
-        "comments": comments_by_post.get(row["id"], []),
-        "likesByPost": likes_by_post.get(row["id"], []),
-        "isStashed": row["id"] in stashed_post_ids,
-        "stashCount": post_stash_counts.get(row["id"], 0)
-      })
-
-
-    # Details of the profile being viewed (findUser was loaded at the top)
-    return jsonify({
-      "allUserPosts": allLoggedInUserPosts,
-      "allUserPolls": allLoggedInUserPolls,
-      "stashed": stashedItems,
-      "likedPosts": allLikedPosts,
-      "userId": findUser["id"],
-      "username": findUser["username"],
-      "userProfilePic": findUser["filename"],
-      "joinedDate": findUser["created"],
-      "bio": findUser["bio"]
-    }), 200
-
-  except sqlite3.IntegrityError:
-    return jsonify({"error": "user does not exist"})
+  # Details of the profile being viewed (findUser was loaded at the top)
+  return jsonify({
+    "allUserPosts": [item for item in their_items if not item["isPoll"]],
+    "allUserPolls": [item for item in their_items if item["isPoll"]],
+    "stashed": stashed_items,
+    "likedPosts": liked_items,
+    "userId": findUser["id"],
+    "username": findUser["username"],
+    "userProfilePic": findUser["filename"],
+    "joinedDate": findUser["created"],
+    "bio": findUser["bio"]
+  }), 200
 
 
 
@@ -413,12 +187,44 @@ def changeBio():
   return jsonify({"message": "Updated bio"}), 200
 
 
+# Keep in sync with THEME_MODES / ACCENTS in client/wolflite/src/lib/theme.ts
+THEME_MODES = {"system", "light", "dark"}
+ACCENTS = {"red", "orange", "green", "teal", "blue", "purple", "pink"}
+
+
+# Saves the logged in user's appearance (theme mode and accent color) to their account.
+# Body: {"theme": "dark", "accent": "blue"} (either one can be left out)
+@profile_page.route('/appearance', methods=['PUT'])
+def saveAppearance():
+  data = request.get_json(silent=True) or {}
+  theme = data.get("theme", g.user["theme"])
+  accent = data.get("accent", g.user["accent"])
+
+  if theme is not None and theme not in THEME_MODES:
+    return jsonify({"error": "Unknown theme"}), 400
+  if accent is not None and accent not in ACCENTS:
+    return jsonify({"error": "Unknown accent color"}), 400
+
+  db = get_db()
+  db.execute("UPDATE user SET theme = ?, accent = ? WHERE id = ?", (theme, accent, g.user["id"]))
+  db.commit()
+
+  return jsonify({"theme": theme, "accent": accent}), 200
+
+
 # Deletes the logged in user's account and logs them out
 @profile_page.route('/deleteProfile', methods=['DELETE'])
 def deleteUser():
   db = get_db()
   # Their stashes would otherwise keep counting toward other posts' stash counts
   db.execute("DELETE FROM stashes WHERE user_id = ?", (g.user["id"],))
+  db.execute("DELETE FROM den_members WHERE user_id = ?", (g.user["id"],))
+  # Their notifications go; notifications they caused stay but no longer name them
+  db.execute("DELETE FROM notifications WHERE user_id = ?", (g.user["id"],))
+  db.execute("UPDATE notifications SET actor_id = NULL WHERE actor_id = ?", (g.user["id"],))
+  # Leave their conversations. Their messages stay for the other person, who now
+  # sees "Deleted user" in that conversation.
+  db.execute("DELETE FROM conversation_members WHERE user_id = ?", (g.user["id"],))
   db.execute("DELETE FROM user WHERE id = ?", (g.user["id"],))
   db.commit()
 

@@ -10,5 +10,6 @@ test('renders login form and hyperlinks inside', ()=> {
    expect(screen.getByPlaceholderText(/Password/i)).toBeInTheDocument()
 
    // Hyperlinks
-   expect(screen.getByRole('link')).toHaveAttribute('href', '/login')
+   expect(screen.getByRole('link', { name: /log in/i })).toHaveAttribute('href', '/login')
+   expect(screen.getByRole('link', { name: /browse without an account/i })).toHaveAttribute('href', '/blog')
 })

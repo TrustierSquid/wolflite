@@ -33,8 +33,35 @@
 }
 
 /* Profile comes first, set apart from the other items */
-.nav-links > li:first-child {
+.nav-links > li.nav-profile {
   margin-right: 2.5rem;
+}
+
+/* Wide screens: the links line up with the feed below. The middle column is as
+   wide as the feed's cards (.page is 640px minus 16px padding on each side);
+   your profile sits at its left edge and everything else at its right edge.
+   The negative margins line the picture / last icon up with the card edges
+   instead of with their (invisible until hovered) highlight box. */
+@media (min-width: 900px) {
+  .nav {
+    grid-template-columns: 1fr minmax(0, 608px) 1fr;
+  }
+
+  .nav-links {
+    justify-content: flex-end;
+  }
+
+  .nav-links > li:first-child {
+    margin-left: calc(-0.75rem - 2px);
+  }
+
+  .nav-links > li.nav-profile {
+    margin-right: auto;
+  }
+
+  .nav-links > li:last-child {
+    margin-right: calc(-0.75rem - 2px);
+  }
 }
 
 /* Each item: icon (or your picture) + label. The bar under the current page is drawn with ::after */
@@ -133,7 +160,7 @@
     padding: 0;
   }
 
-  .nav-links > li:first-child {
+  .nav-links > li.nav-profile {
     margin-right: 1.5rem;
   }
 }
@@ -143,7 +170,7 @@
     gap: 0;
   }
 
-  .nav-links > li:first-child {
+  .nav-links > li.nav-profile {
     margin-right: 0.75rem;
   }
 
@@ -244,10 +271,10 @@
   margin-left: 0;
 }
 
-/* Stashed by you: purple (secondary brand color) outline and tag */
+/* Stashed by you: solid purple (secondary brand color) outline and tag */
 .post.is-stashed {
-  border-color: var(--secondary);
-  box-shadow: 0 0 0 1px var(--secondary);
+  border-color: var(--secondary-border);
+  box-shadow: inset 0 0 0 1px var(--secondary-border);
 }
 
 .tag-stashed {
@@ -299,7 +326,7 @@
   display: flex;
   gap: 0.25rem;
   padding-top: 0.5rem;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--card-border);
 }
 
 .action-btn {
@@ -324,6 +351,28 @@
 .action-btn.is-active,
 .action-btn.is-active:hover {
   color: var(--primary);
+}
+
+/* Like = heart (toggle) + count (opens "Liked by"), joined into one pill */
+.like-group {
+  display: inline-flex;
+  align-items: center;
+}
+
+.like-group .like-toggle {
+  padding-right: 0.35rem;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.like-group .like-count {
+  min-width: 1.75rem;
+  justify-content: center;
+  padding-left: 0.35rem;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.like-group .like-count:hover {
+  text-decoration: underline;
 }
 
 /* Stash button + count sits at the right end of the actions row */
@@ -371,7 +420,7 @@
 }
 
 .poll-option:hover:not(:disabled) {
-  border-color: var(--primary);
+  border-color: var(--primary-border);
 }
 
 .poll-option:disabled {
@@ -388,7 +437,7 @@
 }
 
 .poll-option.is-voted {
-  border-color: var(--primary);
+  border-color: var(--primary-border);
 }
 
 .poll-option.is-voted .poll-option-fill {
@@ -439,7 +488,7 @@
   flex-direction: column;
   gap: 0.75rem;
   padding-top: 0.75rem;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--card-border);
 }
 
 .comment-form {
@@ -658,7 +707,7 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--card-border);
 }
 
 .modal-title {

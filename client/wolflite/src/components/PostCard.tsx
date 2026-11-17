@@ -1,10 +1,15 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Avatar from "./Avatar";
 import CommentSection from "./CommentSection";
+import DenAvatar from "./DenAvatar";
+import MentionText from "./MentionText";
 import DropdownMenu from "./DropdownMenu";
 import type { MenuItem } from "./DropdownMenu";
+import LikesModal from "./LikesModal";
 import Status from "./Status";
 import { api } from "../lib/api";
+import { isLoginRequired } from "../lib/auth";
+import { denHref } from "../lib/dens";
 import { timeAgo } from "../lib/time";
 
 const VIDEO_FILE = /\.(mp4|mov|webm|avi)$/i;
@@ -13,14 +18,20 @@ const VIDEO_FILE = /\.(mp4|mov|webm|avi)$/i;
   One card for both posts and polls, used by the feed and the profile page.
 
   item          a post or poll from the API (item.isPoll tells which)
-  currentUser   the logged in user ({ id, username, profilePic, ... }) or null while loading
+  currentUser   the logged in user ({ id, username, profilePic, ... }), null for guests,
+                undefined while loading
   onChange      called after a like / vote / comment / close, so the page can reload its data
   onShowVoters  called with the poll when "N votes" is clicked
+  showDen       show which den it was posted in (off on the den's own page)
+
+  Guests see everything; their clicks on like / vote / stash open the login prompt.
 */
-export default function PostCard({ item, currentUser, onChange, onShowVoters }) {
+export default function PostCard({ item, currentUser, onChange, onShowVoters, showDen = true }) {
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [likePop, setLikePop] = useState(false);
+  const [likesOpen, setLikesOpen] = useState(false);
+  const closeLikes = useCallback(() => setLikesOpen(false), []);
   const [error, setError] = useState(null);
 
   const currentUserId = currentUser?.id;
@@ -39,7 +50,8 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters }) 
       await request();
       await onChange?.();
     } catch (err) {
-      setError({ type: "error", text: err.message });
+      // Guests get the login prompt instead of an error message
+      if (!isLoginRequired(err)) setError({ type: "error", text: err.message });
     } finally {
       setBusy(false);
     }
@@ -67,7 +79,9 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters }) 
   }
 
   function deleteItem() {
-    if (!window.confirm(`Delete this ${kind}? This can't be undone.`)) return;
+    // Den owners / moderators can delete other people's posts: say whose it is
+    const whose = isOwner ? `this ${kind}` : `${item.username}'s ${kind}`;
+    if (!window.confirm(`Delete ${whose}? This can't be undone.`)) return;
     run(() => api(`/post/delete/${item.id}/${item.isPoll}`, { method: "DELETE" }));
   }
 
@@ -80,7 +94,8 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters }) 
         : { label: "Stash", icon: "fa-bookmark", onSelect: toggleStash }
     );
   }
-  if (isOwner) {
+  // Your own posts, and anything in a den you own / moderate (item.canModerate)
+  if (isOwner || item.canModerate) {
     menuItems.push({ label: "Delete", icon: "fa-trash", onSelect: deleteItem, danger: true });
   }
 
@@ -91,12 +106,37 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters }) 
       <header className="post-header">
         <Avatar src={item.profilePic} size={40} />
         <div className="post-meta">
-          <a className="post-author" href={`/profile?id=${item.author_id}`}>
-            {item.username}
-          </a>
-          <time className="post-time" dateTime={new Date(item.created).toISOString()}>
-            {timeAgo(item.created)}
-          </time>
+          <span className="post-author-row">
+            <a className="post-author" href={`/profile?id=${item.author_id}`}>
+              {item.username}
+            </a>
+            {/* Posted by the owner of the den it's in */}
+            {item.isDenOwner && (
+              <span className="tag tag-owner tag-den-role" title={`Owner of ${item.den?.name ?? "this den"}`}>
+                <i className="fa-solid fa-crown" aria-hidden="true"></i> Den Owner
+              </span>
+            )}
+            {/* Posted by one of the den's moderators */}
+            {item.isDenModerator && (
+              <span className="tag tag-moderator tag-den-role" title={`Moderator of ${item.den?.name ?? "this den"}`}>
+                <i className="fa-solid fa-shield-halved" aria-hidden="true"></i> Moderator
+              </span>
+            )}
+          </span>
+          <span className="post-sub">
+            {showDen && item.den && (
+              <>
+                <a className="post-den" href={denHref(item.den.name)}>
+                  <DenAvatar name={item.den.name} image={item.den.image} size={16} />
+                  {item.den.name}
+                </a>
+                <span aria-hidden="true">·</span>
+              </>
+            )}
+            <time className="post-time" dateTime={new Date(item.created).toISOString()}>
+              {timeAgo(item.created)}
+            </time>
+          </span>
         </div>
         {item.isStashed && (
           <span className="tag tag-stashed">
@@ -123,20 +163,33 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters }) 
       <Status status={error} />
 
       <div className="post-actions">
-        <button
-          type="button"
-          className={`action-btn${isLiked ? " is-active" : ""}`}
-          onClick={toggleLike}
-          aria-pressed={isLiked}
-          aria-label={isLiked ? "Unlike" : "Like"}
-        >
-          <i
-            className={`${isLiked ? "fa-solid" : "fa-regular"} fa-heart${likePop ? " pop" : ""}`}
-            onAnimationEnd={() => setLikePop(false)}
-            aria-hidden="true"
-          ></i>
-          {item.likeCount ?? 0}
-        </button>
+        {/* The heart likes / unlikes; the number opens "Liked by" */}
+        <span className={`like-group${isLiked ? " is-active" : ""}`}>
+          <button
+            type="button"
+            className={`action-btn like-toggle${isLiked ? " is-active" : ""}`}
+            onClick={toggleLike}
+            aria-pressed={isLiked}
+            aria-label={isLiked ? "Unlike" : "Like"}
+            title={isLiked ? "Unlike" : "Like"}
+          >
+            <i
+              className={`${isLiked ? "fa-solid" : "fa-regular"} fa-heart${likePop ? " pop" : ""}`}
+              onAnimationEnd={() => setLikePop(false)}
+              aria-hidden="true"
+            ></i>
+          </button>
+          <button
+            type="button"
+            className={`action-btn like-count${isLiked ? " is-active" : ""}`}
+            onClick={() => setLikesOpen(true)}
+            aria-haspopup="dialog"
+            aria-label={`${item.likeCount ?? 0} ${(item.likeCount ?? 0) === 1 ? "like" : "likes"}, see who liked this`}
+            title="See who liked this"
+          >
+            {item.likeCount ?? 0}
+          </button>
+        </span>
 
         <button
           type="button"
@@ -162,6 +215,10 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters }) 
       </div>
 
       {commentsOpen && <CommentSection item={item} currentUser={currentUser} onChange={onChange} />}
+
+      {likesOpen && (
+        <LikesModal title={item.isPoll ? item.question : item.title} likes={likes} onClose={closeLikes} />
+      )}
     </article>
   );
 }
@@ -173,8 +230,8 @@ function PostBody({ post }) {
 
   return (
     <>
-      <h2 className="post-title">{post.title}</h2>
-      {post.body && <p className="post-body">{post.body}</p>}
+      <h2 className="post-title"><MentionText text={post.title} /></h2>
+      {post.body && <p className="post-body"><MentionText text={post.body} /></p>}
       {media &&
         (VIDEO_FILE.test(media) ? (
           <video className="post-media" src={media} controls preload="metadata" />
@@ -191,7 +248,7 @@ function PollBody({ poll, isOwner, currentUserId, busy, onVote, onClose, onShowV
 
   return (
     <>
-      <h2 className="poll-question">{poll.question}</h2>
+      <h2 className="poll-question"><MentionText text={poll.question} /></h2>
 
       <div className="poll-options">
         {poll.options?.map((option) => {

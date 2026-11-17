@@ -2,9 +2,11 @@ import { useEffect, useId, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import Avatar from "./Avatar";
 import DropdownMenu from "./DropdownMenu";
+import MentionText from "./MentionText";
 import type { MenuItem } from "./DropdownMenu";
 import Status from "./Status";
 import { api } from "../lib/api";
+import { loginHref, signupHref } from "../lib/auth";
 import { timeAgo } from "../lib/time";
 
 const MAX_COMMENT_LENGTH = 500; // same limit as the server
@@ -28,6 +30,8 @@ interface CommentTarget {
   author_id: number;
   isPoll: boolean;
   comments?: Comment[];
+  /** The logged in user owns / moderates the den it's in: they can delete any comment */
+  canModerate?: boolean;
 }
 
 interface CurrentUser {
@@ -53,7 +57,8 @@ function postComment(target: CommentTarget, commentBody: string, parentId?: numb
 
 interface CommentSectionProps {
   item: CommentTarget;
-  currentUser: CurrentUser | null;
+  /** null for guests, undefined while loading */
+  currentUser: CurrentUser | null | undefined;
   /** Reloads the page's data after any change */
   onChange?: () => unknown;
 }
@@ -93,6 +98,14 @@ export default function CommentSection({ item, currentUser, onChange }: CommentS
 
   return (
     <div className="comments">
+      {currentUser === null ? (
+        <p className="comments-login">
+          <i className="fa-regular fa-comment" aria-hidden="true"></i>
+          <span>
+            <a href={loginHref()}>Log in</a> or <a href={signupHref()}>create an account</a> to comment.
+          </span>
+        </p>
+      ) : (
       <form className="comment-form" onSubmit={submit}>
         <Avatar src={currentUser?.profilePic} size={32} />
         <input
@@ -107,6 +120,7 @@ export default function CommentSection({ item, currentUser, onChange }: CommentS
           <i className="fa-solid fa-paper-plane" aria-hidden="true"></i> Post
         </button>
       </form>
+      )}
 
       <Status status={error} />
 
@@ -135,7 +149,7 @@ interface CommentThreadProps {
   comment: Comment;
   replies: Comment[];
   target: CommentTarget;
-  currentUser: CurrentUser | null;
+  currentUser: CurrentUser | null | undefined;
   onChange?: () => unknown;
 }
 
@@ -152,7 +166,7 @@ function CommentThread({ comment, replies, target, currentUser, onChange }: Comm
     setExpanded(true);
   }
 
-  const itemProps = { postAuthorId: target.author_id, currentUserId: currentUser?.id, onChange };
+  const itemProps = { postAuthorId: target.author_id, currentUserId: currentUser?.id, canModerate: !!target.canModerate, onChange };
 
   return (
     <li className="comment-thread">
@@ -206,7 +220,7 @@ interface ReplyFormProps {
   target: CommentTarget;
   parentId: number;
   initialText: string;
-  currentUser: CurrentUser | null;
+  currentUser: CurrentUser | null | undefined;
   /** Called when the form closes; posted = a reply was sent */
   onDone: (posted: boolean) => unknown;
 }
@@ -276,6 +290,8 @@ interface CommentItemProps {
   postAuthorId: number;
   /** Logged in user (undefined while loading) */
   currentUserId?: number;
+  /** The logged in user owns / moderates the den: they can delete any comment */
+  canModerate?: boolean;
   /** Reloads the page's data after an edit or delete */
   onChange?: () => unknown;
   /** Opens the reply box for this comment's thread */
@@ -290,10 +306,11 @@ interface CommentItemProps {
   One comment or reply.
   - Its writer can edit or delete it (⋮ menu)
   - The post's author can delete it (moderating their own post), but not edit it
+  - So can the den's owner and moderators
   - Comments by the post's author get the yellow "Author" badge
   The server enforces the same rules.
 */
-function CommentItem({ comment, postAuthorId, currentUserId, onChange, onReply, isReply = false, replyCount = 0 }: CommentItemProps) {
+function CommentItem({ comment, postAuthorId, currentUserId, canModerate = false, onChange, onReply, isReply = false, replyCount = 0 }: CommentItemProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.commentBody);
   const [busy, setBusy] = useState(false);
@@ -358,7 +375,7 @@ function CommentItem({ comment, postAuthorId, currentUserId, onChange, onReply, 
 
   const menuItems: MenuItem[] = [];
   if (isMine) menuItems.push({ label: "Edit", icon: "fa-pen", onSelect: startEditing });
-  if (isMine || onMyPost) menuItems.push({ label: "Delete", icon: "fa-trash", onSelect: remove, danger: true });
+  if (isMine || onMyPost || canModerate) menuItems.push({ label: "Delete", icon: "fa-trash", onSelect: remove, danger: true });
 
   return (
     <div className={`comment${isReply ? " is-reply" : ""}`}>
@@ -413,7 +430,7 @@ function CommentItem({ comment, postAuthorId, currentUserId, onChange, onReply, 
               </div>
             </form>
           ) : (
-            <p className="comment-body">{comment.commentBody}</p>
+            <p className="comment-body"><MentionText text={comment.commentBody} /></p>
           )}
 
           <Status status={error} />

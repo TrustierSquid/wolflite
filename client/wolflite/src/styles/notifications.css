@@ -1,0 +1,351 @@
+/* ---------- @mentions in posts, polls, comments and notifications ---------- */
+
+.mention {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+a.mention:hover {
+  text-decoration: underline;
+}
+
+/* You were mentioned: a soft highlight behind it too */
+.mention-me {
+  padding: 0 0.2em;
+  border-radius: 4px;
+  background: var(--primary-soft);
+}
+
+
+/* ---------- Notifications ---------- */
+
+/* Wide screens: the feed stays centered and the panel sits in the right-hand column.
+   Narrow screens: the panel is hidden here and opens from the bell in the navbar. */
+.notif-panel.is-sidebar {
+  display: none;
+}
+
+@media (min-width: 1180px) {
+  .layout.has-notifications {
+    display: grid;
+    /* minmax(0, 1fr): the side columns stay equal even when the panel's content
+       is wide, so the feed stays exactly centered (lined up with the navbar) */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 640px) minmax(0, 1fr);
+    column-gap: 1.5rem;
+    align-items: start;
+  }
+
+  .layout.has-notifications > .page {
+    grid-column: 2;
+    width: 100%;
+  }
+
+  .notif-panel.is-sidebar {
+    display: flex;
+    grid-column: 3;
+    justify-self: start;
+    position: sticky;
+    top: calc(var(--nav-height) + 1.5rem);
+    width: min(340px, 100%);
+    max-height: calc(100vh - var(--nav-height) - 3rem);
+    margin-top: 1.5rem;
+  }
+
+  /* The bell is only needed when there's no panel on the page */
+  body:has(.layout.has-notifications) .nav-notifications {
+    display: none;
+  }
+}
+
+/* The panel: a solid, darker surface than the page, no borders */
+.notif-panel {
+  flex-direction: column;
+  min-height: 0;
+  border-radius: var(--radius);
+  background: var(--surface-sunken);
+}
+
+.notif-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem 0.5rem;
+}
+
+.notif-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+}
+
+.notif-title > i {
+  color: var(--primary);
+}
+
+.notif-count {
+  min-width: 1.25rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.notif-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.notif-read-all {
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+/* Clear all: quiet until hovered, then red */
+.notif-clear {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.notif-clear:hover:not(:disabled) {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.notif-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.notif-body > .loader {
+  margin: 2rem auto;
+}
+
+.notif-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 2rem 1rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.notif-empty > i {
+  margin-bottom: 0.25rem;
+  font-size: 1.5rem;
+}
+
+.notif-empty-hint {
+  font-size: 0.8125rem;
+}
+
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0.375rem;
+}
+
+.notif-item {
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+}
+
+.notif-item:hover,
+.notif-item:focus-within {
+  background: var(--surface);
+}
+
+/* The clickable part: picture, text, time, unread dot */
+.notif-main {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.625rem 0.25rem 0.625rem 0.625rem;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.notif-avatar {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Small icon on the picture saying what kind of notification it is */
+.notif-type {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--surface-sunken);
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 0.5625rem;
+}
+
+.notif-type-den_removed {
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
+/* Replies and comments: the purple secondary color */
+.notif-type-reply,
+.notif-type-comment {
+  background: var(--secondary);
+  color: #ffffff;
+}
+
+.notif-type-dm {
+  background: var(--info);
+  color: #ffffff;
+}
+
+.notif-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.notif-text {
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.notif-text strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.is-unread .notif-text {
+  color: var(--text);
+}
+
+/* The text that mentioned you: at most two lines */
+.notif-snippet {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.notif-time {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.is-unread .notif-time {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.notif-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  margin-top: 0.4rem;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+/* Dismiss (×): shows on hover / keyboard focus; always visible on touch screens */
+.notif-dismiss {
+  width: 28px;
+  height: 28px;
+  margin-right: 0.25rem;
+  font-size: 0.8125rem;
+  opacity: 0;
+}
+
+.notif-item:hover .notif-dismiss,
+.notif-dismiss:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .notif-dismiss {
+    opacity: 1;
+  }
+}
+
+
+/* Narrow screens: the bell in the navbar opens the panel as a sheet under the navbar */
+.notif-sheet-backdrop {
+  position: fixed;
+  inset: var(--nav-height) 0 0 0;
+  z-index: 60;
+  background: var(--overlay);
+}
+
+.notif-panel.is-popover {
+  display: flex;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: min(380px, calc(100vw - 16px));
+  max-height: calc(100vh - var(--nav-height) - 16px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* The bell is icon-only (with its unread badge) to save room; screen readers still read the label */
+.nav-notifications .nav-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+/* Phones: with the bell there are five navbar items, so the logo drops its text */
+@media (max-width: 480px) {
+  .nav-logo-text {
+    display: none;
+  }
+}
+
+/* Unread count on the navbar bell */
+.nav-bell {
+  position: relative;
+  display: inline-flex;
+}
+
+.nav-badge {
+  position: absolute;
+  top: -7px;
+  right: -10px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border: 2px solid var(--bg);
+  border-radius: 9px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 13px;
+  text-align: center;
+}

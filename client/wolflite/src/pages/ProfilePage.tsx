@@ -4,6 +4,8 @@ import PostCard from "../components/PostCard";
 import Status from "../components/Status";
 import VotersModal from "../components/VotersModal";
 import { api } from "../lib/api";
+import { loginHref } from "../lib/auth";
+import { messagesHref } from "../lib/messages";
 import { useCurrentUser } from "../lib/currentUser";
 import { formatDate } from "../lib/time";
 
@@ -17,10 +19,15 @@ const TABS = [
 
 const newestFirst = (items) => [...(items ?? [])].sort((a, b) => new Date(b.created) - new Date(a.created));
 
-// /profile?id=N  (without an id it shows your own profile)
+// /profile?id=N  or  /profile?username=name (from @mention links).
+// Without either it shows your own profile.
 export default function ProfilePage() {
   const currentUser = useCurrentUser();
-  const profileId = new URLSearchParams(window.location.search).get("id") || currentUser?.id;
+  const params = new URLSearchParams(window.location.search);
+  const username = params.get("username");
+  const profileId = params.get("id") || (username ? null : currentUser?.id);
+  // What to ask the server for
+  const profileQuery = profileId ? `id=${encodeURIComponent(profileId)}` : username ? `username=${encodeURIComponent(username)}` : null;
 
   const [profile, setProfile] = useState(null); // null while loading
   const [notFound, setNotFound] = useState(false);
@@ -30,9 +37,9 @@ export default function ProfilePage() {
   const [votersPoll, setVotersPoll] = useState(null);
 
   const loadProfile = useCallback(async () => {
-    if (!profileId) return;
+    if (!profileQuery) return;
     try {
-      const data = await api(`/profileInfo/fetch?id=${encodeURIComponent(profileId)}`);
+      const data = await api(`/profileInfo/fetch?${profileQuery}`);
       if (data === null) {
         setNotFound(true); // the server answers 204 for users that don't exist
         return;
@@ -42,11 +49,16 @@ export default function ProfilePage() {
     } catch (err) {
       setError({ type: "error", text: err.message });
     }
-  }, [profileId]);
+  }, [profileQuery]);
 
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
+
+  // "/profile" without an id means "my profile", which guests don't have
+  useEffect(() => {
+    if (!profileQuery && currentUser === null) window.location.replace(loginHref());
+  }, [profileQuery, currentUser]);
 
   const closeVoters = useCallback(() => setVotersPoll(null), []);
 
@@ -101,6 +113,15 @@ export default function ProfilePage() {
             Joined {formatDate(profile.joinedDate)}
           </p>
           {profile.bio && <p className="profile-bio">{profile.bio}</p>}
+
+          {/* Someone else's profile (logged in): start or open a conversation */}
+          {currentUser && !isOwnProfile && (
+            <div className="profile-actions">
+              <a className="btn btn-primary btn-sm" href={messagesHref(profile.userId)}>
+                <i className="fa-solid fa-message" aria-hidden="true"></i> Message
+              </a>
+            </div>
+          )}
 
           {isOwnProfile && (
             <div className="profile-actions">

@@ -1,6 +1,7 @@
 import sqlite3
 from flask import Blueprint, g, request, jsonify, redirect, current_app
-from wolfr.db import get_db
+from wolfr.db import get_db, delete_uploads
+from wolfr.routes.notifications import make_snippet, notify, notify_mentions
 import os
 import uuid
 
@@ -8,40 +9,113 @@ import uuid
 blog_page = Blueprint("post", __name__, url_prefix="/post")
 
 
-# Feed: every post and poll, newest first
+# Feed of posts and polls, newest first. Works for guests too.
+#   ?feed=home       posts from the dens the logged in user joined
+#   ?feed=discover   posts from every den (the default)
+#   ?den=<name>      posts from one den
 @blog_page.route("/fetch", methods=["GET"])
 def retrievePosts():
+   den_name = request.args.get("den")
+   if den_name:
+      den = get_db().execute("SELECT id FROM dens WHERE name = ?", (den_name,)).fetchone()
+      if den is None:
+         return jsonify({"error": "That den doesn't exist"}), 404
+      return jsonify({"feed": build_feed_items(den_ids=[den["id"]])}), 200
+
+   if request.args.get("feed") == "home":
+      if g.user is None:
+         return jsonify({"error": "Log in to see your dens"}), 401
+      return jsonify({"feed": build_feed_items(den_ids=joined_den_ids(g.user["id"]))}), 200
+
    return jsonify({"feed": build_feed_items()}), 200
 
 
-# Builds every post and poll with its likes, comments, votes and whether the
-# logged in user has stashed it. Used by the feed and by the profile's stash list.
-def build_feed_items():
+# Ids of the dens a user is a member of
+def joined_den_ids(user_id):
+   rows = get_db().execute("SELECT den_id FROM den_members WHERE user_id = ?", (user_id,)).fetchall()
+   return [row["den_id"] for row in rows]
+
+
+def is_den_member(den_id, user_id):
+   return get_db().execute(
+      "SELECT 1 FROM den_members WHERE den_id = ? AND user_id = ?", (den_id, user_id)
+   ).fetchone() is not None
+
+
+# Builds posts and polls with their den, likes, comments, votes and whether the
+# logged in user (if any) has stashed them. Newest first.
+# Every filter is optional and they combine (AND):
+#   den_ids              only items in these dens
+#   author_id            only items by this user
+#   post_ids / poll_ids  only these items (e.g. stashed or liked ones). Passing
+#                        only one of them returns only that kind.
+# Used by the feeds, den pages and profiles.
+def build_feed_items(den_ids=None, author_id=None, post_ids=None, poll_ids=None):
    db = get_db()
    cursor = db.cursor()
 
    # Which posts / polls the logged in user has stashed, and how many users stashed each
-   stashed_post_ids, stashed_poll_ids = get_stashed_ids(g.user["id"])
+   stashed_post_ids, stashed_poll_ids = get_stashed_ids(g.user["id"] if g.user else None)
    post_stash_counts, poll_stash_counts = get_stash_counts()
 
-   # selecting all regular posts
-   posts = cursor.execute(
-      "SELECT posts.*, user.username, user.filename AS userProfilePic, "
-      "COUNT(likes.id) AS likeCount "
-      "FROM posts "
-      "JOIN user ON posts.author_id = user.id "
-      "LEFT JOIN likes ON likes.post_id = posts.id "
-      "GROUP BY posts.id "
-   ).fetchall()
+   # Dens the logged in user owns / moderates: they can delete any post and comment there
+   moderated = moderated_den_ids(g.user["id"] if g.user else None)
 
-   # Selecting all polls
-   polls = cursor.execute(
-      "SELECT polls.*, user.username, user.filename AS userProfilePic, "
-      "COUNT(likes.id) AS likeCount "
-      "FROM polls JOIN user ON polls.author_id = user.id "
-      "LEFT JOIN likes ON likes.poll_id = polls.id "
-      "GROUP BY polls.id"
-   ).fetchall()
+   # (den id, user id) of every den moderator, for the "Moderator" badge on their posts
+   den_moderators = {
+      (row["den_id"], row["user_id"])
+      for row in db.execute("SELECT den_id, user_id FROM den_members WHERE role = 'moderator'")
+   }
+
+   # WHERE clause for the posts / polls query. Only "?" placeholders go into the
+   # SQL text; the values themselves are passed as parameters.
+   def where_clause(table, ids):
+      clauses, params = [], []
+      for column, values in (("den_id", den_ids), ("id", ids)):
+         if values is not None:
+            values = list(values)
+            # "IN (NULL)" matches nothing, for an empty list
+            clauses.append(f"{table}.{column} IN ({','.join('?' * len(values)) or 'NULL'})")
+            params += values
+      if author_id is not None:
+         clauses.append(f"{table}.author_id = ?")
+         params.append(author_id)
+      return ("WHERE " + " AND ".join(clauses)) if clauses else "", params
+
+   want_posts = not (poll_ids is not None and post_ids is None)
+   want_polls = not (post_ids is not None and poll_ids is None)
+
+   posts = []
+   if want_posts:
+      where, params = where_clause("posts", post_ids)
+      posts = cursor.execute(
+         "SELECT posts.*, user.username, user.filename AS userProfilePic, "
+         "dens.name AS denName, dens.image AS denImage, dens.owner_id AS denOwnerId, "
+         "COUNT(likes.id) AS likeCount "
+         "FROM posts "
+         "JOIN user ON posts.author_id = user.id "
+         "JOIN dens ON posts.den_id = dens.id "
+         "LEFT JOIN likes ON likes.post_id = posts.id "
+         f"{where} "
+         "GROUP BY posts.id",
+         params,
+      ).fetchall()
+
+   polls = []
+   if want_polls:
+      where, params = where_clause("polls", poll_ids)
+      polls = cursor.execute(
+         "SELECT polls.*, user.username, user.filename AS userProfilePic, "
+         "dens.name AS denName, dens.image AS denImage, dens.owner_id AS denOwnerId, "
+         "COUNT(likes.id) AS likeCount "
+         "FROM polls "
+         "JOIN user ON polls.author_id = user.id "
+         "JOIN dens ON polls.den_id = dens.id "
+         "LEFT JOIN likes ON likes.poll_id = polls.id "
+         f"{where} "
+         "GROUP BY polls.id",
+         params,
+      ).fetchall()
 
    # Get votes for each poll and who voted
    votes = cursor.execute("""
@@ -68,13 +142,13 @@ def build_feed_items():
 
    # Get all likes per post with like author id and username
    likesMembers = cursor.execute("""
-      SELECT likes.post_id, likes.author_id, user.username
+      SELECT likes.post_id, likes.author_id, likes.created, user.username, user.filename AS profilePic
       FROM likes
       JOIN user ON likes.author_id = user.id
    """).fetchall()
 
    pollLikesMembers = cursor.execute("""
-      SELECT likes.poll_id, likes.author_id, user.username
+      SELECT likes.poll_id, likes.author_id, likes.created, user.username, user.filename AS profilePic
       FROM likes
       JOIN user ON likes.author_id = user.id
    """).fetchall()
@@ -88,7 +162,9 @@ def build_feed_items():
          likes_by_post[post_id] = []
       likes_by_post[post_id].append({
          "author_id": like["author_id"],
-         "username": like["username"]
+         "username": like["username"],
+         "profilePic": like["profilePic"],
+         "created": like["created"]
       })
 
    # map for likes (lists all users by id and username who liked a post)
@@ -100,7 +176,9 @@ def build_feed_items():
          likes_by_poll[poll_id] = []
       likes_by_poll[poll_id].append({
          "author_id": like["author_id"],
-         "username": like["username"]
+         "username": like["username"],
+         "profilePic": like["profilePic"],
+         "created": like["created"]
       })
 
 
@@ -171,7 +249,13 @@ def build_feed_items():
             "comments": comments_by_post.get(row["id"], []),
             "isPoll": False,
             "isStashed": row["id"] in stashed_post_ids,
-            "stashCount": post_stash_counts.get(row["id"], 0)
+            "stashCount": post_stash_counts.get(row["id"], 0),
+            "den": {"id": row["den_id"], "name": row["denName"], "image": row["denImage"]},
+            "canModerate": row["den_id"] in moderated,
+            # Posted by the den's owner (shown with a "Den Owner" badge)
+            "isDenOwner": row["author_id"] == row["denOwnerId"],
+            # Posted by one of the den's moderators ("Moderator" badge)
+            "isDenModerator": (row["den_id"], row["author_id"]) in den_moderators
          }
       )
 
@@ -220,7 +304,13 @@ def build_feed_items():
          "likeCount": poll["likeCount"],
          "comments": comments_by_poll.get(poll["id"], []),
          "whoVoted": votes_by_poll.get(poll["id"], []),
-         "likesByPoll": likes_by_poll.get(poll["id"], [])
+         "likesByPoll": likes_by_poll.get(poll["id"], []),
+         "den": {"id": poll["den_id"], "name": poll["denName"], "image": poll["denImage"]},
+         "canModerate": poll["den_id"] in moderated,
+         # Posted by the den's owner (shown with a "Den Owner" badge)
+         "isDenOwner": poll["author_id"] == poll["denOwnerId"],
+         # Posted by one of the den's moderators ("Moderator" badge)
+         "isDenModerator": (poll["den_id"], poll["author_id"]) in den_moderators
       })
 
    # Newest first
@@ -293,23 +383,63 @@ def addLike(item_id, is_poll):
    return jsonify({"success": 200})
 
 
-# Looks up a post or poll that the logged in user wants to change.
-# Returns (table, error_response): the error is set when the item doesn't exist
-# or belongs to someone else.
-def find_own_item(item_id, is_poll):
-   # Table name comes from this whitelist, never from user input
-   table = "polls" if is_poll.lower() == "true" else "posts"
-
-   item = get_db().execute(f"SELECT author_id FROM {table} WHERE id = ?", (item_id,)).fetchone()
-   if item is None:
-      return table, (jsonify({"error": "Not found"}), 404)
-   if item["author_id"] != g.user["id"]:
-      return table, (jsonify({"error": "You can only change your own posts"}), 403)
-   return table, None
+# Den roles: 'owner' (created it), 'moderator' (picked by the owner) or 'member'.
+# Owners and moderators can moderate: delete posts / comments in the den and remove members.
+MODERATOR_ROLES = ("owner", "moderator")
 
 
-# Ids of the posts and polls a user has stashed: (set of post ids, set of poll ids)
+# A user's role in a den, or None if they aren't in it (or are a guest)
+def den_role(den_id, user_id):
+   if user_id is None:
+      return None
+   row = get_db().execute(
+      "SELECT role FROM den_members WHERE den_id = ? AND user_id = ?", (den_id, user_id)
+   ).fetchone()
+   return row["role"] if row else None
+
+
+def can_moderate(den_id, user_id):
+   return den_role(den_id, user_id) in MODERATOR_ROLES
+
+
+# Ids of the dens a user owns or moderates
+def moderated_den_ids(user_id):
+   if user_id is None:
+      return set()
+   rows = get_db().execute(
+      "SELECT den_id FROM den_members WHERE user_id = ? AND role IN ('owner', 'moderator')", (user_id,)
+   ).fetchall()
+   return {row["den_id"] for row in rows}
+
+
+# Deletes posts / polls and everything attached to them (likes, comments, votes,
+# poll options, stashes). Doesn't commit. Returns the URLs of their uploaded media,
+# to delete with delete_uploads() once the commit succeeded.
+def delete_items(post_ids=(), poll_ids=()):
+   db = get_db()
+   media = []
+
+   for post_id in post_ids:
+      row = db.execute("SELECT filename FROM posts WHERE id = ?", (post_id,)).fetchone()
+      if row and row["filename"]:
+         media.append(row["filename"])
+      for table in ("likes", "comments", "stashes"):
+         db.execute(f"DELETE FROM {table} WHERE post_id = ?", (post_id,))
+      db.execute("DELETE FROM posts WHERE id = ?", (post_id,))
+
+   for poll_id in poll_ids:
+      for table in ("votes", "poll_options", "likes", "comments", "stashes"):
+         db.execute(f"DELETE FROM {table} WHERE poll_id = ?", (poll_id,))
+      db.execute("DELETE FROM polls WHERE id = ?", (poll_id,))
+
+   return media
+
+
+# Ids of the posts and polls a user has stashed: (set of post ids, set of poll ids).
+# Guests (user_id None) have stashed nothing.
 def get_stashed_ids(user_id):
+   if user_id is None:
+      return set(), set()
    rows = get_db().execute("SELECT post_id, poll_id FROM stashes WHERE user_id = ?", (user_id,)).fetchall()
    return (
       {row["post_id"] for row in rows if row["post_id"] is not None},
@@ -353,63 +483,78 @@ def stashItem(item_id, is_poll):
    return jsonify({"isStashed": stashed}), 200
 
 
-# Permanently deletes a post / poll and everything attached to it
+# Permanently deletes a post / poll and everything attached to it.
+# Allowed for its author, and for the owner / moderators of the den it's in.
 @blog_page.route("/delete/<int:item_id>/<is_poll>", methods=["DELETE"])
 def deleteItem(item_id, is_poll):
-   table, error = find_own_item(item_id, is_poll)
-   if error:
-      return error
+   # Table name comes from this whitelist, never from user input
+   is_poll = is_poll.lower() == "true"
+   table = "polls" if is_poll else "posts"
 
    db = get_db()
-   if table == "polls":
-      db.execute("DELETE FROM votes WHERE poll_id = ?", (item_id,))
-      db.execute("DELETE FROM poll_options WHERE poll_id = ?", (item_id,))
-      db.execute("DELETE FROM likes WHERE poll_id = ?", (item_id,))
-      db.execute("DELETE FROM comments WHERE poll_id = ?", (item_id,))
-      db.execute("DELETE FROM stashes WHERE poll_id = ?", (item_id,))
-      media = None
-   else:
-      media = db.execute("SELECT filename FROM posts WHERE id = ?", (item_id,)).fetchone()["filename"]
-      db.execute("DELETE FROM likes WHERE post_id = ?", (item_id,))
-      db.execute("DELETE FROM comments WHERE post_id = ?", (item_id,))
-      db.execute("DELETE FROM stashes WHERE post_id = ?", (item_id,))
+   item = db.execute(f"SELECT author_id, den_id FROM {table} WHERE id = ?", (item_id,)).fetchone()
+   if item is None:
+      return jsonify({"error": "Not found"}), 404
+   if item["author_id"] != g.user["id"] and not can_moderate(item["den_id"], g.user["id"]):
+      return jsonify({"error": "You can only delete your own posts, or posts in dens you moderate"}), 403
 
-   db.execute(f"DELETE FROM {table} WHERE id = ?", (item_id,))
+   media = delete_items(poll_ids=[item_id]) if is_poll else delete_items(post_ids=[item_id])
    db.commit()
 
    # Remove the uploaded media file too (never the shared default images)
-   if media and media.startswith("/static/uploads/"):
-      filename = os.path.basename(media)
-      defaults = os.listdir(os.path.join(os.path.dirname(os.path.dirname(__file__)), "defaults"))
-      path = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
-      if filename not in defaults and os.path.isfile(path):
-         os.remove(path)
+   delete_uploads(media)
 
    return jsonify({"message": "Deleted"}), 200
 
 
-# Creates a new post
+# Checks that the logged in user can post in a den (it exists and they joined it).
+# Returns an error response, or None when posting is allowed.
+def den_posting_error(den_id):
+   if not isinstance(den_id, int) or isinstance(den_id, bool):
+      return jsonify({"error": "Pick a den to post in"}), 400
+   if get_db().execute("SELECT 1 FROM dens WHERE id = ?", (den_id,)).fetchone() is None:
+      return jsonify({"error": "That den doesn't exist"}), 404
+   if not is_den_member(den_id, g.user["id"]):
+      return jsonify({"error": "Join the den to post in it"}), 403
+   return None
+
+
+# Creates a new post in a den
 @blog_page.route("/create", methods=["POST"])
 def handleImages():
    postTitle = request.form.get("postTitle", "").strip()
    postContent = request.form.get("postContent", "").strip()
+   den_id = request.form.get("denId", type=int)
 
    if not postTitle or not postContent:
       return jsonify({"error": "A post needs a title and a body"}), 400
 
-   # The media file is optional
+   error = den_posting_error(den_id)
+   if error:
+      return error
+
+   # The media file is optional. Either uploaded in pieces beforehand (uploadId,
+   # see routes/uploads.py; how the site sends post media) or sent with this request.
    file_url = None
+   upload_id = request.form.get("uploadId")
    file = request.files.get("file")
-   if file and file.filename:
+   if upload_id:
+      from wolfr.routes.uploads import claim_upload  # (uploads.py imports this file)
+      file_url, upload_error = claim_upload(upload_id, MEDIA_EXTENSIONS)
+      if upload_error:
+         return jsonify({"error": upload_error}), 400
+   elif file and file.filename:
       file_url = save_upload(file, MEDIA_EXTENSIONS)
       if file_url is None:
          return jsonify({"error": "Invalid file"}), 400
 
    db = get_db()
-   db.execute(
-      "INSERT INTO posts (author_id, title, body, filename) VALUES (?, ?, ?, ?)",
-      (g.user["id"], postTitle, postContent, file_url),
+   cursor = db.execute(
+      "INSERT INTO posts (author_id, title, body, filename, den_id) VALUES (?, ?, ?, ?, ?)",
+      (g.user["id"], postTitle, postContent, file_url, den_id),
    )
+   # Anyone mentioned with @username gets a notification
+   notify_mentions(f"{postTitle}\n{postContent}", g.user["id"], den_id, post_id=cursor.lastrowid)
    db.commit()
 
    return jsonify({"success": True, "url": file_url}), 201
@@ -418,42 +563,42 @@ def handleImages():
 
 
 
-# User creating a poll
-@blog_page.route("/poll/create", methods=(["POST"]))
+# Creates a poll in a den
+# Body: {"question": "...", "options": ["...", ...], "denId": 1}
+@blog_page.route("/poll/create", methods=["POST"])
 def submitPoll():
-    db = get_db()
+   data = request.get_json(silent=True) or {}
+   question = str(data.get("question") or "").strip()
+   options = [str(option).strip() for option in (data.get("options") or []) if str(option).strip()]
+   den_id = data.get("denId")
 
-    if request.method == "POST":
-        try:
-            # Contains the Poll Question and the poll options
-            data = request.get_json()
-            question = data["question"]
-            options = data["options"]
-            cursor = db.cursor()
+   if not question:
+      return jsonify({"error": "A poll needs a question"}), 400
+   if len(options) < 2:
+      return jsonify({"error": "A poll needs at least two options"}), 400
 
+   error = den_posting_error(den_id)
+   if error:
+      return error
 
-            cursor.execute(
-                "INSERT INTO polls (author_id, question) VALUES (?, ?)",
-                (g.user[0], question),
-            )
+   db = get_db()
+   cursor = db.execute(
+      "INSERT INTO polls (author_id, question, den_id) VALUES (?, ?, ?)",
+      (g.user["id"], question, den_id),
+   )
+   # Grabbing the poll id to insert the options with the corresponding poll
+   poll_id = cursor.lastrowid
 
-            # Grabbing the poll id to insert the options with the corresponding poll
-            poll_id = cursor.lastrowid
+   for option in options:
+      db.execute(
+         "INSERT INTO poll_options (poll_id, option_text, users_voted) VALUES (?, ?, ?)",
+         (poll_id, option, 0),
+      )
+   # Anyone mentioned with @username gets a notification
+   notify_mentions(question, g.user["id"], den_id, poll_id=poll_id)
+   db.commit()
 
-            db.commit()
-            for option in options:
-                cursor.execute(
-                  "INSERT INTO poll_options (poll_id, option_text, users_voted) VALUES (?, ?, ?)",
-                  (poll_id, option, 0),
-                )
-
-            db.commit()
-
-            return {"success": 200}
-        except sqlite3.IntegrityError:
-            return jsonify({"message": "something went wrong"})
-
-    return {"success": 200}
+   return jsonify({"success": True}), 201
 
 
 
@@ -485,13 +630,13 @@ def trackUserFeedback():
          # Find the previous option the user voted for
          prev_vote = cursor.execute(
             "SELECT option_id FROM votes WHERE user_id = ? AND poll_id = ?",
-            (g.user[0], poll_ID)
+            (g.user["id"], poll_ID)
          ).fetchone()
 
          # Delete the previous vote
          cursor.execute(
             "DELETE FROM votes WHERE user_id = ? AND poll_id = ?",
-            (g.user[0], poll_ID)
+            (g.user["id"], poll_ID)
          )
 
          # Decrement users_voted for the previous option if it exists
@@ -505,7 +650,7 @@ def trackUserFeedback():
          cursor.execute("""
             INSERT INTO votes (user_id, poll_id, option_id)
             VALUES (?, ?, ?)
-         """, (g.user[0], poll_ID, option_ID))
+         """, (g.user["id"], poll_ID, option_ID))
 
          cursor.execute(
             "UPDATE poll_options SET users_voted = users_voted + 1 WHERE id = ?;", (option_ID,)
@@ -542,32 +687,57 @@ def postComment():
       return jsonify({"error": f"Comments can be at most {MAX_COMMENT_LENGTH} characters"}), 400
 
    # Column name comes from this whitelist, never from user input
-   column = "poll_id" if data.get("isPoll") else "post_id"
+   column, table = ("poll_id", "polls") if data.get("isPoll") else ("post_id", "posts")
 
    db = get_db()
 
+   item = db.execute(f"SELECT id, den_id, author_id FROM {table} WHERE id = ?", (postID,)).fetchone()
+   if item is None:
+      return jsonify({"error": "That post no longer exists"}), 404
+
+   # Who wrote the comment being replied to (notified below)
+   replied_to = None
+
    if parentID is not None:
       parent = db.execute(
-         "SELECT id, post_id, poll_id, parent_id FROM comments WHERE id = ?", (parentID,)
+         "SELECT id, author_id, post_id, poll_id, parent_id FROM comments WHERE id = ?", (parentID,)
       ).fetchone()
       if parent is None:
          return jsonify({"error": "The comment you replied to no longer exists"}), 404
       if str(parent[column]) != str(postID):
          return jsonify({"error": "That comment is on a different post"}), 400
+      replied_to = parent["author_id"]
       # Replies are one level deep: replying to a reply joins the same thread
       parentID = parent["parent_id"] or parent["id"]
 
-   db.execute(
+   cursor = db.execute(
       f"INSERT INTO comments (author_id, {column}, commentBody, parent_id) VALUES (?, ?, ?, ?)",
-      (g.user["id"], postID, commentBody, parentID),
+      (g.user["id"], item["id"], commentBody, parentID),
    )
+
+   # Notifications, at most one per person for this comment (never the writer):
+   #   the person whose comment was replied to   -> "replied to your comment"
+   #   the post / poll's author                    -> "commented on your post"
+   #   anyone mentioned with @username             -> "mentioned you in a comment"
+   refs = dict(den_id=item["den_id"], comment_id=cursor.lastrowid, snippet=make_snippet(commentBody), **{column: item["id"]})
+   den = db.execute("SELECT name FROM dens WHERE id = ?", (item["den_id"],)).fetchone()
+   refs["den_name"] = den["name"] if den else None
+   already = {g.user["id"]}
+   if replied_to is not None and replied_to not in already:
+      notify(replied_to, "reply", actor_id=g.user["id"], **refs)
+      already.add(replied_to)
+   if item["author_id"] not in already:
+      notify(item["author_id"], "comment", actor_id=g.user["id"], **refs)
+      already.add(item["author_id"])
+   notify_mentions(commentBody, g.user["id"], item["den_id"], comment_id=cursor.lastrowid, exclude=already, **{column: item["id"]})
    db.commit()
 
    return jsonify({"success": True}), 200
 
 
-# Loads a comment plus the author of the post / poll it belongs to.
-# Returns (comment, item_author_id), or (None, None) if the comment doesn't exist.
+# Loads a comment plus the post / poll it belongs to (its author_id and den_id).
+# Returns (comment, item), or (None, None) if the comment doesn't exist.
+# item is None if the post / poll is gone.
 def find_comment(comment_id):
    db = get_db()
    comment = db.execute(
@@ -577,11 +747,11 @@ def find_comment(comment_id):
       return None, None
 
    if comment["poll_id"] is not None:
-      item = db.execute("SELECT author_id FROM polls WHERE id = ?", (comment["poll_id"],)).fetchone()
+      item = db.execute("SELECT author_id, den_id FROM polls WHERE id = ?", (comment["poll_id"],)).fetchone()
    else:
-      item = db.execute("SELECT author_id FROM posts WHERE id = ?", (comment["post_id"],)).fetchone()
+      item = db.execute("SELECT author_id, den_id FROM posts WHERE id = ?", (comment["post_id"],)).fetchone()
 
-   return comment, (item["author_id"] if item else None)
+   return comment, item
 
 
 # Edits a comment. Only the person who wrote it can edit it.
@@ -612,15 +782,21 @@ def editComment(comment_id):
 
 
 # Deletes a comment (and its replies, if it starts a thread). Allowed for the person
-# who wrote it, and for the author of the post / poll it is on (so authors can
-# moderate their own posts).
+# who wrote it, the author of the post / poll it is on (so authors can moderate
+# their own posts), and the owner / moderators of the den.
 @blog_page.route("/comment/<int:comment_id>", methods=["DELETE"])
 def deleteComment(comment_id):
-   comment, item_author_id = find_comment(comment_id)
+   comment, item = find_comment(comment_id)
    if comment is None:
       return jsonify({"error": "Comment not found"}), 404
-   if g.user["id"] not in (comment["author_id"], item_author_id):
-      return jsonify({"error": "You can only delete your own comments or comments on your posts"}), 403
+
+   user_id = g.user["id"]
+   allowed = (
+      comment["author_id"] == user_id
+      or (item is not None and (item["author_id"] == user_id or can_moderate(item["den_id"], user_id)))
+   )
+   if not allowed:
+      return jsonify({"error": "You can only delete your own comments, comments on your posts, or comments in dens you moderate"}), 403
 
    db = get_db()
    db.execute("DELETE FROM comments WHERE id = ? OR parent_id = ?", (comment_id, comment_id))

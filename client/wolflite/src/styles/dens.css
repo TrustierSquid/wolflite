@@ -1,0 +1,646 @@
+/* ---------- Dens (communities) ---------- */
+
+/* Den picture: a rounded square, so it never looks like a (round) user picture */
+.den-avatar {
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--surface-2);
+}
+
+/* No picture: the den's first letter on the accent color */
+.den-avatar-letter {
+  display: inline-grid;
+  place-items: center;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+}
+
+/* Den owner badge: yellow, like the comment "Author" badge */
+.tag-owner {
+  background: var(--yellow-soft);
+  color: var(--yellow);
+}
+
+/* "Den Owner" / "Moderator" next to the author's name on posts in their den */
+.post-author-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+/* (.post-header .tag pushes the "Stashed" tag right; this one stays by the name) */
+.post-header .tag-den-role {
+  margin-left: 0;
+  padding: 0.05rem 0.45rem;
+  font-size: 0.75rem;
+}
+
+/* Den moderator badge: the purple secondary brand color */
+.tag-moderator {
+  background: var(--secondary-soft);
+  color: var(--secondary);
+}
+
+
+/* Post header: "<den> · 2h ago" under the author */
+.post-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.post-den {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  color: var(--text);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.post-den .den-avatar {
+  border-radius: 4px;
+  font-size: 0.625rem !important;
+}
+
+.post-den:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+
+/* Den list (Discover) */
+.discover-dens {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.section-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.discover-dens > .section-title:last-child {
+  margin-top: 0.75rem;
+}
+
+.den-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.show-more {
+  align-self: center;
+}
+
+/* ---------- Search tab (feed page) ---------- */
+
+.search-tab,
+.search-results,
+.search-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.search-results {
+  gap: 1.75rem;
+}
+
+.search-group {
+  gap: 0.75rem;
+}
+
+/* All / Dens / Posts with counts */
+.search-filter {
+  align-self: flex-start;
+}
+
+.search-filter-count {
+  margin-left: 0.15rem;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.search-filter button[aria-pressed="true"] .search-filter-count {
+  color: inherit;
+}
+
+/* "Dens 2" / "Posts 5" headings */
+.search-group-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.search-group-title > i {
+  color: var(--primary);
+  font-size: 0.9375rem;
+}
+
+.search-group-count {
+  padding: 0.05rem 0.45rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.search-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.search-hint > i {
+  font-size: 1.5rem;
+}
+
+.den-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+}
+
+.den-card-link {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.den-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.den-card-name {
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.den-card-link:hover .den-card-name {
+  color: var(--primary);
+}
+
+.den-card-stats {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+/* Description: at most two lines */
+.den-card-desc {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.den-card > .btn,
+.den-card > .tag {
+  flex-shrink: 0;
+}
+
+
+/* Home: your dens as chips */
+.den-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.den-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 100%;
+  padding: 0.3rem 0.65rem 0.3rem 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  transition: background-color 120ms, border-color 120ms;
+}
+
+.den-chip:hover {
+  border-color: var(--primary-border);
+  background: var(--surface-2);
+}
+
+.den-chip .den-avatar {
+  border-radius: 4px;
+}
+
+.den-chip-new {
+  padding-left: 0.65rem;
+  border-style: dashed;
+  color: var(--text-muted);
+}
+
+
+/* Den page header */
+.den-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.den-header > .den-avatar {
+  border-radius: var(--radius);
+}
+
+.den-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.den-name {
+  font-size: 1.375rem;
+  overflow-wrap: anywhere;
+}
+
+.den-stats {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* "3 members" opens the members popup */
+.den-members-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.den-members-btn:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+/* Members popup */
+.members-modal {
+  width: min(440px, 100%);
+}
+
+/* Search field (SearchBox): magnifying glass inside on the left, clear (×) on the right */
+.search-box {
+  position: relative;
+}
+
+.search-box > i {
+  position: absolute;
+  top: 50%;
+  left: 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.search-box .input {
+  padding-right: 2.5rem;
+  padding-left: 2.25rem;
+}
+
+/* Our own clear button instead of the browser's (which ignores the theme) */
+.search-box .input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.search-box-clear {
+  position: absolute;
+  top: 50%;
+  right: 0.25rem;
+  width: 28px;
+  height: 28px;
+  transform: translateY(-50%);
+}
+
+/* "Liked by" popup title */
+.likes-heading {
+  min-width: 0;
+}
+
+.likes-heart {
+  color: var(--primary);
+}
+
+/* "3 likes · <post title>" on one line */
+.likes-subtitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Inside a popup, under its header */
+.modal-search {
+  margin: 0.75rem 0.75rem 0.25rem;
+}
+
+.members-empty {
+  padding: 1.5rem 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.member-list {
+  min-height: 0;
+  padding: 0.5rem;
+  overflow-y: auto;
+}
+
+.member-list ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.member-list .loader {
+  margin: 1.5rem auto;
+}
+
+/* Owner / Moderators / Members sections */
+.member-section + .member-section {
+  margin-top: 0.75rem;
+}
+
+.member-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Section icons in the role badge colors */
+.member-section-owner > i {
+  color: var(--yellow);
+}
+
+.member-section-moderator > i {
+  color: var(--secondary);
+}
+
+.member-section-count {
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+/* A member link plus (for owners / moderators) its ⋮ menu */
+.member-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.member {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.member:hover {
+  background: var(--surface-2);
+}
+
+.member-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.member-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.member:hover .member-name {
+  color: var(--primary);
+}
+
+.member-joined {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.member .tag {
+  flex-shrink: 0;
+}
+
+.den-desc {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.den-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.den-meta a {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* "by <picture> username" */
+.den-owner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.den-meta a:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.den-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.den-edit {
+  margin-top: 0.5rem;
+}
+
+/* "Delete den", set apart below the edit form's buttons */
+.den-danger {
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--card-border);
+}
+
+.confirm-box.den-danger {
+  border-top: 1px solid var(--danger-border);
+}
+
+@media (max-width: 480px) {
+  .den-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .den-meta,
+  .den-actions {
+    justify-content: center;
+  }
+
+  .den-edit,
+  .den-danger {
+    text-align: left;
+  }
+}
+
+
+/* Create page: den picker and den form */
+.den-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.den-picker .input {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.hint-error {
+  color: var(--danger);
+}
+
+.input[aria-invalid="true"] {
+  border-color: var(--danger-border);
+}
+
+.empty-actions {
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+
+/* Guests: "Sign up" in the navbar, welcome banner, comment prompt and the login popup */
+.nav-signup .nav-link {
+  color: var(--primary);
+}
+
+.nav-signup .nav-link:hover .nav-icon {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.welcome-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  /* Solid card; the accent shows only in its (deeper, solid) border */
+  border-color: var(--primary-border);
+  background: var(--surface);
+}
+
+.welcome-card img {
+  flex-shrink: 0;
+  width: 48px;
+  height: auto;
+}
+
+.welcome-title {
+  font-size: 1.125rem;
+}
+
+.welcome-text {
+  color: var(--text-muted);
+}
+
+.welcome-text a,
+.comments-login a {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.welcome-text a:hover,
+.comments-login a:hover {
+  text-decoration: underline;
+}
+
+.comments-login {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.login-prompt {
+  width: min(400px, 100%);
+}
+
+.login-prompt-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+@media (max-width: 480px) {
+  .welcome-card {
+    align-items: flex-start;
+  }
+}

@@ -1,0 +1,494 @@
+/* ---------- Direct messages (/messages) ---------- */
+
+/* Fills the screen under the navbar: list on the left, conversation on the right */
+.messages-page {
+  display: flex;
+  flex-direction: column;
+  max-width: 1100px;
+  height: calc(100dvh - var(--nav-height));
+  margin: 0 auto;
+  padding: 1.5rem 16px;
+}
+
+/* Wide screens: leave room for the pinned side nav (256px) and center the
+   messages in the rest */
+@media (min-width: 1180px) {
+  .messages-layout {
+    padding-left: 256px;
+  }
+}
+
+.messages-shell {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 340px minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+}
+
+
+/* Conversation list */
+.conv-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--card-border);
+}
+
+.conv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.875rem 0.75rem 0.5rem 1rem;
+}
+
+.conv-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.125rem;
+}
+
+.conv-title > i {
+  color: var(--primary);
+}
+
+.conv-search {
+  margin: 0 0.75rem 0.5rem;
+}
+
+.conv-list {
+  flex: 1;
+  min-height: 0;
+  padding: 0.375rem;
+  overflow-y: auto;
+}
+
+.conv-list > .loader {
+  margin: 2rem auto;
+}
+
+.conv-list ul {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.conv-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.625rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.conv-row:hover,
+.conv-row.is-active {
+  background: var(--surface-2);
+}
+
+.conv-row-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.conv-row-top,
+.conv-row-bottom {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.conv-row-top {
+  justify-content: space-between;
+}
+
+.conv-row-name {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conv-row-time {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.conv-row-preview {
+  flex: 1;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conv-row.is-unread .conv-row-preview {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.conv-row.is-unread .conv-row-time {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* Unread counts (conversation rows and the side nav) */
+.conv-row-badge,
+.side-nav-badge {
+  flex-shrink: 0;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+.side-nav-badge {
+  margin-left: auto;
+}
+
+.conv-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem 1rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.conv-empty > i {
+  font-size: 1.75rem;
+}
+
+
+/* Open conversation */
+.thread-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.thread-pane > .loader {
+  margin: auto;
+}
+
+.thread-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--card-border);
+}
+
+/* Back to the list: phones only */
+.thread-back {
+  display: none;
+}
+
+.thread-user {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.thread-user-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thread-user:hover .thread-user-name {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.thread-scroll {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.thread-scroll > .loader {
+  margin: auto;
+}
+
+.thread-older {
+  align-self: center;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+}
+
+/* Top of the conversation */
+.thread-start {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding: 1rem 1rem 1.5rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.thread-start strong {
+  color: var(--text);
+}
+
+.message-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  list-style: none;
+}
+
+/* "Nov 17, 2026" between days */
+.message-day {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.message-day::before,
+.message-day::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--card-border);
+}
+
+.message {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.message.is-first {
+  margin-top: 0.5rem;
+}
+
+.message.is-mine {
+  justify-content: flex-end;
+}
+
+.message-avatar {
+  flex-shrink: 0;
+  width: 28px;
+}
+
+.message-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: min(75%, 520px);
+  min-width: 0;
+}
+
+.message.is-mine .message-content {
+  align-items: flex-end;
+}
+
+/* Their messages: solid grey. Yours: solid accent. Corners tighten inside a group. */
+.message-bubble {
+  max-width: 100%;
+  padding: 0.5rem 0.8rem;
+  border-radius: 12px;
+  background: var(--surface-2);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.message:not(.is-mine):not(.is-first) .message-bubble {
+  border-top-left-radius: 4px;
+}
+
+.message:not(.is-mine):not(.is-last) .message-bubble {
+  border-bottom-left-radius: 4px;
+}
+
+.message.is-mine .message-bubble {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.message.is-mine:not(.is-first) .message-bubble {
+  border-top-right-radius: 4px;
+}
+
+.message.is-mine:not(.is-last) .message-bubble {
+  border-bottom-right-radius: 4px;
+}
+
+/* @mentions on your (accent colored) bubbles */
+.message.is-mine .mention {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.message.is-mine .mention-me {
+  background: none;
+}
+
+.message.is-sending .message-bubble {
+  opacity: 0.65;
+}
+
+.message.is-failed .message-bubble {
+  background: var(--surface-2);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--danger-border);
+}
+
+.message-meta {
+  margin-top: 0.2rem;
+  padding: 0 0.25rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.message.is-failed .message-meta {
+  color: var(--danger);
+}
+
+.message-meta .link-btn {
+  font-size: inherit;
+}
+
+
+/* Message box */
+.composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--card-border);
+}
+
+.composer-input {
+  flex: 1;
+  min-height: 42px;
+  max-height: 160px;
+  padding: 0.6rem 0.8rem;
+  overflow-y: auto;
+  line-height: 1.4;
+  resize: none;
+}
+
+.composer-count {
+  align-self: center;
+}
+
+.composer-send {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+}
+
+/* Nothing open yet */
+.thread-empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.thread-empty > i {
+  margin-bottom: 0.25rem;
+  color: var(--primary);
+  font-size: 2rem;
+}
+
+.thread-empty .section-title {
+  color: var(--text);
+}
+
+.thread-empty .btn {
+  margin-top: 0.5rem;
+}
+
+/* New message popup: people are buttons */
+.new-message-user {
+  width: 100%;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.new-message-user:hover {
+  background: var(--surface-2);
+}
+
+.new-message-user:disabled {
+  cursor: default;
+}
+
+
+/* Phones / narrow: one pane at a time */
+@media (max-width: 760px) {
+  .messages-page {
+    padding: 0.5rem 8px;
+  }
+
+  .messages-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .messages-shell.has-active .conv-pane,
+  .messages-shell:not(.has-active) .thread-pane {
+    display: none;
+  }
+
+  .conv-pane {
+    border-right: none;
+  }
+
+  .thread-back {
+    display: inline-grid;
+  }
+
+  .message-content {
+    max-width: 85%;
+  }
+}

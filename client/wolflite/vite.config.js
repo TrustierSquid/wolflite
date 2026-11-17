@@ -13,6 +13,11 @@ const proxiedPaths = [
   '/getUserData',
   '/post',
   '/profileInfo',
+  '/dens', // API only; the /den page itself is served by Vite
+  '/notifications',
+  '/search',
+  '/dm', // direct messages API; the /messages page itself is served by Vite
+  '/upload', // chunked uploads (big videos)
   '/static',
 ]
 
@@ -36,7 +41,9 @@ export default defineConfig(({ command }) => ({
         blog: 'blog.html',
         create: 'create.html',
         profile: 'profile.html',
-        settings: 'settings.html'
+        settings: 'settings.html',
+        den: 'den.html',
+        messages: 'messages.html'
       }
     }
   }
