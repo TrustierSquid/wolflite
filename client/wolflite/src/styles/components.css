@@ -244,10 +244,10 @@
   margin-left: 0;
 }
 
-/* Stashed by you: purple (secondary brand color) outline and tag */
+/* Stashed by you: solid purple (secondary brand color) outline and tag */
 .post.is-stashed {
-  border-color: var(--secondary);
-  box-shadow: 0 0 0 1px var(--secondary);
+  border-color: var(--secondary-border);
+  box-shadow: inset 0 0 0 1px var(--secondary-border);
 }
 
 .tag-stashed {
@@ -326,6 +326,28 @@
   color: var(--primary);
 }
 
+/* Like = heart (toggle) + count (opens "Liked by"), joined into one pill */
+.like-group {
+  display: inline-flex;
+  align-items: center;
+}
+
+.like-group .like-toggle {
+  padding-right: 0.35rem;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.like-group .like-count {
+  min-width: 1.75rem;
+  justify-content: center;
+  padding-left: 0.35rem;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.like-group .like-count:hover {
+  text-decoration: underline;
+}
+
 /* Stash button + count sits at the right end of the actions row */
 .action-btn-stash {
   margin-left: auto;
@@ -371,7 +393,7 @@
 }
 
 .poll-option:hover:not(:disabled) {
-  border-color: var(--primary);
+  border-color: var(--primary-border);
 }
 
 .poll-option:disabled {
@@ -388,7 +410,7 @@
 }
 
 .poll-option.is-voted {
-  border-color: var(--primary);
+  border-color: var(--primary-border);
 }
 
 .poll-option.is-voted .poll-option-fill {

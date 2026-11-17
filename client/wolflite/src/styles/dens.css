@@ -93,6 +93,70 @@
   align-self: center;
 }
 
+/* ---------- Search tab (feed page) ---------- */
+
+.search-tab,
+.search-results,
+.search-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.search-results {
+  gap: 1.75rem;
+}
+
+.search-group {
+  gap: 0.75rem;
+}
+
+/* All / Dens / Posts with counts */
+.search-filter {
+  align-self: flex-start;
+}
+
+.search-filter-count {
+  margin-left: 0.15rem;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.search-filter button[aria-pressed="true"] .search-filter-count {
+  color: inherit;
+}
+
+/* "Dens 2" / "Posts 5" headings */
+.search-group-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.search-group-title > i {
+  color: var(--primary);
+  font-size: 0.9375rem;
+}
+
+.search-group-count {
+  padding: 0.05rem 0.45rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.search-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.search-hint > i {
+  font-size: 1.5rem;
+}
+
 .den-card {
   display: flex;
   align-items: center;
@@ -169,8 +233,8 @@
 }
 
 .den-chip:hover {
-  border-color: var(--primary);
-  background: var(--primary-soft);
+  border-color: var(--primary-border);
+  background: var(--surface-2);
 }
 
 .den-chip .den-avatar {
@@ -235,48 +299,60 @@
   width: min(440px, 100%);
 }
 
-/* Search box with a magnifying glass inside it */
-.member-search {
+/* Search field (SearchBox): magnifying glass inside on the left, clear (×) on the right */
+.search-box {
   position: relative;
-  padding: 0.75rem 0.75rem 0.25rem;
 }
 
-.member-search i {
+.search-box > i {
   position: absolute;
   top: 50%;
-  left: 1.5rem;
-  margin-top: 0.25rem;
+  left: 0.75rem;
   color: var(--text-muted);
   font-size: 0.875rem;
   transform: translateY(-50%);
   pointer-events: none;
 }
 
-.member-search .input {
+.search-box .input {
   padding-right: 2.5rem;
   padding-left: 2.25rem;
 }
 
 /* Our own clear button instead of the browser's (which ignores the theme) */
-.member-search .input::-webkit-search-cancel-button {
+.search-box .input::-webkit-search-cancel-button {
   -webkit-appearance: none;
   appearance: none;
 }
 
-.member-search .member-search-clear {
+.search-box-clear {
   position: absolute;
   top: 50%;
-  right: 1rem;
+  right: 0.25rem;
   width: 28px;
   height: 28px;
-  margin-top: 0.25rem;
   transform: translateY(-50%);
 }
 
-.member-search .member-search-clear i {
-  position: static;
-  margin: 0;
-  transform: none;
+/* "Liked by" popup title */
+.likes-heading {
+  min-width: 0;
+}
+
+.likes-heart {
+  color: var(--primary);
+}
+
+/* "3 likes · <post title>" on one line */
+.likes-subtitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Inside a popup, under its header */
+.modal-search {
+  margin: 0.75rem 0.75rem 0.25rem;
 }
 
 .members-empty {
@@ -400,7 +476,7 @@
 }
 
 .confirm-box.den-danger {
-  border-top: 1px solid var(--danger);
+  border-top: 1px solid var(--danger-border);
 }
 
 @media (max-width: 480px) {
@@ -440,7 +516,7 @@
 }
 
 .input[aria-invalid="true"] {
-  border-color: var(--danger);
+  border-color: var(--danger-border);
 }
 
 .empty-actions {
@@ -464,8 +540,8 @@
   align-items: center;
   gap: 1rem;
   padding: 1.25rem;
-  /* Solid card; the accent shows only in the border */
-  border-color: var(--primary);
+  /* Solid card; the accent shows only in its (deeper, solid) border */
+  border-color: var(--primary-border);
   background: var(--surface);
 }
 

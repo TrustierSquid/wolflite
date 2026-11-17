@@ -15,6 +15,7 @@ const proxiedPaths = [
   '/profileInfo',
   '/dens', // API only; the /den page itself is served by Vite
   '/notifications',
+  '/search',
   '/static',
 ]
 

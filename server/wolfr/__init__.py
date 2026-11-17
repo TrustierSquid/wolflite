@@ -95,7 +95,7 @@ def create_app(test_config=None):
         # pages
         "serve_index", "serve_blog", "serve_profile", "serve_den",
         # reading content
-        "post.retrievePosts", "profileInfo.retrieveLoggedInUserPost", "dens.listDens", "dens.getDen", "dens.listMembers",
+        "post.retrievePosts", "profileInfo.retrieveLoggedInUserPost", "dens.listDens", "dens.getDen", "dens.listMembers", "search.search",
     }
 
     # HTML pages that need an account. Logged out visitors get redirected to
@@ -300,5 +300,8 @@ def create_app(test_config=None):
 
     from .routes import notifications
     app.register_blueprint(notifications.notifications_page)
+
+    from .routes import search
+    app.register_blueprint(search.search_page)
 
     return app

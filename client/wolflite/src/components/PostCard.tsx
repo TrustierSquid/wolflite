@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Avatar from "./Avatar";
 import CommentSection from "./CommentSection";
 import DenAvatar from "./DenAvatar";
 import MentionText from "./MentionText";
 import DropdownMenu from "./DropdownMenu";
 import type { MenuItem } from "./DropdownMenu";
+import LikesModal from "./LikesModal";
 import Status from "./Status";
 import { api } from "../lib/api";
 import { isLoginRequired } from "../lib/auth";
@@ -29,6 +30,8 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters, sh
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [likePop, setLikePop] = useState(false);
+  const [likesOpen, setLikesOpen] = useState(false);
+  const closeLikes = useCallback(() => setLikesOpen(false), []);
   const [error, setError] = useState(null);
 
   const currentUserId = currentUser?.id;
@@ -146,20 +149,33 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters, sh
       <Status status={error} />
 
       <div className="post-actions">
-        <button
-          type="button"
-          className={`action-btn${isLiked ? " is-active" : ""}`}
-          onClick={toggleLike}
-          aria-pressed={isLiked}
-          aria-label={isLiked ? "Unlike" : "Like"}
-        >
-          <i
-            className={`${isLiked ? "fa-solid" : "fa-regular"} fa-heart${likePop ? " pop" : ""}`}
-            onAnimationEnd={() => setLikePop(false)}
-            aria-hidden="true"
-          ></i>
-          {item.likeCount ?? 0}
-        </button>
+        {/* The heart likes / unlikes; the number opens "Liked by" */}
+        <span className={`like-group${isLiked ? " is-active" : ""}`}>
+          <button
+            type="button"
+            className={`action-btn like-toggle${isLiked ? " is-active" : ""}`}
+            onClick={toggleLike}
+            aria-pressed={isLiked}
+            aria-label={isLiked ? "Unlike" : "Like"}
+            title={isLiked ? "Unlike" : "Like"}
+          >
+            <i
+              className={`${isLiked ? "fa-solid" : "fa-regular"} fa-heart${likePop ? " pop" : ""}`}
+              onAnimationEnd={() => setLikePop(false)}
+              aria-hidden="true"
+            ></i>
+          </button>
+          <button
+            type="button"
+            className={`action-btn like-count${isLiked ? " is-active" : ""}`}
+            onClick={() => setLikesOpen(true)}
+            aria-haspopup="dialog"
+            aria-label={`${item.likeCount ?? 0} ${(item.likeCount ?? 0) === 1 ? "like" : "likes"}, see who liked this`}
+            title="See who liked this"
+          >
+            {item.likeCount ?? 0}
+          </button>
+        </span>
 
         <button
           type="button"
@@ -185,6 +201,10 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters, sh
       </div>
 
       {commentsOpen && <CommentSection item={item} currentUser={currentUser} onChange={onChange} />}
+
+      {likesOpen && (
+        <LikesModal title={item.isPoll ? item.question : item.title} likes={likes} onClose={closeLikes} />
+      )}
     </article>
   );
 }

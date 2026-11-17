@@ -136,13 +136,13 @@ def build_feed_items(den_ids=None, author_id=None, post_ids=None, poll_ids=None)
 
    # Get all likes per post with like author id and username
    likesMembers = cursor.execute("""
-      SELECT likes.post_id, likes.author_id, user.username
+      SELECT likes.post_id, likes.author_id, likes.created, user.username, user.filename AS profilePic
       FROM likes
       JOIN user ON likes.author_id = user.id
    """).fetchall()
 
    pollLikesMembers = cursor.execute("""
-      SELECT likes.poll_id, likes.author_id, user.username
+      SELECT likes.poll_id, likes.author_id, likes.created, user.username, user.filename AS profilePic
       FROM likes
       JOIN user ON likes.author_id = user.id
    """).fetchall()
@@ -156,7 +156,9 @@ def build_feed_items(den_ids=None, author_id=None, post_ids=None, poll_ids=None)
          likes_by_post[post_id] = []
       likes_by_post[post_id].append({
          "author_id": like["author_id"],
-         "username": like["username"]
+         "username": like["username"],
+         "profilePic": like["profilePic"],
+         "created": like["created"]
       })
 
    # map for likes (lists all users by id and username who liked a post)
@@ -168,7 +170,9 @@ def build_feed_items(den_ids=None, author_id=None, post_ids=None, poll_ids=None)
          likes_by_poll[poll_id] = []
       likes_by_poll[poll_id].append({
          "author_id": like["author_id"],
-         "username": like["username"]
+         "username": like["username"],
+         "profilePic": like["profilePic"],
+         "created": like["created"]
       })
 
 

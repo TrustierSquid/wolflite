@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import DenAvatar from "../components/DenAvatar";
 import DenCard from "../components/DenCard";
 import PostCard from "../components/PostCard";
+import SearchTab from "../components/SearchTab";
 import Status from "../components/Status";
 import VotersModal from "../components/VotersModal";
 import { api } from "../lib/api";
@@ -11,22 +12,33 @@ import { denHref, listDens } from "../lib/dens";
 import type { Den } from "../lib/dens";
 import type { FeedItem } from "../lib/feed";
 
-type Tab = "home" | "discover";
+type Tab = "home" | "discover" | "search";
+
+const TABS: { key: Tab; label: string; icon: string; guests: boolean }[] = [
+  { key: "home", label: "Home", icon: "fa-house", guests: false },
+  { key: "discover", label: "Discover", icon: "fa-compass", guests: true },
+  { key: "search", label: "Search", icon: "fa-magnifying-glass", guests: true },
+];
+const isTab = (value: string | null): value is Tab => TABS.some((t) => t.key === value);
 
 // How many dens Discover shows before "Show all"
 const DENS_PREVIEW = 4;
 
-// /blog          Home: posts from the dens you joined (guests get Discover)
+// /blog                Home: posts from the dens you joined (guests get Discover)
 // /blog?tab=discover   Discover: every den and the latest posts from all of them
+// /blog?tab=search&q=  Search: dens and posts (see SearchTab)
 export default function FeedPage() {
   const currentUser = useCurrentUser(); // undefined while loading, null for guests
   const requestedTab = new URLSearchParams(window.location.search).get("tab");
-  const [chosenTab, setChosenTab] = useState<Tab | null>(
-    requestedTab === "discover" || requestedTab === "home" ? requestedTab : null
-  );
+  const [chosenTab, setChosenTab] = useState<Tab | null>(isTab(requestedTab) ? requestedTab : null);
 
-  // Guests can only see Discover
-  const tab: Tab | null = currentUser === undefined ? null : currentUser === null ? "discover" : (chosenTab ?? "home");
+  // Guests can see Discover and Search (not Home)
+  const tab: Tab | null =
+    currentUser === undefined
+      ? null
+      : currentUser === null
+        ? chosenTab === "search" ? "search" : "discover"
+        : (chosenTab ?? "home");
 
   const [feed, setFeed] = useState<FeedItem[] | null>(null); // null while loading
   const [dens, setDens] = useState<Den[] | null>(null);
@@ -34,8 +46,9 @@ export default function FeedPage() {
   const [votersPoll, setVotersPoll] = useState(null);
   const [showAllDens, setShowAllDens] = useState(false);
 
+  // Home / Discover load a feed and dens; Search loads its own results
   const loadFeed = useCallback(async () => {
-    if (!tab) return;
+    if (!tab || tab === "search") return;
     try {
       const data = await api(`/post/fetch?feed=${tab}`);
       setFeed(data.feed ?? []);
@@ -46,7 +59,7 @@ export default function FeedPage() {
   }, [tab]);
 
   const loadDens = useCallback(async () => {
-    if (!tab) return;
+    if (!tab || tab === "search") return;
     try {
       setDens(await listDens(tab === "home"));
     } catch (err) {
@@ -64,7 +77,7 @@ export default function FeedPage() {
   function switchTab(next: Tab) {
     setChosenTab(next);
     // Keep the tab in the URL so refreshing / sharing the link keeps it
-    const url = next === "home" ? "/blog" : "/blog?tab=discover";
+    const url = next === "home" ? "/blog" : `/blog?tab=${next}`;
     window.history.replaceState(null, "", url);
   }
 
@@ -88,24 +101,25 @@ export default function FeedPage() {
 
   return (
     <main className="page">
-      {currentUser && (
-        <div className="tabs" role="tablist" aria-label="Feed">
-          {(["home", "discover"] as Tab[]).map((key) => (
-            <button
-              key={key}
-              type="button"
-              role="tab"
-              className="tab"
-              aria-selected={tab === key}
-              onClick={() => switchTab(key)}
-            >
-              <i className={`fa-solid ${key === "home" ? "fa-house" : "fa-compass"}`} aria-hidden="true"></i>{" "}
-              {key === "home" ? "Home" : "Discover"}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="tabs" role="tablist" aria-label="Feed">
+        {TABS.filter((t) => currentUser || t.guests).map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            role="tab"
+            className="tab"
+            aria-selected={tab === t.key}
+            onClick={() => switchTab(t.key)}
+          >
+            <i className={`fa-solid ${t.icon}`} aria-hidden="true"></i> {t.label}
+          </button>
+        ))}
+      </div>
 
+      {tab === "search" ? (
+        <SearchTab currentUser={currentUser} />
+      ) : (
+      <>
       {currentUser === null && (
         <section className="card welcome-card">
           <img src="/static/uploads/wolfLogo.png" alt="" />
@@ -193,12 +207,14 @@ export default function FeedPage() {
       )}
 
       {votersPoll && <VotersModal poll={votersPoll} onClose={closeVoters} />}
+      </>
+      )}
     </main>
   );
 }
 
 
-function EmptyFeed({ tab, joinedAny, onDiscover }: { tab: Tab; joinedAny: boolean; onDiscover: () => void }) {
+function EmptyFeed({ tab, joinedAny, onDiscover }: { tab: Exclude<Tab, "search">; joinedAny: boolean; onDiscover: () => void }) {
   if (tab === "discover") {
     return <div className="empty-state">No posts yet. Join a den and start the conversation.</div>;
   }

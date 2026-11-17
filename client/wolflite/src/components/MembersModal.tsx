@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import Avatar from "./Avatar";
 import DropdownMenu from "./DropdownMenu";
 import type { MenuItem } from "./DropdownMenu";
+import SearchBox from "./SearchBox";
 import Status from "./Status";
 import { listMembers, pluralize, removeMember, setMemberRole } from "../lib/dens";
 import type { Den, DenMember } from "../lib/dens";
@@ -124,23 +125,7 @@ export default function MembersModal({ den, currentUserId, onClose, onDenChange 
           </button>
         </div>
 
-        <div className="member-search">
-          <i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-          <input
-            type="search"
-            className="input"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search members"
-            aria-label="Search members"
-            autoFocus
-          />
-          {query && (
-            <button type="button" className="icon-btn member-search-clear" onClick={() => setQuery("")} aria-label="Clear search">
-              <i className="fa-solid fa-xmark" aria-hidden="true"></i>
-            </button>
-          )}
-        </div>
+        <SearchBox value={query} onChange={setQuery} label="Search members" autoFocus className="modal-search" />
 
         <div className="member-list">
           <Status status={error} />
