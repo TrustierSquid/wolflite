@@ -228,6 +228,13 @@
   font-weight: 600;
 }
 
+/* "by <picture> username" */
+.den-owner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .den-meta a:hover {
   color: var(--primary);
   text-decoration: underline;

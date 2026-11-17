@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
+import Avatar from "../components/Avatar";
 import DenAvatar from "../components/DenAvatar";
 import { JoinButton } from "../components/DenCard";
 import PostCard from "../components/PostCard";
@@ -111,7 +112,11 @@ export default function DenPage() {
                 Created {formatDate(den.created)}
                 {den.ownerUsername && (
                   <>
-                    {" "}by <a href={`/profile?id=${den.ownerId}`}>{den.ownerUsername}</a>
+                    {" "}by{" "}
+                    <a className="den-owner" href={`/profile?id=${den.ownerId}`}>
+                      <Avatar src={den.ownerProfilePic} size={20} />
+                      {den.ownerUsername}
+                    </a>
                   </>
                 )}
               </p>

@@ -10,6 +10,8 @@ export interface Den {
   created: string;
   ownerId: number;
   ownerUsername: string | null;
+  /** Owner's profile picture (null = default picture) */
+  ownerProfilePic: string | null;
   memberCount: number;
   /** Posts + polls */
   postCount: number;

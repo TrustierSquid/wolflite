@@ -16,7 +16,7 @@ MAX_DESCRIPTION_LENGTH = 300
 
 # Dens with their owner, member / post counts and whether the logged in user joined
 DEN_QUERY = """
-   SELECT dens.*, user.username AS ownerUsername,
+   SELECT dens.*, user.username AS ownerUsername, user.filename AS ownerProfilePic,
       (SELECT COUNT(*) FROM den_members WHERE den_members.den_id = dens.id) AS memberCount,
       (SELECT COUNT(*) FROM posts WHERE posts.den_id = dens.id)
          + (SELECT COUNT(*) FROM polls WHERE polls.den_id = dens.id) AS postCount,
@@ -42,6 +42,7 @@ def den_json(row):
       "created": row["created"],
       "ownerId": row["owner_id"],
       "ownerUsername": row["ownerUsername"],
+      "ownerProfilePic": row["ownerProfilePic"],
       "memberCount": row["memberCount"],
       "postCount": row["postCount"],
       "isMember": bool(row["isMember"]),
