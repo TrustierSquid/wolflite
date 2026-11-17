@@ -62,6 +62,17 @@
   .nav-links > li:last-child {
     margin-right: calc(-0.75rem - 2px);
   }
+
+  /* Guests: no profile on the left, so center the links over the feed instead */
+  .nav-links.is-centered {
+    justify-content: center;
+  }
+
+  .nav-links.is-centered > li:first-child,
+  .nav-links.is-centered > li:last-child {
+    margin-left: 0;
+    margin-right: 0;
+  }
 }
 
 /* Each item: icon (or your picture) + label. The bar under the current page is drawn with ::after */

@@ -63,7 +63,7 @@ export default function LoginPage() {
       <section className="card auth-card">
         <div className="auth-brand">
           <img src="/static/uploads/wolfLogo.png" alt="Wolflite" />
-          <h1 className="auth-title">{isLogin ? "Welcome back" : "Create your account"}</h1>
+          <h1 className="auth-title">{isLogin ? "Welcome back to Wolflite" : "Create your account"}</h1>
           <p className="auth-subtitle">
             {isLogin ? "Log in to pick up where you left off." : "Join Wolflite and start posting."}
           </p>
