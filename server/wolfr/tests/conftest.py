@@ -1,11 +1,7 @@
-import os
-
 import pytest
 
-os.environ.setdefault("DB_KEY", "test-secret-key")
-
-from wolfr import create_app  # noqa: E402  (DB_KEY must be set before the app loads)
-from wolfr.db import init_db  # noqa: E402
+from wolfr import create_app
+from wolfr.db import init_db
 
 PASSWORD = "Passw0rd!x"
 
@@ -17,6 +13,8 @@ def app(tmp_path):
     uploads.mkdir()
     app = create_app({
         "TESTING": True,
+        # Tests never use the real DB_KEY (CI doesn't have a .env at all)
+        "SECRET_KEY": "test-secret-key",
         "DATABASE": str(tmp_path / "test.sqlite"),
         "UPLOAD_FOLDER": str(uploads),
         "SESSION_COOKIE_SECURE": False,  # the test client doesn't use https
