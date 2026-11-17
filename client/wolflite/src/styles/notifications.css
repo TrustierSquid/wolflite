@@ -28,7 +28,9 @@ a.mention:hover {
 @media (min-width: 1180px) {
   .layout.has-notifications {
     display: grid;
-    grid-template-columns: 1fr minmax(0, 640px) 1fr;
+    /* minmax(0, 1fr): the side columns stay equal even when the panel's content
+       is wide, so the feed stays exactly centered (lined up with the navbar) */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 640px) minmax(0, 1fr);
     column-gap: 1.5rem;
     align-items: start;
   }

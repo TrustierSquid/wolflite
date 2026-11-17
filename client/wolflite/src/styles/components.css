@@ -37,6 +37,33 @@
   margin-right: 2.5rem;
 }
 
+/* Wide screens: the links line up with the feed below. The middle column is as
+   wide as the feed's cards (.page is 640px minus 16px padding on each side);
+   your profile sits at its left edge and everything else at its right edge.
+   The negative margins line the picture / last icon up with the card edges
+   instead of with their (invisible until hovered) highlight box. */
+@media (min-width: 900px) {
+  .nav {
+    grid-template-columns: 1fr minmax(0, 608px) 1fr;
+  }
+
+  .nav-links {
+    justify-content: flex-end;
+  }
+
+  .nav-links > li:first-child {
+    margin-left: calc(-0.75rem - 2px);
+  }
+
+  .nav-links > li.nav-profile {
+    margin-right: auto;
+  }
+
+  .nav-links > li:last-child {
+    margin-right: calc(-0.75rem - 2px);
+  }
+}
+
 /* Each item: icon (or your picture) + label. The bar under the current page is drawn with ::after */
 .nav-link {
   position: relative;
