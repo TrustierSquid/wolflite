@@ -28,16 +28,22 @@
 
 .nav-links {
   display: flex;
+  align-items: center;
   gap: 0.25rem;
 }
 
-/* Each icon. The bar under the current page is drawn with ::after */
+/* Profile comes first, set apart from the other items */
+.nav-links > li:first-child {
+  margin-right: 2.5rem;
+}
+
+/* Each item: icon (or your picture) + label. The bar under the current page is drawn with ::after */
 .nav-link {
   position: relative;
   display: grid;
   place-items: center;
-  width: 56px;
   height: var(--nav-height);
+  padding: 0 2px;
   border: none;
   background: none;
   color: var(--text-muted);
@@ -46,12 +52,22 @@
 }
 
 .nav-icon {
-  display: grid;
-  place-items: center;
-  width: 42px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   height: 38px;
+  padding: 0 0.75rem;
   border-radius: var(--radius-sm);
   transition: background-color 120ms, color 120ms;
+}
+
+.nav-label {
+  max-width: 140px; /* long usernames end in "…" */
+  overflow: hidden;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nav-link:hover .nav-icon {
@@ -78,7 +94,11 @@
   color: var(--primary);
 }
 
-/* Profile picture in place of the Profile icon. The ring shows the active state,
+.nav-link[aria-current="page"]::after {
+  background: var(--primary);
+}
+
+/* Your picture in the profile link. The ring shows the active state,
    since an image can't change color like the icons do. */
 .nav-avatar {
   display: grid;
@@ -95,13 +115,36 @@
   box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--primary);
 }
 
-.nav-link[aria-current="page"]::after {
-  background: var(--primary);
+/* Narrower screens: icons only. Labels are hidden visually but still read
+   by screen readers (and shown as a tooltip on hover). */
+@media (max-width: 767px) {
+  .nav-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .nav-icon {
+    justify-content: center;
+    width: 42px;
+    padding: 0;
+  }
+
+  .nav-links > li:first-child {
+    margin-right: 1.5rem;
+  }
 }
 
 @media (max-width: 420px) {
-  .nav-link {
-    width: 48px;
+  .nav-links {
+    gap: 0;
+  }
+
+  .nav-links > li:first-child {
+    margin-right: 0.75rem;
   }
 
   .nav-logo img {

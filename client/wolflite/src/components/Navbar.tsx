@@ -1,16 +1,24 @@
+import type { ReactNode } from "react";
 import Avatar from "./Avatar";
 import { useCurrentUser } from "../lib/currentUser";
 import { logout } from "../lib/logout";
 
-interface NavLink {
+interface NavItem {
+  /** Text shown next to the icon (hidden on narrow screens, still read by screen readers) */
   label: string;
-  href: string;
-  current: boolean;
-  /** Font Awesome icon class; links without one show the user's profile picture */
-  icon?: string;
+  /** Icon, or the user's avatar for the profile link */
+  icon: ReactNode;
+  /** Where the link goes; items without one are buttons */
+  href?: string;
+  onClick?: () => void;
+  current?: boolean;
+  /** Full accessible name when it should say more than the label */
+  ariaLabel?: string;
 }
 
-// Top bar: logo on the left, icon links in the center.
+const faIcon = (name: string) => <i className={`fa-solid ${name}`} aria-hidden="true"></i>;
+
+// Top bar: logo on the left, labelled links in the center.
 export default function Navbar() {
   const user = useCurrentUser();
   const path = window.location.pathname;
@@ -21,11 +29,23 @@ export default function Navbar() {
     path === "/settings" ||
     (path === "/profile" && (!viewedProfileId || String(user?.id) === viewedProfileId));
 
-  const links: NavLink[] = [
-    { label: "Home", icon: "fa-house", href: "/blog", current: path === "/blog" },
-    // No icon: shows your profile picture (the default picture while it loads)
-    { label: "Profile", href: user ? `/profile?id=${user.id}` : "/profile", current: onOwnProfile },
-    { label: "Create", icon: "fa-square-plus", href: "/create", current: path === "/create" },
+  // Profile first; CSS adds a gap between it and the rest
+  const items: NavItem[] = [
+    {
+      // Your picture and username (default picture / "Profile" while loading)
+      label: user?.username ?? "Profile",
+      ariaLabel: user ? `${user.username}, Profile` : "Profile",
+      icon: (
+        <span className="nav-avatar">
+          <Avatar src={user?.profilePic} size={26} />
+        </span>
+      ),
+      href: user ? `/profile?id=${user.id}` : "/profile",
+      current: onOwnProfile,
+    },
+    { label: "Home", icon: faIcon("fa-house"), href: "/blog", current: path === "/blog" },
+    { label: "Create", icon: faIcon("fa-square-plus"), href: "/create", current: path === "/create" },
+    { label: "Log out", icon: faIcon("fa-right-from-bracket"), onClick: logout },
   ];
 
   return (
@@ -36,34 +56,33 @@ export default function Navbar() {
 
       <nav aria-label="Main">
         <ul className="nav-links">
-          {links.map((link) => (
-            <li key={link.label}>
-              <a
-                className="nav-link"
-                href={link.href}
-                title={link.label}
-                aria-label={link.label}
-                aria-current={link.current ? "page" : undefined}
-              >
-                <span className="nav-icon">
-                  {link.icon ? (
-                    <i className={`fa-solid ${link.icon}`} aria-hidden="true"></i>
-                  ) : (
-                    <span className="nav-avatar">
-                      <Avatar src={user?.profilePic} size={26} />
-                    </span>
-                  )}
-                </span>
-              </a>
-            </li>
-          ))}
-          <li>
-            <button type="button" className="nav-link" title="Log out" aria-label="Log out" onClick={logout}>
+          {items.map((item) => {
+            const content = (
               <span className="nav-icon">
-                <i className="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+                {item.icon}
+                <span className="nav-label">{item.label}</span>
               </span>
-            </button>
-          </li>
+            );
+            const shared = {
+              className: "nav-link",
+              title: item.ariaLabel ?? item.label,
+              "aria-label": item.ariaLabel,
+            };
+
+            return (
+              <li key={item.href ?? item.label}>
+                {item.href ? (
+                  <a {...shared} href={item.href} aria-current={item.current ? "page" : undefined}>
+                    {content}
+                  </a>
+                ) : (
+                  <button {...shared} type="button" onClick={item.onClick}>
+                    {content}
+                  </button>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </nav>
     </header>
