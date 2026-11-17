@@ -1,5 +1,14 @@
+import Avatar from "./Avatar";
 import { useCurrentUser } from "../lib/currentUser";
 import { logout } from "../lib/logout";
+
+interface NavLink {
+  label: string;
+  href: string;
+  current: boolean;
+  /** Font Awesome icon class; links without one show the user's profile picture */
+  icon?: string;
+}
 
 // Top bar: logo on the left, icon links in the center.
 export default function Navbar() {
@@ -12,9 +21,10 @@ export default function Navbar() {
     path === "/settings" ||
     (path === "/profile" && (!viewedProfileId || String(user?.id) === viewedProfileId));
 
-  const links = [
+  const links: NavLink[] = [
     { label: "Home", icon: "fa-house", href: "/blog", current: path === "/blog" },
-    { label: "Profile", icon: "fa-user", href: user ? `/profile?id=${user.id}` : "/profile", current: onOwnProfile },
+    // No icon: shows your profile picture (the default picture while it loads)
+    { label: "Profile", href: user ? `/profile?id=${user.id}` : "/profile", current: onOwnProfile },
     { label: "Create", icon: "fa-square-plus", href: "/create", current: path === "/create" },
   ];
 
@@ -36,7 +46,13 @@ export default function Navbar() {
                 aria-current={link.current ? "page" : undefined}
               >
                 <span className="nav-icon">
-                  <i className={`fa-solid ${link.icon}`} aria-hidden="true"></i>
+                  {link.icon ? (
+                    <i className={`fa-solid ${link.icon}`} aria-hidden="true"></i>
+                  ) : (
+                    <span className="nav-avatar">
+                      <Avatar src={user?.profilePic} size={26} />
+                    </span>
+                  )}
                 </span>
               </a>
             </li>

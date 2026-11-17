@@ -78,6 +78,23 @@
   color: var(--primary);
 }
 
+/* Profile picture in place of the Profile icon. The ring shows the active state,
+   since an image can't change color like the icons do. */
+.nav-avatar {
+  display: grid;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px transparent;
+  transition: box-shadow 120ms;
+}
+
+.nav-link:hover .nav-avatar {
+  box-shadow: 0 0 0 2px var(--border);
+}
+
+.nav-link[aria-current="page"] .nav-avatar {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--primary);
+}
+
 .nav-link[aria-current="page"]::after {
   background: var(--primary);
 }
