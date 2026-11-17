@@ -1,6 +1,6 @@
 # Wolflite Documentation
 
-Wolflite is a social blogging platform where users can create posts and polls, interact through likes and comments, and manage their profiles with custom profile pictures. The app features a dynamic feed, user profiles, and real-time updates for community engagement. Upcoming features include communities, allowing users to join groups, share content, and participate in discussions within focused interest areas.
+Wolflite is a social blogging platform where users can create posts and polls, interact through likes and comments, and manage their profiles with custom profile pictures. The app features a combined feed of posts and polls and user profiles for community engagement. Upcoming features include communities, allowing users to join groups, share content, and participate in discussions within focused interest areas.
 
 ## Tech Stack
 - **Frontend:** React + Vite
@@ -23,131 +23,212 @@ Wolflite is a social blogging platform where users can create posts and polls, i
 #### Social Interaction
 - **Likes** - Like posts and polls
 - **Comments** - Comment on posts and polls
-- **Dynamic Feed** - Real-time content updates
+- **Feed** - Posts and polls from every user, newest first
 - **User Profiles** - View other users' profiles and content
 
 #### Poll System
 - Create polls with custom options
 - Vote tracking with visual progress bars
 - Percentage calculations and vote counts
-- Poll closing functionality (manual/timer-based)
+- Manually closing a poll
 
 ### Upcoming Features
 - **Communities** - Interest-based groups
 - **Group Discussions** - Focused conversations
 - **Enhanced Content Sharing** within communities
 
+
+# Getting started for developers
+
 ### Prerequisites
 - Python 3.11+
 - Node.js 20.19+ or 22.12+
 - Git
 
+Development runs two servers side by side:
 
-# Getting started for developers
+| Server | Folder | URL | Purpose |
+| --- | --- | --- | --- |
+| Flask | `server/` | http://localhost:5000 | API, database, uploaded files |
+| Vite | `client/wolflite/` | http://localhost:5173 | React pages with hot reload |
 
-- When getting started with development, you want to make sure you create a virtual dev environment. This is important because you want to the projects dependencies isolated from the rest of your machine.
-<br>
-- For Linux users using Debian based distributions sometimes the venv python module is shipped in a seperate package. So you will have to install it first.
-```
-$ sudo apt install python3-venv
-```
+**Open the app at http://localhost:5173.** Vite forwards API calls and `/static/...` files to Flask (see `vite.config.js`), so the browser only talks to one address and login cookies work.
 
-#### Inside the /server directory
-```
-$ python -m venv .venv
-```
-
-#### Activate Virtual Environment
-
-For Linux/Mac
-```
-$ source .venv/bin/activate
-```
-
-For Windows Users
-```
-.venv\Scripts\activate
-```
+Commands are shown for **Windows (PowerShell)** and **Linux/Mac (bash)**. If a step has only one block, it is the same on both.
 
 
-#### Install Backend Dependencies
-```
-$ pip install -r requirements.txt
+## 1. Environment variables
+
+From the project root, copy the example file:
+
+Windows (PowerShell)
+```powershell
+Copy-Item .env.example .env
 ```
 
-In case you add a new dependency, your local virtual environment only knows this. To make sure that the list of dependancies get updated so that other developers have the dependencies, run:
-```
-$ pip freeze > requirements.txt
-```
-
-#### Database Instances
-
-To setup a database development instance (make sure you are inside the /server directory)
-```
-$ flask --app wolfr init-db
+Linux/Mac
+```bash
+cp .env.example .env
 ```
 
-This will give you an instance of a relational database you can use for development/testing. When you run the 'init-db' command it creates the instance of the database with the saved tables that you have inside of the SQL schema.
-
-#### Run Development Server (from /server)
+Then open `.env` and set `DB_KEY` to a random secret. Flask uses it to sign session cookies, and **login will fail without it**. Generate one with:
 ```
-$ flask --app wolfr run --debug
+python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
 
-### Modifying the schema
+## 2. Backend (Flask)
 
-If you want to modify the schema, be sure to first delete the wolfr.sqilte file that is created when you first initialize an instance. That way, when you run the 'init-db' command again, you can have your updated schema ready for use.
+All of these commands run from the `server/` folder.
 
+#### Create a virtual environment
+A virtual environment keeps the project's Python packages isolated from the rest of your machine. You only create it once.
 
-## Setting up the Client side
-
-Make sure you have Node.js 20.19+ or 22.12+ as the client-side development bundled with Vite.
-
-Install vite inside the /client/wolflite directory (if you haven't already, using npm)
-```
-$ npm install vite --save-dev
-```
-
-#### Navigate to Client Directory
-```
-$ cd client/wolflite
+Windows (PowerShell)
+```powershell
+cd server
+py -3.11 -m venv .venv      # or: python -m venv .venv
 ```
 
-#### Install Frontend Dependencies
-```
-$ npm install
-```
-
-#### Run Development Server
-```
-$ npm run dev
+Linux/Mac
+```bash
+cd server
+python3 -m venv .venv
 ```
 
-- With both servers running, the development server is proxying api endpoints to the server over your own local network to send back information to your client.
+> On Debian/Ubuntu the venv module is sometimes a separate package: `sudo apt install python3-venv`
+
+#### Activate it
+You need to do this **every time you open a new terminal**. Your prompt shows `(.venv)` when it is active.
+
+Windows (PowerShell)
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+Windows (Command Prompt / cmd)
+```bat
+.venv\Scripts\activate.bat
+```
+
+Windows (Git Bash)
+```bash
+source .venv/Scripts/activate
+```
+
+Linux/Mac
+```bash
+source .venv/bin/activate
+```
+
+> **Not sure it's active?** Custom prompt themes (oh-my-posh, starship, ...) often hide `(.venv)`. Check which Python you're using; it should point inside `server/.venv`:
+> ```powershell
+> (Get-Command python).Source     # Windows PowerShell
+> ```
+> ```bash
+> which python                    # Linux/Mac/Git Bash
+> ```
+> If `pip install` prints paths outside `.venv` (e.g. `...\LocalCache\local-packages\Python311\...`), the venv is not active and packages are going into your global Python.
+
+> **Windows: "running scripts is disabled on this system"?** PowerShell blocks scripts by default. Allow local scripts for your user once, then activate again:
+> ```powershell
+> Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+> ```
+
+#### Install dependencies
+```
+pip install -r requirements.txt
+```
+
+#### Create the development database
+```
+flask --app wolfr init-db
+```
+This creates `server/instance/wolfr.sqlite` with the tables from `wolfr/schema.sql`.
+
+> **Warning:** `init-db` drops every table and recreates it, so all local data is deleted. That is also how you apply changes to `schema.sql`: edit the schema, then run `init-db` again.
+
+#### Run the dev server
+```
+flask --app wolfr run --debug
+```
+Leave this terminal open. Flask runs on http://localhost:5000.
+
+#### Adding a new Python dependency
+After `pip install <package>`, update `requirements.txt` so other developers get it too.
+
+Linux/Mac, Git Bash, or cmd
+```bash
+pip freeze > requirements.txt
+```
+
+Windows (PowerShell)
+```powershell
+pip freeze | Out-File -Encoding utf8 requirements.txt
+```
+> In Windows PowerShell 5.1, `>` writes the file as UTF-16, which shows up as a garbled diff in git. Use the `Out-File` form above.
+
+
+## 3. Frontend (React + Vite)
+
+Open a **second terminal** from the project root:
+
+```
+cd client/wolflite
+npm install
+npm run dev
+```
+
+`npm install` installs Vite and everything else listed in `package.json`; you only need to run it again when dependencies change.
+
+Open **http://localhost:5173** and create a user. Keep both terminals running while you develop.
+
+
+## Running tests
+
+Backend (from `server/`, with the virtual environment active):
+```
+pip install pytest
+pytest
+```
+
+Frontend (from `client/wolflite/`):
+```
+npm test            # Jest tests
+npm run typecheck   # TypeScript type checking (tsc)
+npm run lint        # ESLint
+```
+> `npm run build` and `npm run dev` don't type check (Vite only strips the types), so run `typecheck` before committing.
 
 
 ## Production Deployment
 
-### Docker Setup
-Build and Run:
+In production, Flask (through Gunicorn) serves both the API and the built React pages on a single port.
+
+#### 1. Build the frontend
+The Docker image does not build the frontend itself yet, so build it first. The output goes to `server/static/dist`:
 ```
-$ docker-compose up -d --build
+cd client/wolflite
+npm run build
 ```
 
-Delete and tear down container and image:
+#### 2. Set up `.env`
+Same file as in development (see step 1 above). Docker Compose reads `DB_KEY`, plus `TUNNEL_TOKEN` for the Cloudflare tunnel.
+
+#### 3. Build and run
+From the project root (with [Docker Desktop](https://www.docker.com/products/docker-desktop/) running on Windows/Mac):
 ```
-$ docker-compose down --rmi all
+docker compose up -d --build
 ```
 
-#### Environment Setup
-Create .env file in project root:
+Tear down the containers and delete the image:
 ```
-DB_KEY="your-secret-key"
+docker compose down --rmi all
 ```
-### Access Application
 
-- Application: "http://localhost:8000"
+The app is available at http://localhost:8000.
+
+> Older Docker installs use `docker-compose` (with a hyphen) instead of `docker compose`.
 
 #### Development vs Production
 - **Development:** Flask debug server + Vite dev server

@@ -1,0 +1,24 @@
+{
+  // Type checking only: Vite does the actual compiling. Run with `npm run typecheck`.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+
+    // Full strictness: the point of the switch
+    "strict": true,
+
+    // src/lib/*.js stay JavaScript for now; allow importing them without checking them
+    "allowJs": true,
+    "checkJs": false,
+
+    // Globals for Vite (import.meta.env, CSS imports) and Jest (test, expect)
+    "types": ["vite/client", "jest"]
+  },
+  "include": ["src", "tests"]
+}

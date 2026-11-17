@@ -1,6 +1,7 @@
 import sqlite3
 from flask import Blueprint, g, request, jsonify, redirect, current_app
 from wolfr.db import get_db
+from wolfr.routes.blog import build_feed_items, get_stashed_ids, get_stash_counts
 from werkzeug.utils import secure_filename
 import os
 import datetime
@@ -15,10 +16,10 @@ def retrieveLoggedInUserPost():
   cursor = db.cursor()
 
   # using Query string to  search a profile by user's ID
-  user_id = int(request.args.get("id"))
+  user_id = request.args.get("id", type=int)
 
   if not user_id:
-    return jsonify({"error": "No user id provided"}), 204
+    return jsonify({"error": "No user id provided"}), 400
 
 
   # If the user searched in the query string does not exist, send back error
@@ -80,13 +81,13 @@ def retrieveLoggedInUserPost():
         })
 
     comments = cursor.execute("""
-      SELECT comments.author_id, comments.post_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
+      SELECT comments.id, comments.parent_id, comments.edited, comments.author_id, comments.post_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
       FROM comments
       JOIN user ON comments.author_id = user.id
     """).fetchall()
 
     pollComments = cursor.execute("""
-      SELECT comments.author_id, comments.poll_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
+      SELECT comments.id, comments.parent_id, comments.edited, comments.author_id, comments.poll_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
       FROM comments
       JOIN user ON comments.author_id = user.id
     """).fetchall()
@@ -101,7 +102,10 @@ def retrieveLoggedInUserPost():
         "profilePic": comment["userProfilePic"],
         "post_id": comment["post_id"],
         "created": comment["created"],
-        "commentBody": comment["commentBody"]
+        "commentBody": comment["commentBody"],
+        "id": comment["id"],
+        "edited": comment["edited"],
+        "parent_id": comment["parent_id"]
       })
 
     # Organize comments by poll_id
@@ -114,7 +118,10 @@ def retrieveLoggedInUserPost():
         "profilePic": comment["userProfilePic"],
         "poll_id": comment["poll_id"],
         "created": comment["created"],
-        "commentBody": comment["commentBody"]
+        "commentBody": comment["commentBody"],
+        "id": comment["id"],
+        "edited": comment["edited"],
+        "parent_id": comment["parent_id"]
       })
 
     # Get all likes per post with like author id and username
@@ -157,6 +164,11 @@ def retrieveLoggedInUserPost():
       })
 
 
+    # Stash state is about the person VIEWING the profile: which items they stashed,
+    # plus how many users stashed each item
+    stashed_post_ids, stashed_poll_ids = get_stashed_ids(g.user["id"])
+    post_stash_counts, poll_stash_counts = get_stash_counts()
+
     # Map for all of the logged in users posts
     allLoggedInUserPosts = []
     for row in userPostedPosts:
@@ -172,10 +184,10 @@ def retrieveLoggedInUserPost():
         "username": row["username"],
         "likesByPost": likes_by_post.get(row["id"], []),
         "comments": comments_by_post.get(row["id"], []),
-        "isPoll": False
+        "isPoll": False,
+        "isStashed": row["id"] in stashed_post_ids,
+        "stashCount": post_stash_counts.get(row["id"], 0)
       })
-
-
 
 
     # Map for all of the logged in users poll
@@ -220,46 +232,18 @@ def retrieveLoggedInUserPost():
         "comments": comments_by_poll.get(row["id"], []),
         "isPoll": True,
         "isOpen": row["isOpen"],
-        "isArchived": row["isArchived"],
         "archive_at": row["archive_at"],
-        "whoVoted": voters
+        "whoVoted": voters,
+        "isStashed": row["id"] in stashed_poll_ids,
+        "stashCount": poll_stash_counts.get(row["id"], 0)
       })
 
-    # GET ALL POLLS THAT THE USER HAS ARCHIVED
-    archivedPolls = cursor.execute(
-      """
-      SELECT polls.*, user.username, user.filename AS userProfilePic,
-      COUNT(likes.id) AS likeCount
-      FROM polls
-      JOIN user ON polls.author_id = user.id
-      LEFT JOIN likes ON polls.id = likes.poll_id
-      WHERE user.id = ? AND polls.isArchived = 0
-      GROUP BY polls.id
-      """, (user_id,)
-    ).fetchall()
-
-    allArchivedPolls = []
-
-    for row in archivedPolls:
-      allArchivedPolls.append({
-        "id": row["id"],
-        "author_id": row["author_id"],
-        "created": row["created"],
-        "question": row["question"],
-        "username": row["username"],
-        # appended the blueprint of the options map
-        "options": option_map.get(row["id"], []),
-        "totalVotes": total_votes,
-        "profilePic": row["userProfilePic"],
-        "likeCount": row["likeCount"],
-        "likesByPoll": likes_by_poll.get(row["id"], []),
-        "comments": comments_by_poll.get(row["id"], []),
-        "isPoll": True,
-        "isOpen": row["isOpen"],
-        "isArchived": row["isArchived"],
-        "archive_at": row["archive_at"],
-        "whoVoted": voters
-      })
+    # The stash list is private: only returned when viewing your own profile.
+    # It can contain anyone's posts and polls, so it reuses the feed builder.
+    if g.user["id"] == user_id:
+      stashedItems = [item for item in build_feed_items() if item["isStashed"]]
+    else:
+      stashedItems = []
 
     # FETCHING ALL POSTS THAT THE USER HAS LIKED
     likedPosts = cursor.execute(
@@ -290,32 +274,23 @@ def retrieveLoggedInUserPost():
         "likeCount": row["PostLikeCount"],
         "isPoll": False,
         "comments": comments_by_post.get(row["id"], []),
-        "likesByPost": likes_by_post.get(row["id"], [])
+        "likesByPost": likes_by_post.get(row["id"], []),
+        "isStashed": row["id"] in stashed_post_ids,
+        "stashCount": post_stash_counts.get(row["id"], 0)
       })
 
 
-    joinedDate = None
-    if allLoggedInUserPosts:
-      queried_username = allLoggedInUserPosts[0]["username"]
-      profilePicture = allLoggedInUserPosts[0]["profilePic"]
-      # Fetch joined date from user table
-      user_row = cursor.execute("SELECT created FROM user WHERE id = ?", (user_id,)).fetchone()
-      joinedDate = user_row["created"] if user_row else None
-    else:
-      # If user has no posts, fetch username separately
-      user_row = cursor.execute("SELECT username, created, filename AS profilePic FROM user WHERE id = ?", (user_id,)).fetchone()
-      queried_username = user_row["username"] if user_row else None
-      profilePicture = user_row["profilePic"] if user_row else None
-      joinedDate = user_row["created"] if user_row else None
-
+    # Details of the profile being viewed (findUser was loaded at the top)
     return jsonify({
       "allUserPosts": allLoggedInUserPosts,
       "allUserPolls": allLoggedInUserPolls,
-      "archivedPolls": allArchivedPolls,
+      "stashed": stashedItems,
       "likedPosts": allLikedPosts,
-      "username": queried_username,
-      "userProfilePic": profilePicture,
-      "joinedDate": joinedDate
+      "userId": findUser["id"],
+      "username": findUser["username"],
+      "userProfilePic": findUser["filename"],
+      "joinedDate": findUser["created"],
+      "bio": findUser["bio"]
     }), 200
 
   except sqlite3.IntegrityError:
@@ -330,6 +305,13 @@ def retrieveLoggedInUserPost():
 def closePoll(pollToClose):
   db = get_db()
   cursor = db.cursor()
+
+  # Only the poll's author can close it
+  poll = cursor.execute("SELECT author_id FROM polls WHERE id = ?", (pollToClose,)).fetchone()
+  if poll is None:
+    return jsonify({"message": "Poll not found"}), 404
+  if poll["author_id"] != g.user["id"]:
+    return jsonify({"message": "You can only close your own polls"}), 403
 
   try:
     if request.method == "DELETE":
@@ -408,79 +390,38 @@ def changeUsername():
 
 
 
+# Removes the logged in user's profile picture (falls back to the default picture)
 @profile_page.route('/deleteProfilePic', methods=['PUT'])
 def deleteProfilePicture():
   db = get_db()
-  cursor = db.cursor()
-  data = request.get_json()
-  currentUser = data['currentUser']
+  db.execute("UPDATE user SET filename = null WHERE id = ?", (g.user["id"],))
+  db.commit()
+
+  return jsonify({"message": "Deleted profile picture"}), 200
 
 
-  if request.method == 'PUT':
-    cursor.execute(
-      """
-      UPDATE user
-      SET filename = null
-      WHERE id = ?
-      """, (currentUser)
-    )
-
-    db.commit()
-
-    return jsonify({"message": f"{currentUser} deleted profle picture"}), 200
-
-
-  return 200
-
-
-
-
+# Changes the logged in user's bio
 @profile_page.route('/changeBio', methods=['PUT'])
 def changeBio():
+  data = request.get_json(silent=True) or {}
+  newBio = str(data.get("newBio") or "").strip()[:500]
+
   db = get_db()
-  cursor = db.cursor()
-  data = request.get_json()
+  db.execute("UPDATE user SET bio = ? WHERE id = ?", (newBio, g.user["id"]))
+  db.commit()
 
-  newBio = data['newBio']
-  currentUser = data['currentUser']
-
-  if request.method == 'PUT':
-    cursor.execute(
-      """
-      UPDATE user
-      SET bio = ?
-      WHERE id = ?
-      """, (newBio, currentUser)
-    )
-
-    db.commit()
-
-    return jsonify({"message": f"{currentUser} Updated their bio"})
-
-  return 200
+  return jsonify({"message": "Updated bio"}), 200
 
 
-
+# Deletes the logged in user's account and logs them out
 @profile_page.route('/deleteProfile', methods=['DELETE'])
 def deleteUser():
   db = get_db()
-  cursor = db.cursor()
-  data = request.get_json()
-  userToDelete = data["userToDelete"]
+  # Their stashes would otherwise keep counting toward other posts' stash counts
+  db.execute("DELETE FROM stashes WHERE user_id = ?", (g.user["id"],))
+  db.execute("DELETE FROM user WHERE id = ?", (g.user["id"],))
+  db.commit()
 
-  if request.method == 'DELETE':
-    cursor.execute(
-      """
-      DELETE FROM user
-      WHERE id = ?
-      """, (userToDelete)
-    )
+  session.clear()
 
-    db.commit()
-
-    session.clear()
-    redirect("/login")
-
-    return jsonify({"message": f"deleted {userToDelete}"}), 200
-
-  return 200
+  return jsonify({"message": "Deleted account"}), 200

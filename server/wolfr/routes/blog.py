@@ -1,374 +1,418 @@
 import sqlite3
 from flask import Blueprint, g, request, jsonify, redirect, current_app
 from wolfr.db import get_db
-from werkzeug.utils import secure_filename
 import os
+import uuid
 
 # All endpoints are prefixed with /post (e.g /post/newendpoint)
 blog_page = Blueprint("post", __name__, url_prefix="/post")
 
 
-# Retireves existing Posts and polls
+# Feed: every post and poll, newest first
 @blog_page.route("/fetch", methods=["GET"])
 def retrievePosts():
+   return jsonify({"feed": build_feed_items()}), 200
+
+
+# Builds every post and poll with its likes, comments, votes and whether the
+# logged in user has stashed it. Used by the feed and by the profile's stash list.
+def build_feed_items():
    db = get_db()
    cursor = db.cursor()
 
-   try:
-      # selecting all regular posts
-      posts = cursor.execute(
-         "SELECT posts.*, user.username, user.filename AS userProfilePic, "
-         "COUNT(likes.id) AS likeCount "
-         "FROM posts "
-         "JOIN user ON posts.author_id = user.id "
-         "LEFT JOIN likes ON likes.post_id = posts.id "
-         "GROUP BY posts.id "
-      ).fetchall()
+   # Which posts / polls the logged in user has stashed, and how many users stashed each
+   stashed_post_ids, stashed_poll_ids = get_stashed_ids(g.user["id"])
+   post_stash_counts, poll_stash_counts = get_stash_counts()
 
-      # Selecting all polls
-      polls = cursor.execute(
-         "SELECT polls.*, user.username, user.filename AS userProfilePic, "
-         "COUNT(likes.id) AS likeCount "
-         "FROM polls JOIN user ON polls.author_id = user.id "
-         "LEFT JOIN likes ON likes.poll_id = polls.id "
-         "GROUP BY polls.id"
-      ).fetchall()
+   # selecting all regular posts
+   posts = cursor.execute(
+      "SELECT posts.*, user.username, user.filename AS userProfilePic, "
+      "COUNT(likes.id) AS likeCount "
+      "FROM posts "
+      "JOIN user ON posts.author_id = user.id "
+      "LEFT JOIN likes ON likes.post_id = posts.id "
+      "GROUP BY posts.id "
+   ).fetchall()
 
-      # Get votes for each poll and who voted
-      votes = cursor.execute("""
-         SELECT votes.poll_id, votes.option_id, votes.user_id, user.username, user.filename AS userProfilePic
-         FROM votes
-         JOIN user ON votes.user_id = user.id
-      """).fetchall()
+   # Selecting all polls
+   polls = cursor.execute(
+      "SELECT polls.*, user.username, user.filename AS userProfilePic, "
+      "COUNT(likes.id) AS likeCount "
+      "FROM polls JOIN user ON polls.author_id = user.id "
+      "LEFT JOIN likes ON likes.poll_id = polls.id "
+      "GROUP BY polls.id"
+   ).fetchall()
 
-      # Organize votes by poll and option
-      votes_by_poll = {}
-      for vote in votes:
-         poll_id = vote["poll_id"]
-         option_id = vote["option_id"]
-         user_info = {
-            "user_id": vote["user_id"],
-            "username": vote["username"],
-            "profilePic": vote["userProfilePic"]
+   # Get votes for each poll and who voted
+   votes = cursor.execute("""
+      SELECT votes.poll_id, votes.option_id, votes.user_id, user.username, user.filename AS userProfilePic
+      FROM votes
+      JOIN user ON votes.user_id = user.id
+   """).fetchall()
+
+   # Organize votes by poll and option
+   votes_by_poll = {}
+   for vote in votes:
+      poll_id = vote["poll_id"]
+      option_id = vote["option_id"]
+      user_info = {
+         "user_id": vote["user_id"],
+         "username": vote["username"],
+         "profilePic": vote["userProfilePic"]
+      }
+      if poll_id not in votes_by_poll:
+         votes_by_poll[poll_id] = {}
+      if option_id not in votes_by_poll[poll_id]:
+         votes_by_poll[poll_id][option_id] = []
+      votes_by_poll[poll_id][option_id].append(user_info)
+
+   # Get all likes per post with like author id and username
+   likesMembers = cursor.execute("""
+      SELECT likes.post_id, likes.author_id, user.username
+      FROM likes
+      JOIN user ON likes.author_id = user.id
+   """).fetchall()
+
+   pollLikesMembers = cursor.execute("""
+      SELECT likes.poll_id, likes.author_id, user.username
+      FROM likes
+      JOIN user ON likes.author_id = user.id
+   """).fetchall()
+
+   # map for likes (lists all users by id and username who liked a post)
+   likes_by_post = {}
+   for like in likesMembers:
+      post_id = like["post_id"]
+
+      if post_id not in likes_by_post:
+         likes_by_post[post_id] = []
+      likes_by_post[post_id].append({
+         "author_id": like["author_id"],
+         "username": like["username"]
+      })
+
+   # map for likes (lists all users by id and username who liked a post)
+   likes_by_poll = {}
+   for like in pollLikesMembers:
+      poll_id = like["poll_id"]
+
+      if poll_id not in likes_by_poll:
+         likes_by_poll[poll_id] = []
+      likes_by_poll[poll_id].append({
+         "author_id": like["author_id"],
+         "username": like["username"]
+      })
+
+
+   comments = cursor.execute("""
+      SELECT comments.id, comments.parent_id, comments.edited, comments.author_id, comments.post_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
+      FROM comments
+      JOIN user ON comments.author_id = user.id
+   """).fetchall()
+
+   pollComments = cursor.execute("""
+      SELECT comments.id, comments.parent_id, comments.edited, comments.author_id, comments.poll_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
+      FROM comments
+      JOIN user ON comments.author_id = user.id
+   """).fetchall()
+
+   # Organize comments by post_id
+   comments_by_post = {}
+   for comment in comments:
+      post_id = comment["post_id"]
+      comments_by_post.setdefault(post_id, []).append({
+         "author_id": comment["author_id"],
+         "author_username": comment["username"],
+         "profilePic": comment["userProfilePic"],
+         "post_id": comment["post_id"],
+         "created": comment["created"],
+         "commentBody": comment["commentBody"],
+         "id": comment["id"],
+         "edited": comment["edited"],
+         "parent_id": comment["parent_id"]
+      })
+
+   comments_by_poll = {}
+   for comment in pollComments:
+      poll_id = comment["poll_id"]
+      comments_by_poll.setdefault(poll_id, []).append({
+         "author_id": comment["author_id"],
+         "author_username": comment["username"],
+         "profilePic": comment["userProfilePic"],
+         "poll_id": comment["poll_id"],
+         "created": comment["created"],
+         "commentBody": comment["commentBody"],
+         "id": comment["id"],
+         "edited": comment["edited"],
+         "parent_id": comment["parent_id"]
+      })
+
+   # Selecting all poll options
+   options = cursor.execute(
+      "SELECT * FROM poll_options"
+   ).fetchall()
+
+   # Blueprint for POST results
+   postResults = []
+
+   for row in posts:
+      postResults.append(
+         {
+            "id": row["id"],
+            "author_id": row["author_id"],
+            "created": row["created"],
+            "filename": row["filename"],
+            "title": row["title"],
+            "body": row["body"],
+            "username": row["username"],
+            "profilePic": row["userProfilePic"],
+            "likeCount": row["likeCount"],
+            "likesByPost": likes_by_post.get(row["id"], []),
+            "comments": comments_by_post.get(row["id"], []),
+            "isPoll": False,
+            "isStashed": row["id"] in stashed_post_ids,
+            "stashCount": post_stash_counts.get(row["id"], 0)
          }
-         if poll_id not in votes_by_poll:
-            votes_by_poll[poll_id] = {}
-         if option_id not in votes_by_poll[poll_id]:
-            votes_by_poll[poll_id][option_id] = []
-         votes_by_poll[poll_id][option_id].append(user_info)
-
-      # Get all likes per post with like author id and username
-      likesMembers = cursor.execute("""
-         SELECT likes.post_id, likes.author_id, user.username
-         FROM likes
-         JOIN user ON likes.author_id = user.id
-      """).fetchall()
-
-      pollLikesMembers = cursor.execute("""
-         SELECT likes.poll_id, likes.author_id, user.username
-         FROM likes
-         JOIN user ON likes.author_id = user.id
-      """).fetchall()
-
-      # map for likes (lists all users by id and username who liked a post)
-      likes_by_post = {}
-      for like in likesMembers:
-         post_id = like["post_id"]
-
-         if post_id not in likes_by_post:
-            likes_by_post[post_id] = []
-         likes_by_post[post_id].append({
-            "author_id": like["author_id"],
-            "username": like["username"]
-         })
-
-      # map for likes (lists all users by id and username who liked a post)
-      likes_by_poll = {}
-      for like in pollLikesMembers:
-         poll_id = like["poll_id"]
-
-         if poll_id not in likes_by_poll:
-            likes_by_poll[poll_id] = []
-         likes_by_poll[poll_id].append({
-            "author_id": like["author_id"],
-            "username": like["username"]
-         })
-
-
-      comments = cursor.execute("""
-         SELECT comments.author_id, comments.post_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
-         FROM comments
-         JOIN user ON comments.author_id = user.id
-      """).fetchall()
-
-      pollComments = cursor.execute("""
-         SELECT comments.author_id, comments.poll_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
-         FROM comments
-         JOIN user ON comments.author_id = user.id
-      """).fetchall()
-
-      # Organize comments by post_id
-      comments_by_post = {}
-      for comment in comments:
-         post_id = comment["post_id"]
-         comments_by_post.setdefault(post_id, []).append({
-            "author_id": comment["author_id"],
-            "author_username": comment["username"],
-            "profilePic": comment["userProfilePic"],
-            "post_id": comment["post_id"],
-            "created": comment["created"],
-            "commentBody": comment["commentBody"]
-         })
-
-      comments_by_poll = {}
-      for comment in pollComments:
-         poll_id = comment["poll_id"]
-         comments_by_poll.setdefault(poll_id, []).append({
-            "author_id": comment["author_id"],
-            "author_username": comment["username"],
-            "profilePic": comment["userProfilePic"],
-            "poll_id": comment["poll_id"],
-            "created": comment["created"],
-            "commentBody": comment["commentBody"]
-         })
-
-      # Selecting all poll options
-      options = cursor.execute(
-         "SELECT * FROM poll_options"
-      ).fetchall()
-
-      # Blueprint for POST results
-      postResults = []
-
-      for row in posts:
-         postResults.append(
-            {
-               "id": row["id"],
-               "author_id": row["author_id"],
-               "created": row["created"],
-               "filename": row["filename"],
-               "title": row["title"],
-               "body": row["body"],
-               "username": row["username"],
-               "profilePic": row["userProfilePic"],
-               "likeCount": row["likeCount"],
-               "likesByPost": likes_by_post.get(row["id"], []),
-               "comments": comments_by_post.get(row["id"], []),
-               "isPoll": False
-            }
-         )
-
-
-      # Blueprint FOR POLLS Results
-      option_map = {}
-      for opt in options:
-         # Fetch user IDs who voted for this option
-         voters = cursor.execute(
-         "SELECT user_id FROM votes WHERE option_id = ?", (opt["id"],)
-         ).fetchall()
-         voter_ids = [v["user_id"] for v in voters]
-
-         option_map.setdefault(opt["poll_id"], []).append({
-            "id": opt["id"],
-            "option_text": opt["option_text"],
-            "user_voted": opt["users_voted"],
-            "voters": voter_ids,
-         })
-
-      # Selecting each poll and sending back a blueprint of each poll and their data
-      pollResults = []
-      for poll in polls:
-
-         # Getting total votes for each poll
-         result = cursor.execute("""
-            SELECT SUM(users_voted) AS total_votes FROM poll_options WHERE poll_id = ? """, (poll["id"],)
-         ).fetchone()
-
-         total_votes = result["total_votes"] if result and result["total_votes"] is not None else 0
-
-         pollResults.append({
-            "id": poll["id"],
-            "author_id": poll["author_id"],
-            "created": poll["created"],
-            "question": poll["question"],
-            "username": poll["username"],
-            # appended the blueprint of the options map
-            "options": option_map.get(poll["id"], []),
-            "totalVotes": total_votes,
-            "profilePic": poll["userProfilePic"],
-            "isPoll": True,
-            "isOpen": poll["isOpen"],
-            "likeCount": poll["likeCount"],
-            "comments": comments_by_poll.get(poll["id"], []),
-            "whoVoted": votes_by_poll.get(poll["id"], []),
-            "likesByPoll": likes_by_poll.get(poll["id"], [])
-         })
-
-      # Move combined_results and sorting outside the for loop
-      combined_results = postResults + pollResults
-      # Sort by 'created' field (descending: newest first)
-      combined_results.sort(key=lambda x: x["created"], reverse=True)
-
-      return (
-         jsonify(
-            {"feed": combined_results}
-         ),
-         200,
       )
-   except sqlite3.IntegrityError:
-      return jsonify({"message": "Table or column doesnt exist"})
+
+
+   # Blueprint FOR POLLS Results
+   option_map = {}
+   for opt in options:
+      # Fetch user IDs who voted for this option
+      voters = cursor.execute(
+      "SELECT user_id FROM votes WHERE option_id = ?", (opt["id"],)
+      ).fetchall()
+      voter_ids = [v["user_id"] for v in voters]
+
+      option_map.setdefault(opt["poll_id"], []).append({
+         "id": opt["id"],
+         "option_text": opt["option_text"],
+         "user_voted": opt["users_voted"],
+         "voters": voter_ids,
+      })
+
+   # Selecting each poll and sending back a blueprint of each poll and their data
+   pollResults = []
+   for poll in polls:
+
+      # Getting total votes for each poll
+      result = cursor.execute("""
+         SELECT SUM(users_voted) AS total_votes FROM poll_options WHERE poll_id = ? """, (poll["id"],)
+      ).fetchone()
+
+      total_votes = result["total_votes"] if result and result["total_votes"] is not None else 0
+
+      pollResults.append({
+         "id": poll["id"],
+         "author_id": poll["author_id"],
+         "created": poll["created"],
+         "question": poll["question"],
+         "username": poll["username"],
+         # appended the blueprint of the options map
+         "options": option_map.get(poll["id"], []),
+         "totalVotes": total_votes,
+         "profilePic": poll["userProfilePic"],
+         "isPoll": True,
+         "isOpen": poll["isOpen"],
+         "isStashed": poll["id"] in stashed_poll_ids,
+         "stashCount": poll_stash_counts.get(poll["id"], 0),
+         "likeCount": poll["likeCount"],
+         "comments": comments_by_poll.get(poll["id"], []),
+         "whoVoted": votes_by_poll.get(poll["id"], []),
+         "likesByPoll": likes_by_poll.get(poll["id"], [])
+      })
+
+   # Newest first
+   combined_results = postResults + pollResults
+   combined_results.sort(key=lambda x: x["created"], reverse=True)
+   return combined_results
 
 
 # Allowed file extensions to be uploaded to the server
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "mp4", "mov", "avi", "webm"}
+IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
+VIDEO_EXTENSIONS = {"mp4", "mov", "avi", "webm"}
+MEDIA_EXTENSIONS = IMAGE_EXTENSIONS | VIDEO_EXTENSIONS
 
 
-# FILE/IMAGE UPLOAD HANDLING: When a filename is passed in from the client, this checks if its a valid img file.
-def allowed_file(filename):
-   return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+def file_extension(filename):
+   return filename.rsplit(".", 1)[1].lower() if "." in filename else ""
 
-# Update Profile Picture
-@blog_page.route('/updateProfilePicture/<int:user_id>', methods=(["PUT"]))
-def updateProfilePicture(user_id):
+
+# Saves an uploaded file under a random name and returns its public URL,
+# or None if the file type is not allowed.
+# The original filename is never used on disk: two users uploading "photo.jpg"
+# (or someone uploading "defaultUser.jpg") would otherwise overwrite each other's files.
+def save_upload(file, allowed_extensions):
+   extension = file_extension(file.filename or "")
+   if extension not in allowed_extensions:
+      return None
+
+   filename = f"{uuid.uuid4().hex}.{extension}"
+   file.save(os.path.join(current_app.config["UPLOAD_FOLDER"], filename))
+   return f"/static/uploads/{filename}"
+
+
+# Update the logged in user's profile picture
+@blog_page.route('/updateProfilePicture', methods=["PUT"])
+def updateProfilePicture():
+   file = request.files.get("file")
+   if file is None:
+      return jsonify({"error": "No file uploaded"}), 400
+
+   file_url = save_upload(file, IMAGE_EXTENSIONS)
+   if file_url is None:
+      return jsonify({"error": "Profile pictures must be an image (png, jpg, gif, webp)"}), 400
+
    db = get_db()
-   cursor = db.cursor()
+   db.execute("UPDATE user SET filename = ? WHERE id = ?", (file_url, g.user["id"]))
+   db.commit()
 
-   if request.method == "PUT":
-      try:
-         if len(request.files) == 0 or None:
-            return {"error": "No file uploaded"}
-
-         file = request.files["file"]
-
-         if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(
-               current_app.config["UPLOAD_FOLDER"], filename
-            )
-
-            file_url = f"/static/uploads/{filename}"
-
-            file.save(filepath)
-            cursor.execute("""
-               UPDATE user
-               SET filename = ?
-               WHERE id = ?
-            """, (file_url, user_id))
-
-            db.commit()
-
-            return jsonify({"profileImg": file_url}), 201
-      except sqlite3.IntegrityError:
-         return jsonify({"error": "user does not exist"})
+   return jsonify({"profileImg": file_url}), 201
 
 
-
-
-
-# Adding a like to a post
-@blog_page.route("/addLike/<int:user_id>/<int:item_id>/<is_poll>", methods=(["POST"]))
-def addLike(user_id, item_id, is_poll):
+# Toggles the logged in user's like on a post or poll
+@blog_page.route("/addLike/<int:item_id>/<is_poll>", methods=["POST"])
+def addLike(item_id, is_poll):
    db = get_db()
-   cursor = db.cursor()
-   is_poll = is_poll.lower() == "true"
+   user_id = g.user["id"]
 
-   if is_poll:
-      # Check if user already liked the poll
-      existing_like = cursor.execute("""
-         SELECT 1 FROM likes WHERE author_id = ? AND poll_id = ?
-      """, (user_id, item_id)).fetchone()
+   # Column name comes from this whitelist, never from user input, so the f-strings below are safe
+   column = "poll_id" if is_poll.lower() == "true" else "post_id"
 
-      if existing_like:
-         cursor.execute("""
-            DELETE FROM likes WHERE author_id = ? AND poll_id = ?
-         """, (user_id, item_id))
-         db.commit()
-         return jsonify({"success": 200})
+   existing_like = db.execute(
+      f"SELECT 1 FROM likes WHERE author_id = ? AND {column} = ?", (user_id, item_id)
+   ).fetchone()
 
-      if request.method == "POST":
-         cursor.execute("""
-            INSERT INTO likes (author_id, poll_id) VALUES (?, ?)
-         """, (user_id, item_id))
-         db.commit()
-         return jsonify({"success": 200})
-
+   if existing_like:
+      db.execute(f"DELETE FROM likes WHERE author_id = ? AND {column} = ?", (user_id, item_id))
    else:
-      # Check if user already liked the post
-      existing_like = cursor.execute("""
-         SELECT 1 FROM likes WHERE author_id = ? AND post_id = ?
-      """, (user_id, item_id)).fetchone()
+      db.execute(f"INSERT INTO likes (author_id, {column}) VALUES (?, ?)", (user_id, item_id))
 
-      if existing_like:
-         cursor.execute("""
-            DELETE FROM likes WHERE author_id = ? AND post_id = ?
-         """, (user_id, item_id))
-         db.commit()
-         return jsonify({"success": 200})
-
-      if request.method == "POST":
-         cursor.execute("""
-            INSERT INTO likes (author_id, post_id) VALUES (?, ?)
-         """, (user_id, item_id))
-         db.commit()
-         return jsonify({"success": 200})
-
+   db.commit()
    return jsonify({"success": 200})
 
 
+# Looks up a post or poll that the logged in user wants to change.
+# Returns (table, error_response): the error is set when the item doesn't exist
+# or belongs to someone else.
+def find_own_item(item_id, is_poll):
+   # Table name comes from this whitelist, never from user input
+   table = "polls" if is_poll.lower() == "true" else "posts"
 
+   item = get_db().execute(f"SELECT author_id FROM {table} WHERE id = ?", (item_id,)).fetchone()
+   if item is None:
+      return table, (jsonify({"error": "Not found"}), 404)
+   if item["author_id"] != g.user["id"]:
+      return table, (jsonify({"error": "You can only change your own posts"}), 403)
+   return table, None
+
+
+# Ids of the posts and polls a user has stashed: (set of post ids, set of poll ids)
+def get_stashed_ids(user_id):
+   rows = get_db().execute("SELECT post_id, poll_id FROM stashes WHERE user_id = ?", (user_id,)).fetchall()
+   return (
+      {row["post_id"] for row in rows if row["post_id"] is not None},
+      {row["poll_id"] for row in rows if row["poll_id"] is not None},
+   )
+
+
+# How many users stashed each item: (dict post id -> count, dict poll id -> count)
+def get_stash_counts():
+   rows = get_db().execute(
+      "SELECT post_id, poll_id, COUNT(*) AS total FROM stashes GROUP BY post_id, poll_id"
+   ).fetchall()
+   return (
+      {row["post_id"]: row["total"] for row in rows if row["post_id"] is not None},
+      {row["poll_id"]: row["total"] for row in rows if row["poll_id"] is not None},
+   )
+
+
+# Stashes (bookmarks) or unstashes any post / poll for the logged in user.
+# Personal: nothing changes for the author or anyone else.
+# Body: {"stashed": true | false}
+@blog_page.route("/stash/<int:item_id>/<is_poll>", methods=["PUT"])
+def stashItem(item_id, is_poll):
+   # Table / column names come from this whitelist, never from user input
+   table, column = ("polls", "poll_id") if is_poll.lower() == "true" else ("posts", "post_id")
+
+   db = get_db()
+   if db.execute(f"SELECT 1 FROM {table} WHERE id = ?", (item_id,)).fetchone() is None:
+      return jsonify({"error": "Not found"}), 404
+
+   data = request.get_json(silent=True) or {}
+   stashed = bool(data.get("stashed", True))
+
+   if stashed:
+      # OR IGNORE: stashing something already stashed is fine
+      db.execute(f"INSERT OR IGNORE INTO stashes (user_id, {column}) VALUES (?, ?)", (g.user["id"], item_id))
+   else:
+      db.execute(f"DELETE FROM stashes WHERE user_id = ? AND {column} = ?", (g.user["id"], item_id))
+   db.commit()
+
+   return jsonify({"isStashed": stashed}), 200
+
+
+# Permanently deletes a post / poll and everything attached to it
+@blog_page.route("/delete/<int:item_id>/<is_poll>", methods=["DELETE"])
+def deleteItem(item_id, is_poll):
+   table, error = find_own_item(item_id, is_poll)
+   if error:
+      return error
+
+   db = get_db()
+   if table == "polls":
+      db.execute("DELETE FROM votes WHERE poll_id = ?", (item_id,))
+      db.execute("DELETE FROM poll_options WHERE poll_id = ?", (item_id,))
+      db.execute("DELETE FROM likes WHERE poll_id = ?", (item_id,))
+      db.execute("DELETE FROM comments WHERE poll_id = ?", (item_id,))
+      db.execute("DELETE FROM stashes WHERE poll_id = ?", (item_id,))
+      media = None
+   else:
+      media = db.execute("SELECT filename FROM posts WHERE id = ?", (item_id,)).fetchone()["filename"]
+      db.execute("DELETE FROM likes WHERE post_id = ?", (item_id,))
+      db.execute("DELETE FROM comments WHERE post_id = ?", (item_id,))
+      db.execute("DELETE FROM stashes WHERE post_id = ?", (item_id,))
+
+   db.execute(f"DELETE FROM {table} WHERE id = ?", (item_id,))
+   db.commit()
+
+   # Remove the uploaded media file too (never the shared default images)
+   if media and media.startswith("/static/uploads/"):
+      filename = os.path.basename(media)
+      defaults = os.listdir(os.path.join(os.path.dirname(os.path.dirname(__file__)), "defaults"))
+      path = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
+      if filename not in defaults and os.path.isfile(path):
+         os.remove(path)
+
+   return jsonify({"message": "Deleted"}), 200
 
 
 # Creates a new post
-@blog_page.route("/create", methods=(["GET", "POST"]))
+@blog_page.route("/create", methods=["POST"])
 def handleImages():
-    db = get_db()
+   postTitle = request.form.get("postTitle", "").strip()
+   postContent = request.form.get("postContent", "").strip()
 
-    if request.method == "POST":
-        try:
-            postTitle = request.form["postTitle"]
-            postContent = request.form["postContent"]
+   if not postTitle or not postContent:
+      return jsonify({"error": "A post needs a title and a body"}), 400
 
-            if postContent is None:
-                postContent = None
+   # The media file is optional
+   file_url = None
+   file = request.files.get("file")
+   if file and file.filename:
+      file_url = save_upload(file, MEDIA_EXTENSIONS)
+      if file_url is None:
+         return jsonify({"error": "Invalid file"}), 400
 
-            # If no photo was uploaded, then just post what data was given
-            if len(request.files) == 0 or None:
-                cursor = db.cursor()
+   db = get_db()
+   db.execute(
+      "INSERT INTO posts (author_id, title, body, filename) VALUES (?, ?, ?, ?)",
+      (g.user["id"], postTitle, postContent, file_url),
+   )
+   db.commit()
 
-                cursor.execute(
-                    "INSERT INTO posts (author_id, title, body) VALUES (?, ?, ?)",
-                    (g.user[0], postTitle, postContent),
-                )
-                db.commit()
-
-                return {"success": True}, 201
-            else:
-                # Image handling
-                file = request.files["file"]
-
-                if file and allowed_file(file.filename):
-                    filename = secure_filename(file.filename)
-                    filepath = os.path.join(
-                        current_app.config["UPLOAD_FOLDER"], filename
-                    )
-                    file_url = f"/static/uploads/{filename}"
-
-                    file.save(filepath)
-
-                    # Cursor for sqlite so we can make SQL commands
-                    cursor = db.cursor()
-                    cursor.execute(
-                        "INSERT INTO posts (author_id, title, body, filename) VALUES (?, ?, ?, ?)",
-                        (g.user[0], postTitle, postContent, file_url),
-                    )
-                    db.commit()
-
-                    return {"url": file_url}, 201
-
-        except sqlite3.IntegrityError:
-            return jsonify({"message": "something went wrong"})
-
-    return {"error": "Invalid file"}, 400
+   return jsonify({"success": True, "url": file_url}), 201
 
 
 
@@ -427,9 +471,15 @@ def trackUserFeedback():
          option_ID = data["optionID"]
          cursor = db.cursor()
 
-         print(f"PollID: {poll_ID} and optionID: {option_ID} ")
+         # The option must belong to this poll, and the poll must still be open
+         valid_option = cursor.execute("""
+            SELECT 1 FROM poll_options
+            JOIN polls ON polls.id = poll_options.poll_id
+            WHERE poll_options.id = ? AND polls.id = ? AND polls.isOpen = 1
+         """, (option_ID, poll_ID)).fetchone()
 
-
+         if valid_option is None:
+            return jsonify({"error": "This poll is closed or the option is invalid"}), 400
 
          # Find if the user already voted on this poll, and delete their previous vote
          # Find the previous option the user voted for
@@ -474,47 +524,106 @@ def trackUserFeedback():
 
 
 
-@blog_page.route("/postComment", methods=(["POST"]))
+MAX_COMMENT_LENGTH = 500
+
+
+# Adds a comment from the logged in user to a post or poll.
+# Body: {"commentBody", "postID", "isPoll", "parentID" (optional, makes it a reply)}
+@blog_page.route("/postComment", methods=["POST"])
 def postComment():
+   data = request.get_json(silent=True) or {}
+   commentBody = str(data.get("commentBody") or "").strip()
+   postID = data.get("postID")
+   parentID = data.get("parentID")
+
+   if not commentBody or postID is None:
+      return jsonify({"error": "A comment needs a body and a post"}), 400
+   if len(commentBody) > MAX_COMMENT_LENGTH:
+      return jsonify({"error": f"Comments can be at most {MAX_COMMENT_LENGTH} characters"}), 400
+
+   # Column name comes from this whitelist, never from user input
+   column = "poll_id" if data.get("isPoll") else "post_id"
+
    db = get_db()
-   cursor = db.cursor()
 
-   if request.method == "POST":
-      try:
-         data = request.get_json()
-         # Information about the user and the post the comment was made on
-         commentBody = data["commentBody"]
-         commentAuthor = data["commentAuthor"]
-         postID = data["postID"]
-         print(data)
+   if parentID is not None:
+      parent = db.execute(
+         "SELECT id, post_id, poll_id, parent_id FROM comments WHERE id = ?", (parentID,)
+      ).fetchone()
+      if parent is None:
+         return jsonify({"error": "The comment you replied to no longer exists"}), 404
+      if str(parent[column]) != str(postID):
+         return jsonify({"error": "That comment is on a different post"}), 400
+      # Replies are one level deep: replying to a reply joins the same thread
+      parentID = parent["parent_id"] or parent["id"]
 
-         if data["isPoll"] is False:
-            try:
-               print("is not a poll")
-               cursor.execute("""
-                  INSERT INTO comments (author_id, post_id, commentBody)
-                  VALUES (?, ?, ?)
-               """, (commentAuthor, postID, commentBody))
+   db.execute(
+      f"INSERT INTO comments (author_id, {column}, commentBody, parent_id) VALUES (?, ?, ?, ?)",
+      (g.user["id"], postID, commentBody, parentID),
+   )
+   db.commit()
 
-               db.commit()
-               return jsonify({"success": True}), 200
-            except sqlite3.IntegrityError:
-               print("Failed to send comment to post")
+   return jsonify({"success": True}), 200
 
-         else:
-            try:
-               print("is a poll")
-               cursor.execute("""
-                  INSERT INTO comments (author_id, poll_id, commentBody)
-                  VALUES (?, ?, ?)
-               """, (commentAuthor, postID, commentBody))
 
-               db.commit()
-               return jsonify({"success": True}), 200
-            except sqlite3.IntegrityError:
-               print("Failed to send comment to poll")
+# Loads a comment plus the author of the post / poll it belongs to.
+# Returns (comment, item_author_id), or (None, None) if the comment doesn't exist.
+def find_comment(comment_id):
+   db = get_db()
+   comment = db.execute(
+      "SELECT id, author_id, post_id, poll_id FROM comments WHERE id = ?", (comment_id,)
+   ).fetchone()
+   if comment is None:
+      return None, None
 
-      except sqlite3.IntegrityError:
-         return jsonify({"error": "failed to save comment"})
+   if comment["poll_id"] is not None:
+      item = db.execute("SELECT author_id FROM polls WHERE id = ?", (comment["poll_id"],)).fetchone()
+   else:
+      item = db.execute("SELECT author_id FROM posts WHERE id = ?", (comment["post_id"],)).fetchone()
 
-   return {"success": 200}
+   return comment, (item["author_id"] if item else None)
+
+
+# Edits a comment. Only the person who wrote it can edit it.
+# Body: {"commentBody": "..."}
+@blog_page.route("/comment/<int:comment_id>", methods=["PUT"])
+def editComment(comment_id):
+   comment, _ = find_comment(comment_id)
+   if comment is None:
+      return jsonify({"error": "Comment not found"}), 404
+   if comment["author_id"] != g.user["id"]:
+      return jsonify({"error": "You can only edit your own comments"}), 403
+
+   data = request.get_json(silent=True) or {}
+   commentBody = str(data.get("commentBody") or "").strip()
+   if not commentBody:
+      return jsonify({"error": "A comment can't be empty"}), 400
+   if len(commentBody) > MAX_COMMENT_LENGTH:
+      return jsonify({"error": f"Comments can be at most {MAX_COMMENT_LENGTH} characters"}), 400
+
+   db = get_db()
+   db.execute(
+      "UPDATE comments SET commentBody = ?, edited = CURRENT_TIMESTAMP WHERE id = ?",
+      (commentBody, comment_id),
+   )
+   db.commit()
+
+   return jsonify({"success": True}), 200
+
+
+# Deletes a comment (and its replies, if it starts a thread). Allowed for the person
+# who wrote it, and for the author of the post / poll it is on (so authors can
+# moderate their own posts).
+@blog_page.route("/comment/<int:comment_id>", methods=["DELETE"])
+def deleteComment(comment_id):
+   comment, item_author_id = find_comment(comment_id)
+   if comment is None:
+      return jsonify({"error": "Comment not found"}), 404
+   if g.user["id"] not in (comment["author_id"], item_author_id):
+      return jsonify({"error": "You can only delete your own comments or comments on your posts"}), 403
+
+   db = get_db()
+   db.execute("DELETE FROM comments WHERE id = ? OR parent_id = ?", (comment_id, comment_id))
+   db.commit()
+
+   return jsonify({"success": True}), 200
