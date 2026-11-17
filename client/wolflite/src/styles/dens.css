@@ -25,6 +25,22 @@
   color: var(--yellow);
 }
 
+/* "Den Owner" next to the author's name on posts by the den's owner */
+.post-author-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+/* (.post-header .tag pushes the "Stashed" tag right; this one stays by the name) */
+.post-header .tag-den-owner {
+  margin-left: 0;
+  padding: 0.05rem 0.45rem;
+  font-size: 0.75rem;
+}
+
 /* Den moderator badge: the purple secondary brand color */
 .tag-moderator {
   background: var(--secondary-soft);

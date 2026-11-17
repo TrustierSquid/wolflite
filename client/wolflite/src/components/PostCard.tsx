@@ -106,9 +106,17 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters, sh
       <header className="post-header">
         <Avatar src={item.profilePic} size={40} />
         <div className="post-meta">
-          <a className="post-author" href={`/profile?id=${item.author_id}`}>
-            {item.username}
-          </a>
+          <span className="post-author-row">
+            <a className="post-author" href={`/profile?id=${item.author_id}`}>
+              {item.username}
+            </a>
+            {/* Posted by the owner of the den it's in */}
+            {item.isDenOwner && (
+              <span className="tag tag-owner tag-den-owner" title={`Owner of ${item.den?.name ?? "this den"}`}>
+                <i className="fa-solid fa-crown" aria-hidden="true"></i> Den Owner
+              </span>
+            )}
+          </span>
           <span className="post-sub">
             {showDen && item.den && (
               <>

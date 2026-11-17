@@ -84,7 +84,7 @@ def build_feed_items(den_ids=None, author_id=None, post_ids=None, poll_ids=None)
       where, params = where_clause("posts", post_ids)
       posts = cursor.execute(
          "SELECT posts.*, user.username, user.filename AS userProfilePic, "
-         "dens.name AS denName, dens.image AS denImage, "
+         "dens.name AS denName, dens.image AS denImage, dens.owner_id AS denOwnerId, "
          "COUNT(likes.id) AS likeCount "
          "FROM posts "
          "JOIN user ON posts.author_id = user.id "
@@ -100,7 +100,7 @@ def build_feed_items(den_ids=None, author_id=None, post_ids=None, poll_ids=None)
       where, params = where_clause("polls", poll_ids)
       polls = cursor.execute(
          "SELECT polls.*, user.username, user.filename AS userProfilePic, "
-         "dens.name AS denName, dens.image AS denImage, "
+         "dens.name AS denName, dens.image AS denImage, dens.owner_id AS denOwnerId, "
          "COUNT(likes.id) AS likeCount "
          "FROM polls "
          "JOIN user ON polls.author_id = user.id "
@@ -245,7 +245,9 @@ def build_feed_items(den_ids=None, author_id=None, post_ids=None, poll_ids=None)
             "isStashed": row["id"] in stashed_post_ids,
             "stashCount": post_stash_counts.get(row["id"], 0),
             "den": {"id": row["den_id"], "name": row["denName"], "image": row["denImage"]},
-            "canModerate": row["den_id"] in moderated
+            "canModerate": row["den_id"] in moderated,
+            # Posted by the den's owner (shown with a "Den Owner" badge)
+            "isDenOwner": row["author_id"] == row["denOwnerId"]
          }
       )
 
@@ -296,7 +298,9 @@ def build_feed_items(den_ids=None, author_id=None, post_ids=None, poll_ids=None)
          "whoVoted": votes_by_poll.get(poll["id"], []),
          "likesByPoll": likes_by_poll.get(poll["id"], []),
          "den": {"id": poll["den_id"], "name": poll["denName"], "image": poll["denImage"]},
-         "canModerate": poll["den_id"] in moderated
+         "canModerate": poll["den_id"] in moderated,
+         # Posted by the den's owner (shown with a "Den Owner" badge)
+         "isDenOwner": poll["author_id"] == poll["denOwnerId"]
       })
 
    # Newest first
