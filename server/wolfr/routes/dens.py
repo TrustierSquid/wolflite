@@ -83,6 +83,37 @@ def getDen(name):
    return jsonify({"den": den_json(row)}), 200
 
 
+# Everyone in a den: the owner first, then the rest in the order they joined.
+# Works for guests.
+@dens_page.route("/<int:den_id>/members", methods=["GET"])
+def listMembers(den_id):
+   if find_den(den_id) is None:
+      return jsonify({"error": "That den doesn't exist"}), 404
+
+   rows = get_db().execute(
+      """
+      SELECT user.id, user.username, user.filename AS profilePic,
+         den_members.role, den_members.created AS joined
+      FROM den_members
+      JOIN user ON den_members.user_id = user.id
+      WHERE den_members.den_id = ?
+      ORDER BY den_members.role = 'owner' DESC, den_members.created, den_members.id
+      """,
+      (den_id,),
+   ).fetchall()
+
+   return jsonify({"members": [
+      {
+         "id": row["id"],
+         "username": row["username"],
+         "profilePic": row["profilePic"],
+         "role": row["role"],
+         "joined": row["joined"],
+      }
+      for row in rows
+   ]}), 200
+
+
 # Checks a den description. Returns (description, error message or None).
 def clean_description(raw):
    description = str(raw or "").strip()

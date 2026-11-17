@@ -51,4 +51,20 @@ export async function setMembership(den: Pick<Den, "id">, join: boolean): Promis
   return data.den;
 }
 
+/** Someone in a den */
+export interface DenMember {
+  id: number;
+  username: string;
+  profilePic: string | null;
+  role: "owner" | "member";
+  /** When they joined */
+  joined: string;
+}
+
+/** Everyone in a den, owner first */
+export async function listMembers(den: Pick<Den, "id">): Promise<DenMember[]> {
+  const data = await api(`/dens/${den.id}/members`);
+  return data.members ?? [];
+}
+
 export const pluralize = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;

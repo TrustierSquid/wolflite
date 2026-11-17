@@ -3,6 +3,7 @@ import type { ChangeEvent, FormEvent } from "react";
 import Avatar from "../components/Avatar";
 import DenAvatar from "../components/DenAvatar";
 import { JoinButton } from "../components/DenCard";
+import MembersModal from "../components/MembersModal";
 import PostCard from "../components/PostCard";
 import Status from "../components/Status";
 import VotersModal from "../components/VotersModal";
@@ -31,6 +32,7 @@ export default function DenPage() {
   const [error, setError] = useState<StatusMessage | null>(null);
   const [editing, setEditing] = useState(false);
   const [votersPoll, setVotersPoll] = useState(null);
+  const [showMembers, setShowMembers] = useState(false);
 
   const loadDen = useCallback(async () => {
     if (!name) {
@@ -63,6 +65,7 @@ export default function DenPage() {
   }, [loadDen, loadFeed]);
 
   const closeVoters = useCallback(() => setVotersPoll(null), []);
+  const closeMembers = useCallback(() => setShowMembers(false), []);
 
   if (notFound) {
     return (
@@ -91,7 +94,16 @@ export default function DenPage() {
         <div className="den-info">
           <h1 className="den-name">{den.name}</h1>
           <p className="den-stats">
-            {pluralize(den.memberCount, "member")} · {pluralize(den.postCount, "post")}
+            <button
+              type="button"
+              className="den-members-btn"
+              onClick={() => setShowMembers(true)}
+              aria-haspopup="dialog"
+              title="See who's in this den"
+            >
+              <i className="fa-solid fa-users" aria-hidden="true"></i> {pluralize(den.memberCount, "member")}
+            </button>{" "}
+            · {pluralize(den.postCount, "post")}
           </p>
 
           {editing ? (
@@ -168,6 +180,7 @@ export default function DenPage() {
       )}
 
       {votersPoll && <VotersModal poll={votersPoll} onClose={closeVoters} />}
+      {showMembers && <MembersModal den={den} onClose={closeMembers} />}
     </main>
   );
 }
