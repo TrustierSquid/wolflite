@@ -1,5 +1,6 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { api } from "./api";
+import { pollWhileVisible } from "./poll";
 
 /**
  * den_removed  removed from a den      mention  @username in a post / poll / comment
@@ -35,14 +36,15 @@ interface NotificationsState {
   One shared copy of the logged in user's notifications for the whole page, so
   the side panel and the navbar bell (narrow screens) show the same thing and
   only one of them polls the server.
-  Refreshes every minute and whenever the tab gets focus again.
+  Refreshes every minute while the tab is visible, and right away when it
+  becomes visible again (nothing is fetched while it's in the background).
 */
 const REFRESH_EVERY_MS = 60_000;
 
 let state: NotificationsState = { notifications: null, unreadCount: 0, error: null };
 const listeners = new Set<() => void>();
 let users = 0;
-let timer: number | undefined;
+let stopPolling: (() => void) | null = null;
 
 function setState(changes: Partial<NotificationsState>) {
   state = { ...state, ...changes };
@@ -58,22 +60,19 @@ export async function refreshNotifications() {
   }
 }
 
-const onFocus = () => refreshNotifications();
-
 // Start polling while at least one component shows notifications
 function start() {
   users += 1;
   if (users > 1) return;
   refreshNotifications();
-  timer = window.setInterval(refreshNotifications, REFRESH_EVERY_MS);
-  window.addEventListener("focus", onFocus);
+  stopPolling = pollWhileVisible(refreshNotifications, REFRESH_EVERY_MS);
 }
 
 function stop() {
   users -= 1;
   if (users > 0) return;
-  window.clearInterval(timer);
-  window.removeEventListener("focus", onFocus);
+  stopPolling?.();
+  stopPolling = null;
 }
 
 /**

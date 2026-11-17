@@ -101,7 +101,7 @@ def create_app(test_config=None):
     # HTML pages that need an account. Logged out visitors get redirected to
     # /login (and come back afterwards), while API endpoints answer with a 401
     # that the frontend turns into a "log in to continue" prompt.
-    PAGE_ENDPOINTS = {"serve_create", "serve_settings"}
+    PAGE_ENDPOINTS = {"serve_create", "serve_settings", "serve_messages"}
 
     # middleware. Loads the logged in user into g.user for every request.
     # Routes must take the user's id from g.user["id"], NEVER from the request
@@ -283,6 +283,11 @@ def create_app(test_config=None):
         # One den's page (/den?name=homelab)
         return send_from_directory(os.path.join(app.static_folder, "dist"), "den.html")
 
+    @app.route('/messages')
+    def serve_messages():
+        # Direct messages page (the /dm API behind it: docs/direct-messages-api.md)
+        return send_from_directory(os.path.join(app.static_folder, "dist"), "messages.html")
+
 
     # Importing Database configurations
     from . import db
@@ -303,5 +308,8 @@ def create_app(test_config=None):
 
     from .routes import search
     app.register_blueprint(search.search_page)
+
+    from .routes import messages
+    app.register_blueprint(messages.messages_page)
 
     return app

@@ -5,6 +5,7 @@ import Status from "../components/Status";
 import VotersModal from "../components/VotersModal";
 import { api } from "../lib/api";
 import { loginHref } from "../lib/auth";
+import { messagesHref } from "../lib/messages";
 import { useCurrentUser } from "../lib/currentUser";
 import { formatDate } from "../lib/time";
 
@@ -112,6 +113,15 @@ export default function ProfilePage() {
             Joined {formatDate(profile.joinedDate)}
           </p>
           {profile.bio && <p className="profile-bio">{profile.bio}</p>}
+
+          {/* Someone else's profile (logged in): start or open a conversation */}
+          {currentUser && !isOwnProfile && (
+            <div className="profile-actions">
+              <a className="btn btn-primary btn-sm" href={messagesHref(profile.userId)}>
+                <i className="fa-solid fa-message" aria-hidden="true"></i> Message
+              </a>
+            </div>
+          )}
 
           {isOwnProfile && (
             <div className="profile-actions">

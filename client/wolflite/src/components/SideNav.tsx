@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import DenAvatar from "./DenAvatar";
 import { useCurrentUser } from "../lib/currentUser";
 import { denHref, listDens } from "../lib/dens";
+import { useUnreadMessages } from "../lib/messages";
 import type { Den } from "../lib/dens";
 
 interface SideNavProps {
@@ -40,6 +41,7 @@ export default function SideNav({ variant = "fixed" }: SideNavProps) {
   const user = useCurrentUser();
   const [dens, setDens] = useState<Den[] | null>(null);
   const [collapsed, setCollapsed] = useState<string[]>(readCollapsed);
+  const unreadMessages = useUnreadMessages(!!user);
 
   useEffect(() => {
     if (!user) return;
@@ -62,10 +64,14 @@ export default function SideNav({ variant = "fixed" }: SideNavProps) {
     });
   }
 
-  const top = [
+  const top: { label: string; icon: string; href: string; current: boolean; badge?: number }[] = [
     // Home is the feed itself (guests see Discover there)
     { label: "Home", icon: "fa-house", href: "/blog", current: onFeed(null) || (path === "/blog" && tab === "home") },
     { label: "Discover", icon: "fa-compass", href: "/blog?tab=discover", current: onFeed("discover") },
+    // Direct messages (logged in only), with the unread count
+    ...(user
+      ? [{ label: "Messages", icon: "fa-message", href: "/messages", current: path === "/messages", badge: unreadMessages }]
+      : []),
     { label: "Explore dens", icon: "fa-people-group", href: "/blog?tab=dens", current: onFeed("dens") },
     {
       label: "Create a den",
@@ -83,6 +89,11 @@ export default function SideNav({ variant = "fixed" }: SideNavProps) {
             <a className="side-nav-link" href={item.href} aria-current={item.current ? "page" : undefined}>
               <i className={`fa-solid ${item.icon}`} aria-hidden="true"></i>
               <span>{item.label}</span>
+              {!!item.badge && (
+                <span className="side-nav-badge" aria-label={`${item.badge} unread`}>
+                  {item.badge > 99 ? "99+" : item.badge}
+                </span>
+              )}
             </a>
           </li>
         ))}

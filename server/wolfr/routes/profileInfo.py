@@ -222,6 +222,9 @@ def deleteUser():
   # Their notifications go; notifications they caused stay but no longer name them
   db.execute("DELETE FROM notifications WHERE user_id = ?", (g.user["id"],))
   db.execute("UPDATE notifications SET actor_id = NULL WHERE actor_id = ?", (g.user["id"],))
+  # Leave their conversations. Their messages stay for the other person, who now
+  # sees "Deleted user" in that conversation.
+  db.execute("DELETE FROM conversation_members WHERE user_id = ?", (g.user["id"],))
   db.execute("DELETE FROM user WHERE id = ?", (g.user["id"],))
   db.commit()
 

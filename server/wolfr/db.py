@@ -98,6 +98,38 @@ ADDED_TABLES = [
    )
    """,
    "CREATE INDEX IF NOT EXISTS notifications_by_user ON notifications (user_id, id)",
+   # Direct messages (see schema.sql for what each column means)
+   """
+   CREATE TABLE IF NOT EXISTS conversations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+   )
+   """,
+   """
+   CREATE TABLE IF NOT EXISTS conversation_members (
+      conversation_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      last_read_message_id INTEGER NULL,
+      joined TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (conversation_id, user_id),
+      FOREIGN KEY (conversation_id) REFERENCES conversations(id),
+      FOREIGN KEY (user_id) REFERENCES user(id)
+   )
+   """,
+   "CREATE INDEX IF NOT EXISTS conversation_members_by_user ON conversation_members (user_id, conversation_id)",
+   """
+   CREATE TABLE IF NOT EXISTS direct_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      conversation_id INTEGER NOT NULL,
+      sender_id INTEGER NOT NULL,
+      body TEXT NOT NULL,
+      created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (conversation_id) REFERENCES conversations(id),
+      FOREIGN KEY (sender_id) REFERENCES user(id)
+   )
+   """,
+   "CREATE INDEX IF NOT EXISTS direct_messages_by_conversation ON direct_messages (conversation_id, id)",
 ]
 
 # (table, column, definition)

@@ -100,7 +100,8 @@ function describe(n: AppNotification): { text: ReactNode; href: string | null; i
       return { text: <>{who} commented on your {what}{den && <> in {den}</>}</>, href: denLink, icon: "fa-comment" };
     }
     case "dm":
-      return { text: <>{who} sent you a message</>, href: null, icon: "fa-envelope" };
+      // Opens the conversation with them (or the messages page for deleted users)
+      return { text: <>{who} sent you a message</>, href: n.actor ? `/messages?user=${n.actor.id}` : "/messages", icon: "fa-envelope" };
     default:
       return { text: <>New notification</>, href: null, icon: "fa-bell" };
   }
