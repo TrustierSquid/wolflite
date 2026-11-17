@@ -1,4 +1,6 @@
 import { useState } from "react";
+import createIllustration from "../assets/imgs/createIlli.svg";
+import loginIllustration from "../assets/imgs/loginIlli.svg";
 import { nextPage } from "../lib/auth";
 import { adoptAccountAppearance } from "../lib/theme";
 
@@ -60,82 +62,95 @@ export default function LoginPage() {
 
   return (
     <main className="auth-page">
-      <section className="card auth-card">
-        <div className="auth-brand">
-          <img src="/static/uploads/wolfLogo.png" alt="Wolflite" />
-          <h1 className="auth-title">{isLogin ? "Welcome back to Wolflite" : "Create your account"}</h1>
-          <p className="auth-subtitle">
-            {isLogin ? "Log in to pick up where you left off." : "Join Wolflite and start posting."}
-          </p>
-        </div>
-
-        <form className="form" onSubmit={submit}>
-          <div className="field">
-            <label className="label" htmlFor="username">Username</label>
-            <input
-              id="username"
-              className="input"
-              name="username"
-              placeholder="Username"
-              autoComplete="username"
-              maxLength={30}
-              required
-            />
+      {/* Two halves: the form on the left, an illustration on the right (hidden on small screens) */}
+      <section className="card auth-card auth-split">
+        <div className="auth-form-side">
+          <div className="auth-brand">
+            <img src="/static/uploads/wolfLogo.png" alt="Wolflite" />
+            <h1 className="auth-title">{isLogin ? "Welcome back to Wolflite" : "Create your account"}</h1>
+            <p className="auth-subtitle">
+              {isLogin ? "Log in to pick up where you left off." : "Join Wolflite and start posting."}
+            </p>
           </div>
 
-          <div className="field">
-            <label className="label" htmlFor="password">Password</label>
-            <div className="password-field">
+          <form className="form" onSubmit={submit}>
+            <div className="field">
+              <label className="label" htmlFor="username">Username</label>
               <input
-                id="password"
+                id="username"
                 className="input"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                autoComplete={isLogin ? "current-password" : "new-password"}
+                name="username"
+                placeholder="Username"
+                autoComplete="username"
+                maxLength={30}
                 required
               />
-              <button
-                type="button"
-                className="icon-btn password-toggle"
-                onClick={() => setShowPassword((shown) => !shown)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                <i className={`fa-solid ${showPassword ? "fa-eye-slash" : "fa-eye"}`} aria-hidden="true"></i>
-              </button>
             </div>
-            {!isLogin && (
-              <p className="hint">At least 8 characters, with an uppercase letter, a lowercase letter, a number and a symbol.</p>
+
+            <div className="field">
+              <label className="label" htmlFor="password">Password</label>
+              <div className="password-field">
+                <input
+                  id="password"
+                  className="input"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  autoComplete={isLogin ? "current-password" : "new-password"}
+                  required
+                />
+                <button
+                  type="button"
+                  className="icon-btn password-toggle"
+                  onClick={() => setShowPassword((shown) => !shown)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  <i className={`fa-solid ${showPassword ? "fa-eye-slash" : "fa-eye"}`} aria-hidden="true"></i>
+                </button>
+              </div>
+              {!isLogin && (
+                <p className="hint">At least 8 characters, with an uppercase letter, a lowercase letter, a number and a symbol.</p>
+              )}
+            </div>
+
+            {error && (
+              <p className="status status-error" role="alert">
+                <i className="fa-solid fa-circle-exclamation" aria-hidden="true"></i> {error}
+              </p>
             )}
+
+            <button type="submit" className="btn btn-primary btn-block" disabled={sending}>
+              {isLogin ? "Log in" : "Create account"}
+            </button>
+          </form>
+
+          <p className="auth-switch">
+            {isLogin ? (
+              <>New to Wolflite? <a href={`/${search}`}>Create an account</a></>
+            ) : (
+              <>Already have an account? <a href={`/login${search}`}>Log in</a></>
+            )}
+          </p>
+
+          <a className="btn btn-ghost btn-block" href="/blog">
+            <i className="fa-solid fa-compass" aria-hidden="true"></i> Browse without an account
+          </a>
+
+          <div className="guest-box">
+            Just looking around? Use the guest account:
+            <br />
+            Username <code>HiringGuest</code> · Password <code>PassWord01%</code>
           </div>
+        </div>
 
-          {error && (
-            <p className="status status-error" role="alert">
-              <i className="fa-solid fa-circle-exclamation" aria-hidden="true"></i> {error}
-            </p>
-          )}
-
-          <button type="submit" className="btn btn-primary btn-block" disabled={sending}>
-            {isLogin ? "Log in" : "Create account"}
-          </button>
-        </form>
-
-        <p className="auth-switch">
-          {isLogin ? (
-            <>New to Wolflite? <a href={`/${search}`}>Create an account</a></>
-          ) : (
-            <>Already have an account? <a href={`/login${search}`}>Log in</a></>
-          )}
-        </p>
-
-        <a className="btn btn-ghost btn-block" href="/blog">
-          <i className="fa-solid fa-compass" aria-hidden="true"></i> Browse without an account
-        </a>
-
-        <div className="guest-box">
-          Just looking around? Use the guest account:
-          <br />
-          Username <code>HiringGuest</code> · Password <code>PassWord01%</code>
+        <div className="auth-art" aria-hidden="true">
+          <img src={isLogin ? loginIllustration : createIllustration} alt="" />
+          <p className="auth-art-title">{isLogin ? "Good to see you again" : "Find your pack"}</p>
+          <p className="auth-art-text">
+            {isLogin
+              ? "Your dens, messages and notifications are waiting."
+              : "Join dens about the things you love, post, and talk with people who get it."}
+          </p>
         </div>
       </section>
     </main>

@@ -350,6 +350,71 @@
   padding: 2rem 1.5rem;
 }
 
+/* Two halves: form on the left, illustration on the right */
+.auth-card.auth-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 0;
+  width: min(960px, 100%);
+  padding: 0;
+  overflow: hidden;
+}
+
+.auth-form-side {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 2.5rem 2.25rem;
+}
+
+/* Illustration side: solid darker panel, no gradient */
+.auth-art {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2.5rem 2.25rem;
+  border-left: 1px solid var(--card-border);
+  background: var(--surface-sunken);
+  text-align: center;
+}
+
+.auth-art img {
+  width: 100%;
+  max-width: 380px;
+  max-height: 320px;
+  margin-bottom: 1.5rem;
+  object-fit: contain;
+}
+
+.auth-art-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.auth-art-text {
+  max-width: 320px;
+  color: var(--text-muted);
+}
+
+/* Small screens: just the form */
+@media (max-width: 820px) {
+  .auth-card.auth-split {
+    grid-template-columns: 1fr;
+    width: min(440px, 100%);
+  }
+
+  .auth-art {
+    display: none;
+  }
+
+  .auth-form-side {
+    padding: 2rem 1.5rem;
+  }
+}
+
 .auth-brand {
   display: flex;
   flex-direction: column;
