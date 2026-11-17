@@ -79,6 +79,25 @@ ADDED_TABLES = [
       UNIQUE(den_id, user_id)
    )
    """,
+   """
+   CREATE TABLE IF NOT EXISTS notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      type TEXT NOT NULL,
+      actor_id INTEGER NULL,
+      den_id INTEGER NULL,
+      den_name TEXT NULL,
+      post_id INTEGER NULL,
+      poll_id INTEGER NULL,
+      comment_id INTEGER NULL,
+      snippet TEXT NULL,
+      is_read BOOLEAN NOT NULL DEFAULT 0,
+      created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES user(id),
+      FOREIGN KEY (actor_id) REFERENCES user(id)
+   )
+   """,
+   "CREATE INDEX IF NOT EXISTS notifications_by_user ON notifications (user_id, id)",
 ]
 
 # (table, column, definition)

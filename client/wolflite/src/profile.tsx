@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import "./styles/main.css";
 import { syncAppearanceAcrossTabs } from "./lib/theme";
 import Navbar from "./components/Navbar.jsx";
+import { WithNotifications } from "./components/NotificationsPanel";
 import ProfilePage from "./pages/ProfilePage.jsx";
 import SettingsPage from "./pages/SettingsPage.jsx";
 
@@ -15,6 +16,6 @@ syncAppearanceAcrossTabs();
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Navbar />
-    {isSettings ? <SettingsPage /> : <ProfilePage />}
+    <WithNotifications>{isSettings ? <SettingsPage /> : <ProfilePage />}</WithNotifications>
   </StrictMode>
 );

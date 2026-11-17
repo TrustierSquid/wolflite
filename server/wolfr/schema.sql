@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS likes;
 DROP TABLE IF EXISTS stashes;
 DROP TABLE IF EXISTS den_members;
 DROP TABLE IF EXISTS dens;
+DROP TABLE IF EXISTS notifications;
 
 CREATE TABLE user (
    id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -135,3 +136,31 @@ CREATE TABLE stashes (
   UNIQUE(user_id, post_id),
   UNIQUE(user_id, poll_id)
 );
+
+-- Notifications shown in the notification panel. One row per recipient.
+-- type: 'den_removed' (actor removed user_id from a den)
+--       'mention'     (actor mentioned @user in a post / poll / comment)
+--       'reply'       (actor replied to user_id's comment)
+--       'comment'     (actor commented on user_id's post / poll)
+--       'dm'          (direct messages, coming later)
+-- den_name and snippet are copies, so the notification still reads right after
+-- the den / post is renamed or deleted.
+-- (Keep this in sync with ADDED_TABLES in db.py, which creates it on older databases.)
+CREATE TABLE notifications (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL, -- who gets it
+  type TEXT NOT NULL,
+  actor_id INTEGER NULL, -- who caused it
+  den_id INTEGER NULL,
+  den_name TEXT NULL,
+  post_id INTEGER NULL,
+  poll_id INTEGER NULL,
+  comment_id INTEGER NULL,
+  snippet TEXT NULL, -- start of the text that mentioned them
+  is_read BOOLEAN NOT NULL DEFAULT 0,
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES user(id),
+  FOREIGN KEY (actor_id) REFERENCES user(id)
+);
+
+CREATE INDEX notifications_by_user ON notifications (user_id, id);

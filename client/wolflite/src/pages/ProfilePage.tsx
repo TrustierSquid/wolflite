@@ -18,10 +18,15 @@ const TABS = [
 
 const newestFirst = (items) => [...(items ?? [])].sort((a, b) => new Date(b.created) - new Date(a.created));
 
-// /profile?id=N  (without an id it shows your own profile)
+// /profile?id=N  or  /profile?username=name (from @mention links).
+// Without either it shows your own profile.
 export default function ProfilePage() {
   const currentUser = useCurrentUser();
-  const profileId = new URLSearchParams(window.location.search).get("id") || currentUser?.id;
+  const params = new URLSearchParams(window.location.search);
+  const username = params.get("username");
+  const profileId = params.get("id") || (username ? null : currentUser?.id);
+  // What to ask the server for
+  const profileQuery = profileId ? `id=${encodeURIComponent(profileId)}` : username ? `username=${encodeURIComponent(username)}` : null;
 
   const [profile, setProfile] = useState(null); // null while loading
   const [notFound, setNotFound] = useState(false);
@@ -31,9 +36,9 @@ export default function ProfilePage() {
   const [votersPoll, setVotersPoll] = useState(null);
 
   const loadProfile = useCallback(async () => {
-    if (!profileId) return;
+    if (!profileQuery) return;
     try {
-      const data = await api(`/profileInfo/fetch?id=${encodeURIComponent(profileId)}`);
+      const data = await api(`/profileInfo/fetch?${profileQuery}`);
       if (data === null) {
         setNotFound(true); // the server answers 204 for users that don't exist
         return;
@@ -43,7 +48,7 @@ export default function ProfilePage() {
     } catch (err) {
       setError({ type: "error", text: err.message });
     }
-  }, [profileId]);
+  }, [profileQuery]);
 
   useEffect(() => {
     loadProfile();
@@ -51,8 +56,8 @@ export default function ProfilePage() {
 
   // "/profile" without an id means "my profile", which guests don't have
   useEffect(() => {
-    if (!profileId && currentUser === null) window.location.replace(loginHref());
-  }, [profileId, currentUser]);
+    if (!profileQuery && currentUser === null) window.location.replace(loginHref());
+  }, [profileQuery, currentUser]);
 
   const closeVoters = useCallback(() => setVotersPoll(null), []);
 

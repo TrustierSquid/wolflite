@@ -15,8 +15,16 @@ def retrieveLoggedInUserPost():
   db = get_db()
   cursor = db.cursor()
 
-  # using Query string to  search a profile by user's ID
+  # The profile to show: ?id=<user id>, or ?username=<name> (used by @mention links,
+  # which only know the name; matched ignoring case)
   user_id = request.args.get("id", type=int)
+  username = request.args.get("username", "").strip()
+
+  if not user_id and username:
+    found = cursor.execute("SELECT id FROM user WHERE username = ? COLLATE NOCASE", (username,)).fetchone()
+    if found is None:
+      return '', 204
+    user_id = found["id"]
 
   if not user_id:
     return jsonify({"error": "No user id provided"}), 400
@@ -211,6 +219,9 @@ def deleteUser():
   # Their stashes would otherwise keep counting toward other posts' stash counts
   db.execute("DELETE FROM stashes WHERE user_id = ?", (g.user["id"],))
   db.execute("DELETE FROM den_members WHERE user_id = ?", (g.user["id"],))
+  # Their notifications go; notifications they caused stay but no longer name them
+  db.execute("DELETE FROM notifications WHERE user_id = ?", (g.user["id"],))
+  db.execute("UPDATE notifications SET actor_id = NULL WHERE actor_id = ?", (g.user["id"],))
   db.execute("DELETE FROM user WHERE id = ?", (g.user["id"],))
   db.commit()
 

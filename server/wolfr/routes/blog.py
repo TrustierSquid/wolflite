@@ -1,6 +1,7 @@
 import sqlite3
 from flask import Blueprint, g, request, jsonify, redirect, current_app
 from wolfr.db import get_db, delete_uploads
+from wolfr.routes.notifications import make_snippet, notify, notify_mentions
 import os
 import uuid
 
@@ -523,10 +524,12 @@ def handleImages():
          return jsonify({"error": "Invalid file"}), 400
 
    db = get_db()
-   db.execute(
+   cursor = db.execute(
       "INSERT INTO posts (author_id, title, body, filename, den_id) VALUES (?, ?, ?, ?, ?)",
       (g.user["id"], postTitle, postContent, file_url, den_id),
    )
+   # Anyone mentioned with @username gets a notification
+   notify_mentions(f"{postTitle}\n{postContent}", g.user["id"], den_id, post_id=cursor.lastrowid)
    db.commit()
 
    return jsonify({"success": True, "url": file_url}), 201
@@ -566,6 +569,8 @@ def submitPoll():
          "INSERT INTO poll_options (poll_id, option_text, users_voted) VALUES (?, ?, ?)",
          (poll_id, option, 0),
       )
+   # Anyone mentioned with @username gets a notification
+   notify_mentions(question, g.user["id"], den_id, poll_id=poll_id)
    db.commit()
 
    return jsonify({"success": True}), 201
@@ -657,25 +662,49 @@ def postComment():
       return jsonify({"error": f"Comments can be at most {MAX_COMMENT_LENGTH} characters"}), 400
 
    # Column name comes from this whitelist, never from user input
-   column = "poll_id" if data.get("isPoll") else "post_id"
+   column, table = ("poll_id", "polls") if data.get("isPoll") else ("post_id", "posts")
 
    db = get_db()
 
+   item = db.execute(f"SELECT id, den_id, author_id FROM {table} WHERE id = ?", (postID,)).fetchone()
+   if item is None:
+      return jsonify({"error": "That post no longer exists"}), 404
+
+   # Who wrote the comment being replied to (notified below)
+   replied_to = None
+
    if parentID is not None:
       parent = db.execute(
-         "SELECT id, post_id, poll_id, parent_id FROM comments WHERE id = ?", (parentID,)
+         "SELECT id, author_id, post_id, poll_id, parent_id FROM comments WHERE id = ?", (parentID,)
       ).fetchone()
       if parent is None:
          return jsonify({"error": "The comment you replied to no longer exists"}), 404
       if str(parent[column]) != str(postID):
          return jsonify({"error": "That comment is on a different post"}), 400
+      replied_to = parent["author_id"]
       # Replies are one level deep: replying to a reply joins the same thread
       parentID = parent["parent_id"] or parent["id"]
 
-   db.execute(
+   cursor = db.execute(
       f"INSERT INTO comments (author_id, {column}, commentBody, parent_id) VALUES (?, ?, ?, ?)",
-      (g.user["id"], postID, commentBody, parentID),
+      (g.user["id"], item["id"], commentBody, parentID),
    )
+
+   # Notifications, at most one per person for this comment (never the writer):
+   #   the person whose comment was replied to   -> "replied to your comment"
+   #   the post / poll's author                    -> "commented on your post"
+   #   anyone mentioned with @username             -> "mentioned you in a comment"
+   refs = dict(den_id=item["den_id"], comment_id=cursor.lastrowid, snippet=make_snippet(commentBody), **{column: item["id"]})
+   den = db.execute("SELECT name FROM dens WHERE id = ?", (item["den_id"],)).fetchone()
+   refs["den_name"] = den["name"] if den else None
+   already = {g.user["id"]}
+   if replied_to is not None and replied_to not in already:
+      notify(replied_to, "reply", actor_id=g.user["id"], **refs)
+      already.add(replied_to)
+   if item["author_id"] not in already:
+      notify(item["author_id"], "comment", actor_id=g.user["id"], **refs)
+      already.add(item["author_id"])
+   notify_mentions(commentBody, g.user["id"], item["den_id"], comment_id=cursor.lastrowid, exclude=already, **{column: item["id"]})
    db.commit()
 
    return jsonify({"success": True}), 200

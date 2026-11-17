@@ -1,9 +1,13 @@
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import Avatar from "./Avatar";
 import LoginPrompt from "./LoginPrompt";
+import NotificationsPanel from "./NotificationsPanel";
 import { loginHref, signupHref } from "../lib/auth";
 import { useCurrentUser } from "../lib/currentUser";
 import { logout } from "../lib/logout";
+import { useNotifications } from "../lib/notifications";
 
 interface NavItem {
   /** Text shown next to the icon (hidden on narrow screens, still read by screen readers) */
@@ -26,7 +30,17 @@ const faIcon = (name: string) => <i className={`fa-solid ${name}`} aria-hidden="
 // Logged in: Profile, Home, Create, Log out. Guests: Home, Log in, Sign up.
 export default function Navbar() {
   const user = useCurrentUser(); // undefined while loading, null for guests
+  const { unreadCount } = useNotifications(!!user);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const path = window.location.pathname;
+
+  // Escape closes the notifications sheet
+  useEffect(() => {
+    if (!notificationsOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => e.key === "Escape" && setNotificationsOpen(false);
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [notificationsOpen]);
   const viewedProfileId = new URLSearchParams(window.location.search).get("id");
 
   // Highlight "Profile" on your own profile and on settings, not on other people's profiles
@@ -54,6 +68,20 @@ export default function Navbar() {
       },
       home,
       { label: "Create", icon: faIcon("fa-square-plus"), href: "/create", current: path === "/create" },
+      {
+        // Only shown on screens too narrow for the notification panel next to the feed
+        label: "Notifications",
+        ariaLabel: unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications",
+        icon: (
+          <span className="nav-bell">
+            {faIcon("fa-bell")}
+            {unreadCount > 0 && <span className="nav-badge">{unreadCount > 99 ? "99+" : unreadCount}</span>}
+          </span>
+        ),
+        onClick: () => setNotificationsOpen((open) => !open),
+        current: notificationsOpen,
+        className: "nav-notifications",
+      },
       { label: "Log out", icon: faIcon("fa-right-from-bracket"), onClick: logout },
     ];
   } else if (user === null) {
@@ -70,7 +98,7 @@ export default function Navbar() {
   return (
     <header className="nav">
       <a href="/blog" className="nav-logo" aria-label="Wolflite home">
-        <img src="/static/uploads/wolfLogo.png" alt="" /> WOLF
+        <img src="/static/uploads/wolfLogo.png" alt="" /> <span className="nav-logo-text">WOLF</span>
       </a>
 
       <nav aria-label="Main">
@@ -95,7 +123,12 @@ export default function Navbar() {
                     {content}
                   </a>
                 ) : (
-                  <button {...shared} type="button" onClick={item.onClick}>
+                  <button
+                    {...shared}
+                    type="button"
+                    onClick={item.onClick}
+                    aria-expanded={item.className === "nav-notifications" ? notificationsOpen : undefined}
+                  >
                     {content}
                   </button>
                 )}
@@ -106,6 +139,18 @@ export default function Navbar() {
       </nav>
 
       <LoginPrompt />
+
+      {/* Narrow screens: notifications drop down from the bell. Rendered in <body>
+          because the navbar's backdrop-filter would trap a fixed-position child. */}
+      {notificationsOpen &&
+        createPortal(
+          <div className="notif-sheet-backdrop" onClick={() => setNotificationsOpen(false)}>
+            <div onClick={(e) => e.stopPropagation()}>
+              <NotificationsPanel className="is-popover" />
+            </div>
+          </div>,
+          document.body
+        )}
     </header>
   );
 }

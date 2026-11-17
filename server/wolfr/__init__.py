@@ -298,4 +298,7 @@ def create_app(test_config=None):
     from .routes import dens
     app.register_blueprint(dens.dens_page)
 
+    from .routes import notifications
+    app.register_blueprint(notifications.notifications_page)
+
     return app

@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import Avatar from "./Avatar";
 import DropdownMenu from "./DropdownMenu";
+import MentionText from "./MentionText";
 import type { MenuItem } from "./DropdownMenu";
 import Status from "./Status";
 import { api } from "../lib/api";
@@ -429,7 +430,7 @@ function CommentItem({ comment, postAuthorId, currentUserId, canModerate = false
               </div>
             </form>
           ) : (
-            <p className="comment-body">{comment.commentBody}</p>
+            <p className="comment-body"><MentionText text={comment.commentBody} /></p>
           )}
 
           <Status status={error} />

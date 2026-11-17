@@ -2,6 +2,7 @@ import { useState } from "react";
 import Avatar from "./Avatar";
 import CommentSection from "./CommentSection";
 import DenAvatar from "./DenAvatar";
+import MentionText from "./MentionText";
 import DropdownMenu from "./DropdownMenu";
 import type { MenuItem } from "./DropdownMenu";
 import Status from "./Status";
@@ -195,8 +196,8 @@ function PostBody({ post }) {
 
   return (
     <>
-      <h2 className="post-title">{post.title}</h2>
-      {post.body && <p className="post-body">{post.body}</p>}
+      <h2 className="post-title"><MentionText text={post.title} /></h2>
+      {post.body && <p className="post-body"><MentionText text={post.body} /></p>}
       {media &&
         (VIDEO_FILE.test(media) ? (
           <video className="post-media" src={media} controls preload="metadata" />
@@ -213,7 +214,7 @@ function PollBody({ poll, isOwner, currentUserId, busy, onVote, onClose, onShowV
 
   return (
     <>
-      <h2 className="poll-question">{poll.question}</h2>
+      <h2 className="poll-question"><MentionText text={poll.question} /></h2>
 
       <div className="poll-options">
         {poll.options?.map((option) => {

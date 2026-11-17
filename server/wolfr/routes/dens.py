@@ -3,6 +3,7 @@ import sqlite3
 from flask import Blueprint, g, request, jsonify
 from wolfr.db import get_db, delete_uploads
 from wolfr.routes.blog import save_upload, IMAGE_EXTENSIONS, MODERATOR_ROLES, delete_items
+from wolfr.routes.notifications import notify
 
 # Dens are the communities of Wolflite: users create them, join them and post in them.
 # All endpoints are prefixed with /dens (e.g /dens/list)
@@ -277,6 +278,8 @@ def removeMember(den_id, user_id):
 
    db = get_db()
    db.execute("DELETE FROM den_members WHERE den_id = ? AND user_id = ?", (den_id, user_id))
+   # Tell them, in their notification panel
+   notify(user_id, "den_removed", actor_id=g.user["id"], den_id=den_id, den_name=den["name"])
    db.commit()
 
    return jsonify({"den": den_json(find_den(den_id))}), 200

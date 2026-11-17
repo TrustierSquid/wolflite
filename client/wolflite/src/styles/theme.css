@@ -33,6 +33,7 @@
 
   /* Surfaces & text */
   --bg: #ffffff;
+  --surface-sunken: #f4f4f5; /* darker than the page: side panels (notifications) */
   --surface: #ffffff;
   --surface-2: #f4f4f5;
   --surface-3: #e8e8eb;
@@ -69,6 +70,7 @@
     --yellow-soft: rgba(253, 224, 71, 0.16);
 
     --bg: #0e0e10;
+    --surface-sunken: #08080a;
     --surface: #17171a;
     --surface-2: #212125;
     --surface-3: #2b2b30;
@@ -101,6 +103,7 @@
   --yellow-soft: rgba(253, 224, 71, 0.16);
 
   --bg: #0e0e10;
+  --surface-sunken: #08080a;
   --surface: #17171a;
   --surface-2: #212125;
   --surface-3: #2b2b30;
