@@ -105,13 +105,13 @@ def build_feed_items():
 
 
    comments = cursor.execute("""
-      SELECT comments.author_id, comments.post_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
+      SELECT comments.id, comments.edited, comments.author_id, comments.post_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
       FROM comments
       JOIN user ON comments.author_id = user.id
    """).fetchall()
 
    pollComments = cursor.execute("""
-      SELECT comments.author_id, comments.poll_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
+      SELECT comments.id, comments.edited, comments.author_id, comments.poll_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
       FROM comments
       JOIN user ON comments.author_id = user.id
    """).fetchall()
@@ -126,7 +126,9 @@ def build_feed_items():
          "profilePic": comment["userProfilePic"],
          "post_id": comment["post_id"],
          "created": comment["created"],
-         "commentBody": comment["commentBody"]
+         "commentBody": comment["commentBody"],
+         "id": comment["id"],
+         "edited": comment["edited"]
       })
 
    comments_by_poll = {}
@@ -138,7 +140,9 @@ def build_feed_items():
          "profilePic": comment["userProfilePic"],
          "poll_id": comment["poll_id"],
          "created": comment["created"],
-         "commentBody": comment["commentBody"]
+         "commentBody": comment["commentBody"],
+         "id": comment["id"],
+         "edited": comment["edited"]
       })
 
    # Selecting all poll options
@@ -518,6 +522,9 @@ def trackUserFeedback():
 
 
 
+MAX_COMMENT_LENGTH = 500
+
+
 # Adds a comment from the logged in user to a post or poll
 @blog_page.route("/postComment", methods=["POST"])
 def postComment():
@@ -527,6 +534,8 @@ def postComment():
 
    if not commentBody or postID is None:
       return jsonify({"error": "A comment needs a body and a post"}), 400
+   if len(commentBody) > MAX_COMMENT_LENGTH:
+      return jsonify({"error": f"Comments can be at most {MAX_COMMENT_LENGTH} characters"}), 400
 
    # Column name comes from this whitelist, never from user input
    column = "poll_id" if data.get("isPoll") else "post_id"
@@ -536,6 +545,68 @@ def postComment():
       f"INSERT INTO comments (author_id, {column}, commentBody) VALUES (?, ?, ?)",
       (g.user["id"], postID, commentBody),
    )
+   db.commit()
+
+   return jsonify({"success": True}), 200
+
+
+# Loads a comment plus the author of the post / poll it belongs to.
+# Returns (comment, item_author_id), or (None, None) if the comment doesn't exist.
+def find_comment(comment_id):
+   db = get_db()
+   comment = db.execute(
+      "SELECT id, author_id, post_id, poll_id FROM comments WHERE id = ?", (comment_id,)
+   ).fetchone()
+   if comment is None:
+      return None, None
+
+   if comment["poll_id"] is not None:
+      item = db.execute("SELECT author_id FROM polls WHERE id = ?", (comment["poll_id"],)).fetchone()
+   else:
+      item = db.execute("SELECT author_id FROM posts WHERE id = ?", (comment["post_id"],)).fetchone()
+
+   return comment, (item["author_id"] if item else None)
+
+
+# Edits a comment. Only the person who wrote it can edit it.
+# Body: {"commentBody": "..."}
+@blog_page.route("/comment/<int:comment_id>", methods=["PUT"])
+def editComment(comment_id):
+   comment, _ = find_comment(comment_id)
+   if comment is None:
+      return jsonify({"error": "Comment not found"}), 404
+   if comment["author_id"] != g.user["id"]:
+      return jsonify({"error": "You can only edit your own comments"}), 403
+
+   data = request.get_json(silent=True) or {}
+   commentBody = str(data.get("commentBody") or "").strip()
+   if not commentBody:
+      return jsonify({"error": "A comment can't be empty"}), 400
+   if len(commentBody) > MAX_COMMENT_LENGTH:
+      return jsonify({"error": f"Comments can be at most {MAX_COMMENT_LENGTH} characters"}), 400
+
+   db = get_db()
+   db.execute(
+      "UPDATE comments SET commentBody = ?, edited = CURRENT_TIMESTAMP WHERE id = ?",
+      (commentBody, comment_id),
+   )
+   db.commit()
+
+   return jsonify({"success": True}), 200
+
+
+# Deletes a comment. Allowed for the person who wrote it, and for the author
+# of the post / poll it is on (so authors can moderate their own posts).
+@blog_page.route("/comment/<int:comment_id>", methods=["DELETE"])
+def deleteComment(comment_id):
+   comment, item_author_id = find_comment(comment_id)
+   if comment is None:
+      return jsonify({"error": "Comment not found"}), 404
+   if g.user["id"] not in (comment["author_id"], item_author_id):
+      return jsonify({"error": "You can only delete your own comments or comments on your posts"}), 403
+
+   db = get_db()
+   db.execute("DELETE FROM comments WHERE id = ?", (comment_id,))
    db.commit()
 
    return jsonify({"success": True}), 200

@@ -67,6 +67,7 @@ CREATE TABLE comments (
   post_id INTEGER NULL, -- what post was it on
   commentBody TEXT NOT NULL,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  edited TIMESTAMP NULL, -- when the comment was last edited (NULL = never)
   FOREIGN KEY (author_id) REFERENCES user(id),
   FOREIGN KEY (post_id) REFERENCES posts(id),
   FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE CASCADE

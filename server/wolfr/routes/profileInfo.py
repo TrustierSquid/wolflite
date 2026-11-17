@@ -81,13 +81,13 @@ def retrieveLoggedInUserPost():
         })
 
     comments = cursor.execute("""
-      SELECT comments.author_id, comments.post_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
+      SELECT comments.id, comments.edited, comments.author_id, comments.post_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
       FROM comments
       JOIN user ON comments.author_id = user.id
     """).fetchall()
 
     pollComments = cursor.execute("""
-      SELECT comments.author_id, comments.poll_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
+      SELECT comments.id, comments.edited, comments.author_id, comments.poll_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
       FROM comments
       JOIN user ON comments.author_id = user.id
     """).fetchall()
@@ -102,7 +102,9 @@ def retrieveLoggedInUserPost():
         "profilePic": comment["userProfilePic"],
         "post_id": comment["post_id"],
         "created": comment["created"],
-        "commentBody": comment["commentBody"]
+        "commentBody": comment["commentBody"],
+        "id": comment["id"],
+        "edited": comment["edited"]
       })
 
     # Organize comments by poll_id
@@ -115,7 +117,9 @@ def retrieveLoggedInUserPost():
         "profilePic": comment["userProfilePic"],
         "poll_id": comment["poll_id"],
         "created": comment["created"],
-        "commentBody": comment["commentBody"]
+        "commentBody": comment["commentBody"],
+        "id": comment["id"],
+        "edited": comment["edited"]
       })
 
     # Get all likes per post with like author id and username

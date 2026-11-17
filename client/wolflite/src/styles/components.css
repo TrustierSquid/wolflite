@@ -99,11 +99,11 @@
   position: relative;
 }
 
+/* Rendered at the end of <body> and positioned by DropdownMenu (top/left inline),
+   so it sits above everything: posts, scrolling comment lists and the sticky navbar */
 .dropdown-menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  z-index: 20;
+  position: fixed;
+  z-index: 1000;
   display: flex;
   flex-direction: column;
   min-width: 180px;
@@ -112,6 +112,13 @@
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow-lg);
+}
+
+/* Compact ⋮ button, e.g. on comments */
+.dropdown-small .icon-btn {
+  width: 28px;
+  height: 28px;
+  font-size: 0.875rem;
 }
 
 .dropdown-item {
@@ -409,9 +416,54 @@
 
 .comment-header {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  align-items: center;
   gap: 0.5rem;
+}
+
+/* Name + Author badge on the left; time and ⋮ menu are pushed right */
+.comment-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  margin-right: auto;
+}
+
+/* Yellow badge on comments written by the post's author */
+.tag-author {
+  padding: 0.05rem 0.45rem;
+  background: var(--yellow-soft);
+  color: var(--yellow);
+  font-size: 0.75rem;
+}
+
+/* Keep the ⋮ button from making the comment header taller */
+.comment-header .dropdown {
+  margin: -4px -6px -4px 0;
+}
+
+.comment-edit-input {
+  min-height: 64px;
+  margin-top: 0.375rem;
+}
+
+.comment-edit-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.comment-edit-actions .hint {
+  margin-right: auto;
+}
+
+@media (max-width: 480px) {
+  .comment-edit-actions .hint {
+    display: none;
+  }
 }
 
 .comment-author {

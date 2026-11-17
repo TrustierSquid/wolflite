@@ -28,6 +28,8 @@
   --danger: #dc2626;
   --on-danger: #ffffff;
   --danger-soft: color-mix(in srgb, var(--danger) 10%, transparent);
+  --yellow: #713f12;      /* text/icon on --yellow-soft (e.g. the comment "Author" badge) */
+  --yellow-soft: #fef08a;
 
   /* Surfaces & text */
   --bg: #ffffff;
@@ -63,6 +65,8 @@
     --danger: #f87171;
     --on-danger: #18181b;
     --danger-soft: color-mix(in srgb, var(--danger) 16%, transparent);
+    --yellow: #fde047;
+    --yellow-soft: rgba(253, 224, 71, 0.16);
 
     --bg: #0e0e10;
     --surface: #17171a;
@@ -93,6 +97,8 @@
   --danger: #f87171;
   --on-danger: #18181b;
   --danger-soft: color-mix(in srgb, var(--danger) 16%, transparent);
+  --yellow: #fde047;
+  --yellow-soft: rgba(253, 224, 71, 0.16);
 
   --bg: #0e0e10;
   --surface: #17171a;

@@ -2,6 +2,11 @@
 //  - sends `json` as a JSON body, or `body` as-is (FormData for uploads)
 //  - sends the user to /login when the session has expired (401)
 //  - throws an Error with the server's message for any other failed request
+/**
+ * @param {string} path
+ * @param {{ method?: string, json?: unknown, body?: BodyInit }} [options]
+ * @returns {Promise<any>}
+ */
 export async function api(path, { method = "GET", json, body } = {}) {
   const options = { method, credentials: "include" };
 

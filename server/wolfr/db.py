@@ -59,7 +59,9 @@ ADDED_TABLES = [
 ]
 
 # (table, column, definition)
-ADDED_COLUMNS = []
+ADDED_COLUMNS = [
+   ("comments", "edited", "TIMESTAMP NULL"),
+]
 
 
 def upgrade_db():
