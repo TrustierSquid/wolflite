@@ -22,7 +22,6 @@ from wolfr.db import get_db
 # load_dotenv()
 env_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
 load_dotenv(env_path)
-db_key = os.getenv("DB_KEY")
 
 # Creating the flask instance
 def create_app(test_config=None):
@@ -46,8 +45,10 @@ def create_app(test_config=None):
     )
 
     app.config.from_mapping(
-        # Key is used to securely sign session cookies
-        SECRET_KEY=db_key,
+        # Key is used to securely sign session cookies. Read when the app is
+        # created (not when this module is imported), so the environment can be
+        # set up first, e.g. by tests.
+        SECRET_KEY=os.getenv("DB_KEY"),
         DATABASE=os.path.join(app.instance_path, "wolfr.sqlite"),
     )
 

@@ -1,0 +1,144 @@
+# CI / CD for Wolflite.
+#
+#   Every push and pull request:  frontend checks + backend tests
+#   Push to main (tests passed):  build the Docker image -> ghcr.io -> deploy to the
+#                                 server over Tailscale (no open ports, no SSH keys)
+#
+# One-time setup (Tailscale, GitHub secrets, the server folder): docs/deployment.md
+
+name: CI / CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: # "Run workflow" button: redeploy main without a new commit
+
+# One deploy at a time; a newer push waits for the running one instead of cutting it off
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  # Must be lowercase
+  IMAGE: ghcr.io/trustiersquid/wolflite
+
+jobs:
+  frontend:
+    name: Frontend (lint, tests, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client/wolflite
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/wolflite/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test -- --ci
+      # Report only for now: the older code still has type errors. Remove
+      # continue-on-error once `npm run typecheck` is clean to make it required.
+      - name: Type check (report only)
+        run: npm run typecheck
+        continue-on-error: true
+      - run: npm run build
+
+  backend:
+    name: Backend (pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: server/requirements.txt
+      - run: pip install -r requirements.txt pytest
+      - run: pytest -q
+
+  image:
+    name: Build and push image
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [frontend, backend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # push to ghcr.io
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: server/Dockerfile
+          push: true
+          # :latest, plus the commit's sha so any version can be redeployed
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to server
+    needs: image
+    runs-on: ubuntu-latest
+    environment: production # shows deploys under the repo's "Environments"
+    permissions:
+      contents: read
+      packages: read # lets the server pull the image with this run's token
+    env:
+      TARGET: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+      SSH_OPTS: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR
+    steps:
+      - uses: actions/checkout@v5
+
+      # Joins your tailnet as a temporary device tagged tag:ci (removed after the run)
+      - uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      - name: Copy compose.yml to the server
+        run: scp $SSH_OPTS compose.yml "$TARGET:$DEPLOY_PATH/compose.yml"
+
+      - name: Log the server in to ghcr.io (this run's token, sent over stdin)
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | ssh $SSH_OPTS "$TARGET" "docker login ghcr.io -u '${{ github.actor }}' --password-stdin"
+
+      - name: Pull the new image and restart
+        run: |
+          ssh $SSH_OPTS "$TARGET" "cd '$DEPLOY_PATH' \
+            && export WOLFLITE_TAG='${{ github.sha }}' \
+            && docker compose pull wolflite \
+            && docker compose up -d \
+            && docker image prune -f"
+
+      - name: Health check
+        run: |
+          ssh $SSH_OPTS "$TARGET" "cd '$DEPLOY_PATH' && for i in \$(seq 1 30); do \
+              docker compose exec -T wolflite python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/login', timeout=5)\" \
+                && echo 'Wolflite is up' && exit 0; \
+              sleep 2; \
+            done; \
+            echo 'Wolflite did not come up. Last logs:'; docker compose logs --tail 80 wolflite; exit 1"
+
+      - name: Log the server out of ghcr.io
+        if: always()
+        run: ssh $SSH_OPTS "$TARGET" "docker logout ghcr.io" || true
