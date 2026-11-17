@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import wolfOriginal from "../assets/imgs/wolf-original.png";
 
 // "About Wolf" and "Help" views of the feed page (/blog?tab=about, /blog?tab=help)
 
@@ -31,6 +32,69 @@ export function AboutWolf() {
         <Feature icon="fa-at" title="Mentions">Type @username to bring someone into the conversation. They get notified.</Feature>
         <Feature icon="fa-bookmark" title="Stash">Bookmark posts to come back to them later, from your profile.</Feature>
       </div>
+
+      <DevSection />
+    </section>
+  );
+}
+
+
+// What Wolflite is built with, grouped for the "From the developer" section
+const STACK: { group: string; icon: string; items: string[] }[] = [
+  { group: "Frontend", icon: "fa-display", items: ["React", "TypeScript", "Vite", "Font Awesome"] },
+  { group: "Backend", icon: "fa-server", items: ["Python", "Flask", "SQLite", "Gunicorn"] },
+  { group: "Shipping", icon: "fa-rocket", items: ["Docker Compose", "GitHub Actions", "Tailscale", "Cloudflare Tunnel"] },
+];
+
+function DevSection() {
+  return (
+    <section className="card dev-section" aria-labelledby="dev-title">
+      <div className="dev-header">
+        <h2 id="dev-title" className="section-title">From the developer</h2>
+        <p className="section-desc">How Wolflite came to be</p>
+      </div>
+
+      <div className="dev-story">
+        <p>
+          Wolflite has been about a <strong>year and a half</strong> in the making. It didn't start out as Wolflite:
+          the first build was just called <strong>Wolf</strong>.
+        </p>
+        <p>
+          University taught me the fundamentals of programming, but most of what went into Wolflite I learned on my
+          own, through <strong>trial and error</strong>. Building something, breaking it, figuring out why, and
+          building it again, one problem at a time.
+        </p>
+        <p>
+          Most of that time went into learning what goes into a good product, not just getting features to work.
+          Understanding a proper design language, building other projects along the way, and learning the attention to
+          detail that UI really takes are what turned Wolf into what you're using now.
+        </p>
+      </div>
+
+      <figure className="dev-figure">
+        <img src={wolfOriginal} alt="The first version, Wolf: a dark red top bar, a Dashboard sidebar with topics, and a big glowing “What's New” heading above the posts" loading="lazy" />
+        <figcaption>
+          <i className="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> Where it started: the original <strong>Wolf</strong>
+        </figcaption>
+      </figure>
+
+      <div className="dev-stack">
+        <h3 className="dev-stack-title">Built with</h3>
+        {STACK.map((group) => (
+          <div key={group.group} className="dev-stack-group">
+            <span className="dev-stack-label">
+              <i className={`fa-solid ${group.icon}`} aria-hidden="true"></i> {group.group}
+            </span>
+            <ul className="dev-stack-items">
+              {group.items.map((item) => (
+                <li key={item} className="tag">{item}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      <p className="dev-signoff">Samuel, developer of Wolflite</p>
     </section>
   );
 }
