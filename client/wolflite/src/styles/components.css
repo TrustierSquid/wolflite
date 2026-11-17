@@ -18,6 +18,7 @@
   justify-self: start;
   display: flex;
   align-items: center;
+  gap: 0.5rem;
 }
 
 .nav-logo img {
@@ -166,9 +167,25 @@
   gap: 0.625rem;
 }
 
-/* Pushes the ⋮ menu to the right edge of the header */
+/* Pushes the "Stashed" tag and ⋮ menu to the right edge of the header */
+.post-header .tag,
 .post-header .dropdown {
   margin-left: auto;
+}
+
+.post-header .tag + .dropdown {
+  margin-left: 0;
+}
+
+/* Stashed by you: purple (secondary brand color) outline and tag */
+.post.is-stashed {
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 1px var(--secondary);
+}
+
+.tag-stashed {
+  background: var(--secondary-soft);
+  color: var(--secondary);
 }
 
 .post-meta {
@@ -240,6 +257,16 @@
 .action-btn.is-active,
 .action-btn.is-active:hover {
   color: var(--primary);
+}
+
+/* Stash button + count sits at the right end of the actions row */
+.action-btn-stash {
+  margin-left: auto;
+}
+
+.action-btn.is-stashed,
+.action-btn.is-stashed:hover {
+  color: var(--secondary);
 }
 
 

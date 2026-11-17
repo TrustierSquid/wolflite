@@ -21,7 +21,7 @@ export default function Navbar() {
   return (
     <header className="nav">
       <a href="/blog" className="nav-logo" aria-label="Wolflite home">
-        <img src="/static/uploads/wolfLogo.png" alt="" />
+        <img src="/static/uploads/wolfLogo.png" alt="" /> WOLF
       </a>
 
       <nav aria-label="Main">
