@@ -1,6 +1,7 @@
 import sqlite3
 from flask import Blueprint, g, request, jsonify, redirect, current_app
 from wolfr.db import get_db
+from wolfr.routes.blog import build_feed_items, get_stashed_ids, get_stash_counts
 from werkzeug.utils import secure_filename
 import os
 import datetime
@@ -157,6 +158,11 @@ def retrieveLoggedInUserPost():
       })
 
 
+    # Stash state is about the person VIEWING the profile: which items they stashed,
+    # plus how many users stashed each item
+    stashed_post_ids, stashed_poll_ids = get_stashed_ids(g.user["id"])
+    post_stash_counts, poll_stash_counts = get_stash_counts()
+
     # Map for all of the logged in users posts
     allLoggedInUserPosts = []
     for row in userPostedPosts:
@@ -173,7 +179,8 @@ def retrieveLoggedInUserPost():
         "likesByPost": likes_by_post.get(row["id"], []),
         "comments": comments_by_post.get(row["id"], []),
         "isPoll": False,
-        "isArchived": bool(row["isArchived"])
+        "isStashed": row["id"] in stashed_post_ids,
+        "stashCount": post_stash_counts.get(row["id"], 0)
       })
 
 
@@ -219,20 +226,18 @@ def retrieveLoggedInUserPost():
         "comments": comments_by_poll.get(row["id"], []),
         "isPoll": True,
         "isOpen": row["isOpen"],
-        "isArchived": bool(row["isArchived"]),
         "archive_at": row["archive_at"],
-        "whoVoted": voters
+        "whoVoted": voters,
+        "isStashed": row["id"] in stashed_poll_ids,
+        "stashCount": poll_stash_counts.get(row["id"], 0)
       })
 
-    # Archived posts and polls are hidden from the public profile and only
-    # returned (in their own list) to the profile's owner
-    isOwner = g.user["id"] == user_id
-    activePosts = [post for post in allLoggedInUserPosts if not post["isArchived"]]
-    activePolls = [poll for poll in allLoggedInUserPolls if not poll["isArchived"]]
-    archivedItems = (
-      [item for item in allLoggedInUserPosts + allLoggedInUserPolls if item["isArchived"]]
-      if isOwner else []
-    )
+    # The stash list is private: only returned when viewing your own profile.
+    # It can contain anyone's posts and polls, so it reuses the feed builder.
+    if g.user["id"] == user_id:
+      stashedItems = [item for item in build_feed_items() if item["isStashed"]]
+    else:
+      stashedItems = []
 
     # FETCHING ALL POSTS THAT THE USER HAS LIKED
     likedPosts = cursor.execute(
@@ -241,7 +246,7 @@ def retrieveLoggedInUserPost():
         (SELECT COUNT(*) FROM likes WHERE likes.post_id = posts.id) AS PostLikeCount
       FROM posts
       JOIN user ON posts.author_id = user.id
-      WHERE posts.isArchived = 0 AND posts.id IN (
+      WHERE posts.id IN (
         SELECT post_id FROM likes WHERE author_id = ?
         );
       """, (user_id,)
@@ -263,15 +268,17 @@ def retrieveLoggedInUserPost():
         "likeCount": row["PostLikeCount"],
         "isPoll": False,
         "comments": comments_by_post.get(row["id"], []),
-        "likesByPost": likes_by_post.get(row["id"], [])
+        "likesByPost": likes_by_post.get(row["id"], []),
+        "isStashed": row["id"] in stashed_post_ids,
+        "stashCount": post_stash_counts.get(row["id"], 0)
       })
 
 
     # Details of the profile being viewed (findUser was loaded at the top)
     return jsonify({
-      "allUserPosts": activePosts,
-      "allUserPolls": activePolls,
-      "archived": archivedItems,
+      "allUserPosts": allLoggedInUserPosts,
+      "allUserPolls": allLoggedInUserPolls,
+      "stashed": stashedItems,
       "likedPosts": allLikedPosts,
       "userId": findUser["id"],
       "username": findUser["username"],
@@ -404,6 +411,8 @@ def changeBio():
 @profile_page.route('/deleteProfile', methods=['DELETE'])
 def deleteUser():
   db = get_db()
+  # Their stashes would otherwise keep counting toward other posts' stash counts
+  db.execute("DELETE FROM stashes WHERE user_id = ?", (g.user["id"],))
   db.execute("DELETE FROM user WHERE id = ?", (g.user["id"],))
   db.commit()
 

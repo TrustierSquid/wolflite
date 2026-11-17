@@ -35,17 +35,43 @@ def init_db():
       db.executescript(f.read().decode('utf8'))
 
 
-# Columns added after the first release. upgrade_db() adds any that are missing,
-# so existing databases (including production) keep their data instead of
-# needing `init-db`, which wipes everything.
-# When you add a column to schema.sql, add it here too: (table, column, definition)
-ADDED_COLUMNS = [
-   ("posts", "isArchived", "BOOLEAN NOT NULL DEFAULT 0"),
+# Tables and columns added after the first release. upgrade_db() creates any that
+# are missing, so existing databases (including production) keep their data
+# instead of needing `init-db`, which wipes everything.
+# When you add a table or column to schema.sql, add it here too.
+
+# CREATE TABLE IF NOT EXISTS statements
+ADDED_TABLES = [
+   """
+   CREATE TABLE IF NOT EXISTS stashes (
+     id INTEGER PRIMARY KEY AUTOINCREMENT,
+     user_id INTEGER NOT NULL,
+     post_id INTEGER NULL,
+     poll_id INTEGER NULL,
+     created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     FOREIGN KEY (user_id) REFERENCES user(id),
+     FOREIGN KEY (post_id) REFERENCES posts(id),
+     FOREIGN KEY (poll_id) REFERENCES polls(id),
+     UNIQUE(user_id, post_id),
+     UNIQUE(user_id, poll_id)
+   )
+   """,
 ]
+
+# (table, column, definition)
+ADDED_COLUMNS = []
 
 
 def upgrade_db():
    db = get_db()
+
+   # Only upgrade databases that were initialised (init-db creates everything itself)
+   if not db.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'user'").fetchone():
+      return
+
+   for statement in ADDED_TABLES:
+      db.execute(statement)
+
    for table, column, definition in ADDED_COLUMNS:
       existing = {row["name"] for row in db.execute(f"PRAGMA table_info({table})")}
       # A table missing entirely means the db was never initialised; init-db handles that

@@ -8,219 +8,219 @@ import uuid
 blog_page = Blueprint("post", __name__, url_prefix="/post")
 
 
-# Retireves existing Posts and polls
+# Feed: every post and poll, newest first
 @blog_page.route("/fetch", methods=["GET"])
 def retrievePosts():
+   return jsonify({"feed": build_feed_items()}), 200
+
+
+# Builds every post and poll with its likes, comments, votes and whether the
+# logged in user has stashed it. Used by the feed and by the profile's stash list.
+def build_feed_items():
    db = get_db()
    cursor = db.cursor()
 
-   try:
-      # selecting all regular posts
-      posts = cursor.execute(
-         "SELECT posts.*, user.username, user.filename AS userProfilePic, "
-         "COUNT(likes.id) AS likeCount "
-         "FROM posts "
-         "JOIN user ON posts.author_id = user.id "
-         "LEFT JOIN likes ON likes.post_id = posts.id "
-         "WHERE posts.isArchived = 0 "
-         "GROUP BY posts.id "
-      ).fetchall()
+   # Which posts / polls the logged in user has stashed, and how many users stashed each
+   stashed_post_ids, stashed_poll_ids = get_stashed_ids(g.user["id"])
+   post_stash_counts, poll_stash_counts = get_stash_counts()
 
-      # Selecting all polls
-      polls = cursor.execute(
-         "SELECT polls.*, user.username, user.filename AS userProfilePic, "
-         "COUNT(likes.id) AS likeCount "
-         "FROM polls JOIN user ON polls.author_id = user.id "
-         "LEFT JOIN likes ON likes.poll_id = polls.id "
-         "WHERE polls.isArchived = 0 "
-         "GROUP BY polls.id"
-      ).fetchall()
+   # selecting all regular posts
+   posts = cursor.execute(
+      "SELECT posts.*, user.username, user.filename AS userProfilePic, "
+      "COUNT(likes.id) AS likeCount "
+      "FROM posts "
+      "JOIN user ON posts.author_id = user.id "
+      "LEFT JOIN likes ON likes.post_id = posts.id "
+      "GROUP BY posts.id "
+   ).fetchall()
 
-      # Get votes for each poll and who voted
-      votes = cursor.execute("""
-         SELECT votes.poll_id, votes.option_id, votes.user_id, user.username, user.filename AS userProfilePic
-         FROM votes
-         JOIN user ON votes.user_id = user.id
-      """).fetchall()
+   # Selecting all polls
+   polls = cursor.execute(
+      "SELECT polls.*, user.username, user.filename AS userProfilePic, "
+      "COUNT(likes.id) AS likeCount "
+      "FROM polls JOIN user ON polls.author_id = user.id "
+      "LEFT JOIN likes ON likes.poll_id = polls.id "
+      "GROUP BY polls.id"
+   ).fetchall()
 
-      # Organize votes by poll and option
-      votes_by_poll = {}
-      for vote in votes:
-         poll_id = vote["poll_id"]
-         option_id = vote["option_id"]
-         user_info = {
-            "user_id": vote["user_id"],
-            "username": vote["username"],
-            "profilePic": vote["userProfilePic"]
+   # Get votes for each poll and who voted
+   votes = cursor.execute("""
+      SELECT votes.poll_id, votes.option_id, votes.user_id, user.username, user.filename AS userProfilePic
+      FROM votes
+      JOIN user ON votes.user_id = user.id
+   """).fetchall()
+
+   # Organize votes by poll and option
+   votes_by_poll = {}
+   for vote in votes:
+      poll_id = vote["poll_id"]
+      option_id = vote["option_id"]
+      user_info = {
+         "user_id": vote["user_id"],
+         "username": vote["username"],
+         "profilePic": vote["userProfilePic"]
+      }
+      if poll_id not in votes_by_poll:
+         votes_by_poll[poll_id] = {}
+      if option_id not in votes_by_poll[poll_id]:
+         votes_by_poll[poll_id][option_id] = []
+      votes_by_poll[poll_id][option_id].append(user_info)
+
+   # Get all likes per post with like author id and username
+   likesMembers = cursor.execute("""
+      SELECT likes.post_id, likes.author_id, user.username
+      FROM likes
+      JOIN user ON likes.author_id = user.id
+   """).fetchall()
+
+   pollLikesMembers = cursor.execute("""
+      SELECT likes.poll_id, likes.author_id, user.username
+      FROM likes
+      JOIN user ON likes.author_id = user.id
+   """).fetchall()
+
+   # map for likes (lists all users by id and username who liked a post)
+   likes_by_post = {}
+   for like in likesMembers:
+      post_id = like["post_id"]
+
+      if post_id not in likes_by_post:
+         likes_by_post[post_id] = []
+      likes_by_post[post_id].append({
+         "author_id": like["author_id"],
+         "username": like["username"]
+      })
+
+   # map for likes (lists all users by id and username who liked a post)
+   likes_by_poll = {}
+   for like in pollLikesMembers:
+      poll_id = like["poll_id"]
+
+      if poll_id not in likes_by_poll:
+         likes_by_poll[poll_id] = []
+      likes_by_poll[poll_id].append({
+         "author_id": like["author_id"],
+         "username": like["username"]
+      })
+
+
+   comments = cursor.execute("""
+      SELECT comments.author_id, comments.post_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
+      FROM comments
+      JOIN user ON comments.author_id = user.id
+   """).fetchall()
+
+   pollComments = cursor.execute("""
+      SELECT comments.author_id, comments.poll_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
+      FROM comments
+      JOIN user ON comments.author_id = user.id
+   """).fetchall()
+
+   # Organize comments by post_id
+   comments_by_post = {}
+   for comment in comments:
+      post_id = comment["post_id"]
+      comments_by_post.setdefault(post_id, []).append({
+         "author_id": comment["author_id"],
+         "author_username": comment["username"],
+         "profilePic": comment["userProfilePic"],
+         "post_id": comment["post_id"],
+         "created": comment["created"],
+         "commentBody": comment["commentBody"]
+      })
+
+   comments_by_poll = {}
+   for comment in pollComments:
+      poll_id = comment["poll_id"]
+      comments_by_poll.setdefault(poll_id, []).append({
+         "author_id": comment["author_id"],
+         "author_username": comment["username"],
+         "profilePic": comment["userProfilePic"],
+         "poll_id": comment["poll_id"],
+         "created": comment["created"],
+         "commentBody": comment["commentBody"]
+      })
+
+   # Selecting all poll options
+   options = cursor.execute(
+      "SELECT * FROM poll_options"
+   ).fetchall()
+
+   # Blueprint for POST results
+   postResults = []
+
+   for row in posts:
+      postResults.append(
+         {
+            "id": row["id"],
+            "author_id": row["author_id"],
+            "created": row["created"],
+            "filename": row["filename"],
+            "title": row["title"],
+            "body": row["body"],
+            "username": row["username"],
+            "profilePic": row["userProfilePic"],
+            "likeCount": row["likeCount"],
+            "likesByPost": likes_by_post.get(row["id"], []),
+            "comments": comments_by_post.get(row["id"], []),
+            "isPoll": False,
+            "isStashed": row["id"] in stashed_post_ids,
+            "stashCount": post_stash_counts.get(row["id"], 0)
          }
-         if poll_id not in votes_by_poll:
-            votes_by_poll[poll_id] = {}
-         if option_id not in votes_by_poll[poll_id]:
-            votes_by_poll[poll_id][option_id] = []
-         votes_by_poll[poll_id][option_id].append(user_info)
-
-      # Get all likes per post with like author id and username
-      likesMembers = cursor.execute("""
-         SELECT likes.post_id, likes.author_id, user.username
-         FROM likes
-         JOIN user ON likes.author_id = user.id
-      """).fetchall()
-
-      pollLikesMembers = cursor.execute("""
-         SELECT likes.poll_id, likes.author_id, user.username
-         FROM likes
-         JOIN user ON likes.author_id = user.id
-      """).fetchall()
-
-      # map for likes (lists all users by id and username who liked a post)
-      likes_by_post = {}
-      for like in likesMembers:
-         post_id = like["post_id"]
-
-         if post_id not in likes_by_post:
-            likes_by_post[post_id] = []
-         likes_by_post[post_id].append({
-            "author_id": like["author_id"],
-            "username": like["username"]
-         })
-
-      # map for likes (lists all users by id and username who liked a post)
-      likes_by_poll = {}
-      for like in pollLikesMembers:
-         poll_id = like["poll_id"]
-
-         if poll_id not in likes_by_poll:
-            likes_by_poll[poll_id] = []
-         likes_by_poll[poll_id].append({
-            "author_id": like["author_id"],
-            "username": like["username"]
-         })
-
-
-      comments = cursor.execute("""
-         SELECT comments.author_id, comments.post_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
-         FROM comments
-         JOIN user ON comments.author_id = user.id
-      """).fetchall()
-
-      pollComments = cursor.execute("""
-         SELECT comments.author_id, comments.poll_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
-         FROM comments
-         JOIN user ON comments.author_id = user.id
-      """).fetchall()
-
-      # Organize comments by post_id
-      comments_by_post = {}
-      for comment in comments:
-         post_id = comment["post_id"]
-         comments_by_post.setdefault(post_id, []).append({
-            "author_id": comment["author_id"],
-            "author_username": comment["username"],
-            "profilePic": comment["userProfilePic"],
-            "post_id": comment["post_id"],
-            "created": comment["created"],
-            "commentBody": comment["commentBody"]
-         })
-
-      comments_by_poll = {}
-      for comment in pollComments:
-         poll_id = comment["poll_id"]
-         comments_by_poll.setdefault(poll_id, []).append({
-            "author_id": comment["author_id"],
-            "author_username": comment["username"],
-            "profilePic": comment["userProfilePic"],
-            "poll_id": comment["poll_id"],
-            "created": comment["created"],
-            "commentBody": comment["commentBody"]
-         })
-
-      # Selecting all poll options
-      options = cursor.execute(
-         "SELECT * FROM poll_options"
-      ).fetchall()
-
-      # Blueprint for POST results
-      postResults = []
-
-      for row in posts:
-         postResults.append(
-            {
-               "id": row["id"],
-               "author_id": row["author_id"],
-               "created": row["created"],
-               "filename": row["filename"],
-               "title": row["title"],
-               "body": row["body"],
-               "username": row["username"],
-               "profilePic": row["userProfilePic"],
-               "likeCount": row["likeCount"],
-               "likesByPost": likes_by_post.get(row["id"], []),
-               "comments": comments_by_post.get(row["id"], []),
-               "isPoll": False,
-               "isArchived": bool(row["isArchived"])
-            }
-         )
-
-
-      # Blueprint FOR POLLS Results
-      option_map = {}
-      for opt in options:
-         # Fetch user IDs who voted for this option
-         voters = cursor.execute(
-         "SELECT user_id FROM votes WHERE option_id = ?", (opt["id"],)
-         ).fetchall()
-         voter_ids = [v["user_id"] for v in voters]
-
-         option_map.setdefault(opt["poll_id"], []).append({
-            "id": opt["id"],
-            "option_text": opt["option_text"],
-            "user_voted": opt["users_voted"],
-            "voters": voter_ids,
-         })
-
-      # Selecting each poll and sending back a blueprint of each poll and their data
-      pollResults = []
-      for poll in polls:
-
-         # Getting total votes for each poll
-         result = cursor.execute("""
-            SELECT SUM(users_voted) AS total_votes FROM poll_options WHERE poll_id = ? """, (poll["id"],)
-         ).fetchone()
-
-         total_votes = result["total_votes"] if result and result["total_votes"] is not None else 0
-
-         pollResults.append({
-            "id": poll["id"],
-            "author_id": poll["author_id"],
-            "created": poll["created"],
-            "question": poll["question"],
-            "username": poll["username"],
-            # appended the blueprint of the options map
-            "options": option_map.get(poll["id"], []),
-            "totalVotes": total_votes,
-            "profilePic": poll["userProfilePic"],
-            "isPoll": True,
-            "isOpen": poll["isOpen"],
-            "isArchived": bool(poll["isArchived"]),
-            "likeCount": poll["likeCount"],
-            "comments": comments_by_poll.get(poll["id"], []),
-            "whoVoted": votes_by_poll.get(poll["id"], []),
-            "likesByPoll": likes_by_poll.get(poll["id"], [])
-         })
-
-      # Move combined_results and sorting outside the for loop
-      combined_results = postResults + pollResults
-      # Sort by 'created' field (descending: newest first)
-      combined_results.sort(key=lambda x: x["created"], reverse=True)
-
-      return (
-         jsonify(
-            {"feed": combined_results}
-         ),
-         200,
       )
-   except sqlite3.IntegrityError:
-      return jsonify({"message": "Table or column doesnt exist"})
+
+
+   # Blueprint FOR POLLS Results
+   option_map = {}
+   for opt in options:
+      # Fetch user IDs who voted for this option
+      voters = cursor.execute(
+      "SELECT user_id FROM votes WHERE option_id = ?", (opt["id"],)
+      ).fetchall()
+      voter_ids = [v["user_id"] for v in voters]
+
+      option_map.setdefault(opt["poll_id"], []).append({
+         "id": opt["id"],
+         "option_text": opt["option_text"],
+         "user_voted": opt["users_voted"],
+         "voters": voter_ids,
+      })
+
+   # Selecting each poll and sending back a blueprint of each poll and their data
+   pollResults = []
+   for poll in polls:
+
+      # Getting total votes for each poll
+      result = cursor.execute("""
+         SELECT SUM(users_voted) AS total_votes FROM poll_options WHERE poll_id = ? """, (poll["id"],)
+      ).fetchone()
+
+      total_votes = result["total_votes"] if result and result["total_votes"] is not None else 0
+
+      pollResults.append({
+         "id": poll["id"],
+         "author_id": poll["author_id"],
+         "created": poll["created"],
+         "question": poll["question"],
+         "username": poll["username"],
+         # appended the blueprint of the options map
+         "options": option_map.get(poll["id"], []),
+         "totalVotes": total_votes,
+         "profilePic": poll["userProfilePic"],
+         "isPoll": True,
+         "isOpen": poll["isOpen"],
+         "isStashed": poll["id"] in stashed_poll_ids,
+         "stashCount": poll_stash_counts.get(poll["id"], 0),
+         "likeCount": poll["likeCount"],
+         "comments": comments_by_poll.get(poll["id"], []),
+         "whoVoted": votes_by_poll.get(poll["id"], []),
+         "likesByPoll": likes_by_poll.get(poll["id"], [])
+      })
+
+   # Newest first
+   combined_results = postResults + pollResults
+   combined_results.sort(key=lambda x: x["created"], reverse=True)
+   return combined_results
 
 
 # Allowed file extensions to be uploaded to the server
@@ -302,21 +302,49 @@ def find_own_item(item_id, is_poll):
    return table, None
 
 
-# Archives (hides from the feed and public profile) or unarchives a post / poll
-@blog_page.route("/archive/<int:item_id>/<is_poll>", methods=["PUT"])
-def archiveItem(item_id, is_poll):
-   table, error = find_own_item(item_id, is_poll)
-   if error:
-      return error
+# Ids of the posts and polls a user has stashed: (set of post ids, set of poll ids)
+def get_stashed_ids(user_id):
+   rows = get_db().execute("SELECT post_id, poll_id FROM stashes WHERE user_id = ?", (user_id,)).fetchall()
+   return (
+      {row["post_id"] for row in rows if row["post_id"] is not None},
+      {row["poll_id"] for row in rows if row["poll_id"] is not None},
+   )
 
-   data = request.get_json(silent=True) or {}
-   archived = bool(data.get("archived", True))
+
+# How many users stashed each item: (dict post id -> count, dict poll id -> count)
+def get_stash_counts():
+   rows = get_db().execute(
+      "SELECT post_id, poll_id, COUNT(*) AS total FROM stashes GROUP BY post_id, poll_id"
+   ).fetchall()
+   return (
+      {row["post_id"]: row["total"] for row in rows if row["post_id"] is not None},
+      {row["poll_id"]: row["total"] for row in rows if row["poll_id"] is not None},
+   )
+
+
+# Stashes (bookmarks) or unstashes any post / poll for the logged in user.
+# Personal: nothing changes for the author or anyone else.
+# Body: {"stashed": true | false}
+@blog_page.route("/stash/<int:item_id>/<is_poll>", methods=["PUT"])
+def stashItem(item_id, is_poll):
+   # Table / column names come from this whitelist, never from user input
+   table, column = ("polls", "poll_id") if is_poll.lower() == "true" else ("posts", "post_id")
 
    db = get_db()
-   db.execute(f"UPDATE {table} SET isArchived = ? WHERE id = ?", (int(archived), item_id))
+   if db.execute(f"SELECT 1 FROM {table} WHERE id = ?", (item_id,)).fetchone() is None:
+      return jsonify({"error": "Not found"}), 404
+
+   data = request.get_json(silent=True) or {}
+   stashed = bool(data.get("stashed", True))
+
+   if stashed:
+      # OR IGNORE: stashing something already stashed is fine
+      db.execute(f"INSERT OR IGNORE INTO stashes (user_id, {column}) VALUES (?, ?)", (g.user["id"], item_id))
+   else:
+      db.execute(f"DELETE FROM stashes WHERE user_id = ? AND {column} = ?", (g.user["id"], item_id))
    db.commit()
 
-   return jsonify({"isArchived": archived}), 200
+   return jsonify({"isStashed": stashed}), 200
 
 
 # Permanently deletes a post / poll and everything attached to it
@@ -332,11 +360,13 @@ def deleteItem(item_id, is_poll):
       db.execute("DELETE FROM poll_options WHERE poll_id = ?", (item_id,))
       db.execute("DELETE FROM likes WHERE poll_id = ?", (item_id,))
       db.execute("DELETE FROM comments WHERE poll_id = ?", (item_id,))
+      db.execute("DELETE FROM stashes WHERE poll_id = ?", (item_id,))
       media = None
    else:
       media = db.execute("SELECT filename FROM posts WHERE id = ?", (item_id,)).fetchone()["filename"]
       db.execute("DELETE FROM likes WHERE post_id = ?", (item_id,))
       db.execute("DELETE FROM comments WHERE post_id = ?", (item_id,))
+      db.execute("DELETE FROM stashes WHERE post_id = ?", (item_id,))
 
    db.execute(f"DELETE FROM {table} WHERE id = ?", (item_id,))
    db.commit()

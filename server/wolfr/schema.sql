@@ -5,6 +5,7 @@ DROP TABLE IF EXISTS poll_options;
 DROP TABLE IF EXISTS votes;
 DROP TABLE IF EXISTS comments;
 DROP TABLE IF EXISTS likes;
+DROP TABLE IF EXISTS stashes;
 
 CREATE TABLE user (
    id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -24,7 +25,6 @@ CREATE TABLE posts (
    title TEXT NOT NULL,
    body TEXT NOT NULL,
    filename TEXT,
-   isArchived BOOLEAN NOT NULL DEFAULT 0,
    FOREIGN KEY (author_id) REFERENCES user (id)
 );
 
@@ -81,4 +81,21 @@ CREATE TABLE likes (
   FOREIGN KEY (author_id) REFERENCES user(id),
   FOREIGN KEY (post_id) REFERENCES posts(id),
   UNIQUE(author_id, poll_id, post_id)
+);
+
+-- Stashes (bookmarks): posts and polls a user saved to their stash list.
+-- Personal: stashing doesn't hide or change the item for anyone else.
+-- Exactly one of post_id / poll_id is set.
+-- (Keep this in sync with ADDED_TABLES in db.py, which creates it on older databases.)
+CREATE TABLE stashes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  post_id INTEGER NULL,
+  poll_id INTEGER NULL,
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES user(id),
+  FOREIGN KEY (post_id) REFERENCES posts(id),
+  FOREIGN KEY (poll_id) REFERENCES polls(id),
+  UNIQUE(user_id, post_id),
+  UNIQUE(user_id, poll_id)
 );

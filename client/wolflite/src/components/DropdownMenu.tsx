@@ -3,8 +3,10 @@ import type { KeyboardEvent } from "react";
 
 export interface MenuItem {
   label: string;
-  /** Font Awesome icon class, e.g. "fa-box-archive" */
+  /** Font Awesome icon class, e.g. "fa-bookmark" */
   icon: string;
+  /** Font Awesome style: filled (default) or outlined */
+  iconStyle?: "solid" | "regular";
   onSelect: () => void;
   /** Destructive actions (delete) are shown in red */
   danger?: boolean;
@@ -102,7 +104,7 @@ export default function DropdownMenu({ items, label }: DropdownMenuProps) {
                 item.onSelect();
               }}
             >
-              <i className={`fa-solid ${item.icon}`} aria-hidden="true"></i>
+              <i className={`fa-${item.iconStyle ?? "solid"} ${item.icon}`} aria-hidden="true"></i>
               {item.label}
             </button>
           ))}

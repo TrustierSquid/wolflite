@@ -59,9 +59,10 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters }) 
     run(() => api(`/profileInfo/closePoll/${item.id}`, { method: "DELETE" }));
   }
 
-  function toggleArchive() {
+  // Stash = personal bookmark. Nothing changes for the author or anyone else.
+  function toggleStash() {
     run(() =>
-      api(`/post/archive/${item.id}/${item.isPoll}`, { method: "PUT", json: { archived: !item.isArchived } })
+      api(`/post/stash/${item.id}/${item.isPoll}`, { method: "PUT", json: { stashed: !item.isStashed } })
     );
   }
 
@@ -72,17 +73,21 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters }) 
 
   // Options in the ⋮ menu. Add future options here; the menu hides itself when the list is empty.
   const menuItems: MenuItem[] = [];
-  if (isOwner) {
+  if (currentUser) {
     menuItems.push(
-      item.isArchived
-        ? { label: "Unarchive", icon: "fa-box-open", onSelect: toggleArchive }
-        : { label: "Archive", icon: "fa-box-archive", onSelect: toggleArchive },
-      { label: "Delete", icon: "fa-trash", onSelect: deleteItem, danger: true }
+      item.isStashed
+        ? { label: "Unstash", icon: "fa-bookmark", iconStyle: "regular", onSelect: toggleStash }
+        : { label: "Stash", icon: "fa-bookmark", onSelect: toggleStash }
     );
   }
+  if (isOwner) {
+    menuItems.push({ label: "Delete", icon: "fa-trash", onSelect: deleteItem, danger: true });
+  }
+
+  const stashCount = item.stashCount ?? 0;
 
   return (
-    <article className="card post">
+    <article className={`card post${item.isStashed ? " is-stashed" : ""}`}>
       <header className="post-header">
         <Avatar src={item.profilePic} size={40} />
         <div className="post-meta">
@@ -93,9 +98,9 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters }) 
             {timeAgo(item.created)}
           </time>
         </div>
-        {item.isArchived && (
-          <span className="tag">
-            <i className="fa-solid fa-box-archive" aria-hidden="true"></i> Archived
+        {item.isStashed && (
+          <span className="tag tag-stashed">
+            <i className="fa-solid fa-bookmark" aria-hidden="true"></i> Stashed
           </span>
         )}
         <DropdownMenu items={menuItems} label={`${kind === "poll" ? "Poll" : "Post"} options`} />
@@ -141,6 +146,18 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters }) 
         >
           <i className="fa-regular fa-comment" aria-hidden="true"></i>
           {commentCount} {commentCount === 1 ? "comment" : "comments"}
+        </button>
+
+        <button
+          type="button"
+          className={`action-btn action-btn-stash${item.isStashed ? " is-stashed" : ""}`}
+          onClick={toggleStash}
+          aria-pressed={item.isStashed}
+          aria-label={`${item.isStashed ? "Unstash" : "Stash"} (${stashCount} ${stashCount === 1 ? "stash" : "stashes"})`}
+          title={item.isStashed ? "Unstash" : "Stash"}
+        >
+          <i className={`${item.isStashed ? "fa-solid" : "fa-regular"} fa-bookmark`} aria-hidden="true"></i>
+          {stashCount}
         </button>
       </div>
 

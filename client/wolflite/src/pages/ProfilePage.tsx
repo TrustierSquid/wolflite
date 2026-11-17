@@ -11,8 +11,8 @@ const TABS = [
   { key: "posts", label: "Posts", field: "allUserPosts", empty: "No posts yet." },
   { key: "polls", label: "Polls", field: "allUserPolls", empty: "No polls yet." },
   { key: "liked", label: "Liked", field: "likedPosts", empty: "No liked posts yet." },
-  // Only shown on your own profile: archived items are hidden from everyone else
-  { key: "archived", label: "Archived", field: "archived", empty: "Nothing archived. Use the ⋮ menu on a post or poll to archive it.", ownerOnly: true },
+  // Your stash list (bookmarks). Private, so only shown on your own profile.
+  { key: "stashed", label: "Stashed", field: "stashed", empty: "Nothing stashed yet. Use the bookmark or ⋮ menu on any post or poll to stash it.", ownerOnly: true },
 ];
 
 const newestFirst = (items) => [...(items ?? [])].sort((a, b) => new Date(b.created) - new Date(a.created));
