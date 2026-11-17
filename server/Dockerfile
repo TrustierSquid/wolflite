@@ -21,7 +21,9 @@ RUN echo '#!/bin/bash\n\
 if [ ! -f /app/instance/wolfr.sqlite ]; then\n\
   flask --app wolfr init-db\n\
 fi\n\
-gunicorn --bind 0.0.0.0:8000 --workers 4 "wolfr:create_app()"' > start.sh
+gunicorn --bind 0.0.0.0:8000 --workers 4 --timeout 900 "wolfr:create_app()"' > start.sh
+# --timeout 900: big uploads (videos up to MAX_UPLOAD_MB) can take minutes to arrive;
+# gunicorn's default (30 s) would kill the worker halfway through the upload.
 
 
 RUN chmod +x start.sh

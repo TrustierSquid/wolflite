@@ -533,10 +533,17 @@ def handleImages():
    if error:
       return error
 
-   # The media file is optional
+   # The media file is optional. Either uploaded in pieces beforehand (uploadId,
+   # see routes/uploads.py; how the site sends post media) or sent with this request.
    file_url = None
+   upload_id = request.form.get("uploadId")
    file = request.files.get("file")
-   if file and file.filename:
+   if upload_id:
+      from wolfr.routes.uploads import claim_upload  # (uploads.py imports this file)
+      file_url, upload_error = claim_upload(upload_id, MEDIA_EXTENSIONS)
+      if upload_error:
+         return jsonify({"error": upload_error}), 400
+   elif file and file.filename:
       file_url = save_upload(file, MEDIA_EXTENSIONS)
       if file_url is None:
          return jsonify({"error": "Invalid file"}), 400

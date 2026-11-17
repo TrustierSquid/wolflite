@@ -13,6 +13,7 @@ import { MAX_DEN_DESCRIPTION, deleteDen, getDen, pluralize } from "../lib/dens";
 import type { Den } from "../lib/dens";
 import type { FeedItem } from "../lib/feed";
 import { formatDate } from "../lib/time";
+import { uploadSizeError } from "../lib/upload";
 
 interface StatusMessage {
   type: "success" | "error";
@@ -214,6 +215,13 @@ function EditDenForm({ den, onSaved, onCancel }: EditDenFormProps) {
     const picked = e.target.files?.[0];
     e.target.value = "";
     if (!picked) return;
+    // Too big: say so now, instead of after writing the whole post
+    const tooBig = uploadSizeError(picked);
+    if (tooBig) {
+      setStatus({ type: "error", text: tooBig });
+      return;
+    }
+    setStatus(null);
     setFile(picked);
     setPreviewUrl(URL.createObjectURL(picked));
     setRemoveImage(false);

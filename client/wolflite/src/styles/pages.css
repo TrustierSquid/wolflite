@@ -277,6 +277,47 @@
   color: #ffffff;
 }
 
+.upload-limit {
+  margin-top: 0.375rem;
+}
+
+/* Media upload progress on the create form */
+.upload-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.upload-progress-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.9375rem;
+}
+
+.upload-progress-top i {
+  color: var(--primary);
+}
+
+.upload-progress-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--surface-3);
+}
+
+.upload-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--primary);
+  transition: width 200ms linear;
+}
+
 .option-row {
   display: flex;
   align-items: center;

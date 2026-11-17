@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import DenAvatar from "../components/DenAvatar";
 import Status from "../components/Status";
 import { api } from "../lib/api";
 import { useRequiredUser } from "../lib/currentUser";
+import { cancelUpload, formatBytes, getMaxUploadBytes, uploadInChunks, uploadSizeError } from "../lib/upload";
+import type { UploadSession } from "../lib/upload";
 import { DEN_NAME_HINT, DEN_NAME_RULE, MAX_DEN_DESCRIPTION, denHref, listDens } from "../lib/dens";
 import type { Den } from "../lib/dens";
 
@@ -123,10 +125,15 @@ function DenPicker({ dens, value, onChange }: { dens: Den[]; value: number | nul
 function PostForm({ den }: { den: Den | null }) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [file, setFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
-  const [status, setStatus] = useState(null);
+  const [status, setStatus] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  // Media upload progress (null when not uploading)
+  const [progress, setProgress] = useState<{ sent: number; total: number } | null>(null);
+  // The current upload, so "Post" after a failure resumes instead of starting over
+  const session = useRef<UploadSession | null>(null);
+  const abort = useRef<AbortController | null>(null);
 
   // Free the preview's memory when it is replaced or the form goes away
   useEffect(() => {
@@ -135,20 +142,54 @@ function PostForm({ den }: { den: Den | null }) {
     };
   }, [previewUrl]);
 
-  function pickFile(e) {
+  // Set right before going to the den after posting, so the warning below doesn't fire
+  const finished = useRef(false);
+
+  // Leaving the page mid-upload would throw the upload away: ask first
+  useEffect(() => {
+    if (!progress) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      if (finished.current) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [progress]);
+
+  // A different (or no) file: the old upload is no use any more
+  function forgetUpload() {
+    cancelUpload(session.current);
+    session.current = null;
+  }
+
+  function pickFile(e: ChangeEvent<HTMLInputElement>) {
     const picked = e.target.files?.[0];
     e.target.value = "";
     if (!picked) return;
+    // Too big: say so now, instead of after writing the whole post
+    const tooBig = uploadSizeError(picked);
+    if (tooBig) {
+      setStatus({ type: "error", text: tooBig });
+      return;
+    }
+    forgetUpload();
+    setStatus(null);
     setFile(picked);
     setPreviewUrl(URL.createObjectURL(picked));
   }
 
   function removeFile() {
+    forgetUpload();
     setFile(null);
     setPreviewUrl(null);
   }
 
-  async function submit(e) {
+  function cancel() {
+    abort.current?.abort();
+  }
+
+  async function submit(e: FormEvent) {
     e.preventDefault();
     setSending(true);
     setStatus(null);
@@ -157,16 +198,41 @@ function PostForm({ den }: { den: Den | null }) {
     form.append("postTitle", title.trim());
     form.append("postContent", body.trim());
     if (den) form.append("denId", String(den.id));
-    if (file) form.append("file", file);
 
     try {
+      // Media goes up first, in pieces (works for big videos behind Cloudflare too)
+      if (file) {
+        abort.current = new AbortController();
+        setProgress({ sent: 0, total: file.size });
+        const uploadId = await uploadInChunks(file, {
+          resume: session.current,
+          signal: abort.current.signal,
+          onSession: (s) => (session.current = s),
+          onProgress: (sent, total) => setProgress({ sent, total }),
+        });
+        form.append("uploadId", uploadId);
+      }
+
       await api("/post/create", { method: "POST", body: form });
+      session.current = null;
+      finished.current = true; // posted: leaving now is fine
       window.location.href = den ? denHref(den.name) : "/blog";
     } catch (err) {
-      setStatus({ type: "error", text: err.message });
+      setProgress(null);
       setSending(false);
+      if ((err as Error).name === "AbortError") {
+        forgetUpload();
+        setStatus({ type: "error", text: "Upload cancelled." });
+      } else {
+        const text = err instanceof Error ? err.message : "Couldn't post";
+        const resumable = session.current ? " Press Post to try again; the upload carries on where it stopped." : "";
+        setStatus({ type: "error", text: text + resumable });
+      }
     }
   }
+
+  const percent = progress ? Math.floor((progress.sent / Math.max(progress.total, 1)) * 100) : 0;
+  const kind = file?.type.startsWith("video/") ? "video" : "image";
 
   return (
     <form className="form" onSubmit={submit}>
@@ -200,16 +266,18 @@ function PostForm({ den }: { den: Den | null }) {
 
       <div className="field">
         <span className="label">Media (optional)</span>
-        {previewUrl ? (
+        {previewUrl && file ? (
           <div className="media-preview">
-            {file.type.startsWith("video/") ? (
+            {kind === "video" ? (
               <video src={previewUrl} controls />
             ) : (
               <img src={previewUrl} alt="Preview of the selected image" />
             )}
-            <button type="button" className="icon-btn media-remove" onClick={removeFile} aria-label="Remove media">
-              <i className="fa-solid fa-xmark" aria-hidden="true"></i>
-            </button>
+            {!progress && (
+              <button type="button" className="icon-btn media-remove" onClick={removeFile} aria-label="Remove media">
+                <i className="fa-solid fa-xmark" aria-hidden="true"></i>
+              </button>
+            )}
           </div>
         ) : (
           <div>
@@ -217,16 +285,45 @@ function PostForm({ den }: { den: Den | null }) {
               <i className="fa-solid fa-image" aria-hidden="true"></i> Add photo or video
               <input type="file" accept="image/*,video/*" className="sr-only" onChange={pickFile} />
             </label>
+            <p className="hint upload-limit">Up to {formatBytes(getMaxUploadBytes())}</p>
           </div>
         )}
       </div>
+
+      {progress && file && (
+        <div className="upload-progress" role="status" aria-live="polite">
+          <div className="upload-progress-top">
+            <span>
+              <i className={`fa-solid ${kind === "video" ? "fa-film" : "fa-image"}`} aria-hidden="true"></i>{" "}
+              Uploading {kind}… <strong>{percent}%</strong>
+            </span>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={cancel}>
+              Cancel
+            </button>
+          </div>
+          <div
+            className="upload-progress-track"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={percent}
+            aria-label="Upload progress"
+          >
+            <div className="upload-progress-fill" style={{ width: `${percent}%` }}></div>
+          </div>
+          <span className="hint">
+            {formatBytes(progress.sent)} of {formatBytes(progress.total)}
+          </span>
+        </div>
+      )}
 
       <Status status={status} />
 
       <div className="form-footer">
         <span></span>
         <button type="submit" className="btn btn-primary" disabled={sending}>
-          <i className="fa-solid fa-paper-plane" aria-hidden="true"></i> {sending ? "Posting…" : "Post"}
+          <i className="fa-solid fa-paper-plane" aria-hidden="true"></i>{" "}
+          {progress ? "Uploading…" : sending ? "Posting…" : "Post"}
         </button>
       </div>
     </form>
@@ -350,6 +447,13 @@ function DenForm() {
     const picked = e.target.files?.[0];
     e.target.value = "";
     if (!picked) return;
+    // Too big: say so now, instead of after writing the whole post
+    const tooBig = uploadSizeError(picked);
+    if (tooBig) {
+      setStatus({ type: "error", text: tooBig });
+      return;
+    }
+    setStatus(null);
     setFile(picked);
     setPreviewUrl(URL.createObjectURL(picked));
   }

@@ -75,6 +75,8 @@ Linux/Mac
 cp .env.example .env
 ```
 
+Optionally set `MAX_UPLOAD_MB` (default 50) to allow bigger photo and video uploads. Behind Cloudflare, keep it at 100 or less (Cloudflare's own request limit).
+
 Then open `.env` and set `DB_KEY` to a random secret. Flask uses it to sign session cookies, and **login will fail without it**. Generate one with:
 ```
 python -c "import secrets; print(secrets.token_hex(32))"

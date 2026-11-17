@@ -54,8 +54,15 @@ def create_app(test_config=None):
     # Setting this config for file uploads
     app.config["UPLOAD_FOLDER"] = os.path.join(app.static_folder, "uploads")
 
-    # Reject request bodies (uploads) bigger than this with a 413
-    app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50 MB
+    # Largest file someone can upload (photos, videos, pictures), in MB.
+    # Set MAX_UPLOAD_MB in .env to change it (e.g. 200 for longer videos).
+    # The browser checks files against this too (sent by /getUserData), so people
+    # get a clear message instead of a failed upload.
+    max_upload_mb = int(os.getenv("MAX_UPLOAD_MB") or 50)
+    app.config["MAX_UPLOAD_BYTES"] = max_upload_mb * 1024 * 1024
+    # Whole request body: the file plus 1 MB for the other form fields.
+    # Anything bigger is rejected with a 413.
+    app.config["MAX_CONTENT_LENGTH"] = app.config["MAX_UPLOAD_BYTES"] + 1024 * 1024
 
     # ensures that the static/uploads directories exists
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
@@ -141,7 +148,9 @@ def create_app(test_config=None):
             "currentUserID": g.user["id"],
             # Appearance saved to the account (None = never chosen)
             "theme": g.user["theme"],
-            "accent": g.user["accent"]
+            "accent": g.user["accent"],
+            # Largest upload allowed, so the browser can check files before sending them
+            "maxUploadBytes": app.config["MAX_UPLOAD_BYTES"]
         })
 
 
@@ -311,5 +320,8 @@ def create_app(test_config=None):
 
     from .routes import messages
     app.register_blueprint(messages.messages_page)
+
+    from .routes import uploads
+    app.register_blueprint(uploads.uploads_page)
 
     return app

@@ -17,6 +17,7 @@ const proxiedPaths = [
   '/notifications',
   '/search',
   '/dm', // direct messages API; the /messages page itself is served by Vite
+  '/upload', // chunked uploads (big videos)
   '/static',
 ]
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "./api";
 import { loginHref } from "./auth";
 import { adoptAccountAppearance } from "./theme";
+import { setMaxUploadBytes } from "./upload";
 
 /**
  * Saves the theme mode / accent color to the logged in user's account.
@@ -37,6 +38,8 @@ export function fetchCurrentUser() {
       // Theme / accent follow the account; guests get the defaults
       const unsaved = adoptAccountAppearance(data ?? { loggedIn: false });
       if (unsaved) saveAccountAppearance(unsaved).catch((error) => console.log(error));
+      // The server's upload limit, so file pickers can check sizes before uploading
+      setMaxUploadBytes(data?.maxUploadBytes);
 
       return data?.loggedIn
         ? {
