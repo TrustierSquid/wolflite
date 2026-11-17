@@ -105,13 +105,13 @@ def build_feed_items():
 
 
    comments = cursor.execute("""
-      SELECT comments.id, comments.edited, comments.author_id, comments.post_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
+      SELECT comments.id, comments.parent_id, comments.edited, comments.author_id, comments.post_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
       FROM comments
       JOIN user ON comments.author_id = user.id
    """).fetchall()
 
    pollComments = cursor.execute("""
-      SELECT comments.id, comments.edited, comments.author_id, comments.poll_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
+      SELECT comments.id, comments.parent_id, comments.edited, comments.author_id, comments.poll_id, comments.commentBody, comments.created, user.username, user.filename AS userProfilePic
       FROM comments
       JOIN user ON comments.author_id = user.id
    """).fetchall()
@@ -128,7 +128,8 @@ def build_feed_items():
          "created": comment["created"],
          "commentBody": comment["commentBody"],
          "id": comment["id"],
-         "edited": comment["edited"]
+         "edited": comment["edited"],
+         "parent_id": comment["parent_id"]
       })
 
    comments_by_poll = {}
@@ -142,7 +143,8 @@ def build_feed_items():
          "created": comment["created"],
          "commentBody": comment["commentBody"],
          "id": comment["id"],
-         "edited": comment["edited"]
+         "edited": comment["edited"],
+         "parent_id": comment["parent_id"]
       })
 
    # Selecting all poll options
@@ -525,12 +527,14 @@ def trackUserFeedback():
 MAX_COMMENT_LENGTH = 500
 
 
-# Adds a comment from the logged in user to a post or poll
+# Adds a comment from the logged in user to a post or poll.
+# Body: {"commentBody", "postID", "isPoll", "parentID" (optional, makes it a reply)}
 @blog_page.route("/postComment", methods=["POST"])
 def postComment():
    data = request.get_json(silent=True) or {}
    commentBody = str(data.get("commentBody") or "").strip()
    postID = data.get("postID")
+   parentID = data.get("parentID")
 
    if not commentBody or postID is None:
       return jsonify({"error": "A comment needs a body and a post"}), 400
@@ -541,9 +545,21 @@ def postComment():
    column = "poll_id" if data.get("isPoll") else "post_id"
 
    db = get_db()
+
+   if parentID is not None:
+      parent = db.execute(
+         "SELECT id, post_id, poll_id, parent_id FROM comments WHERE id = ?", (parentID,)
+      ).fetchone()
+      if parent is None:
+         return jsonify({"error": "The comment you replied to no longer exists"}), 404
+      if str(parent[column]) != str(postID):
+         return jsonify({"error": "That comment is on a different post"}), 400
+      # Replies are one level deep: replying to a reply joins the same thread
+      parentID = parent["parent_id"] or parent["id"]
+
    db.execute(
-      f"INSERT INTO comments (author_id, {column}, commentBody) VALUES (?, ?, ?)",
-      (g.user["id"], postID, commentBody),
+      f"INSERT INTO comments (author_id, {column}, commentBody, parent_id) VALUES (?, ?, ?, ?)",
+      (g.user["id"], postID, commentBody, parentID),
    )
    db.commit()
 
@@ -595,8 +611,9 @@ def editComment(comment_id):
    return jsonify({"success": True}), 200
 
 
-# Deletes a comment. Allowed for the person who wrote it, and for the author
-# of the post / poll it is on (so authors can moderate their own posts).
+# Deletes a comment (and its replies, if it starts a thread). Allowed for the person
+# who wrote it, and for the author of the post / poll it is on (so authors can
+# moderate their own posts).
 @blog_page.route("/comment/<int:comment_id>", methods=["DELETE"])
 def deleteComment(comment_id):
    comment, item_author_id = find_comment(comment_id)
@@ -606,7 +623,7 @@ def deleteComment(comment_id):
       return jsonify({"error": "You can only delete your own comments or comments on your posts"}), 403
 
    db = get_db()
-   db.execute("DELETE FROM comments WHERE id = ?", (comment_id,))
+   db.execute("DELETE FROM comments WHERE id = ? OR parent_id = ?", (comment_id, comment_id))
    db.commit()
 
    return jsonify({"success": True}), 200

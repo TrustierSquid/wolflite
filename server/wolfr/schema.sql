@@ -68,7 +68,9 @@ CREATE TABLE comments (
   commentBody TEXT NOT NULL,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   edited TIMESTAMP NULL, -- when the comment was last edited (NULL = never)
+  parent_id INTEGER NULL, -- set on replies: the top-level comment of the thread (one level deep)
   FOREIGN KEY (author_id) REFERENCES user(id),
+  FOREIGN KEY (parent_id) REFERENCES comments(id),
   FOREIGN KEY (post_id) REFERENCES posts(id),
   FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE CASCADE
 );

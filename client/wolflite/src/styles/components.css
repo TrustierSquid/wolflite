@@ -420,6 +420,82 @@
   gap: 0.5rem;
 }
 
+/* ----- Threads & replies ----- */
+
+/* Replies line up with the parent's bubble: avatar width + gap */
+.comment-thread {
+  --reply-indent: calc(32px + 0.625rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.comment-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.comment-main .comment-bubble {
+  align-self: stretch;
+}
+
+.comment-reply-btn,
+.replies-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.4rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.comment-reply-btn:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.replies-toggle {
+  align-self: flex-start;
+  margin-left: var(--reply-indent);
+  color: var(--primary);
+}
+
+.replies-toggle:hover {
+  background: var(--primary-soft);
+}
+
+.comment-replies {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-left: var(--reply-indent);
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--border);
+}
+
+.reply-form-wrap {
+  margin-left: var(--reply-indent);
+}
+
+@media (max-width: 480px) {
+  .comment-thread {
+    --reply-indent: 1rem;
+  }
+
+  .reply-form .avatar {
+    display: none;
+  }
+}
+
 /* Name + Author badge on the left; time and ⋮ menu are pushed right */
 .comment-meta {
   display: flex;

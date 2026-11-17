@@ -61,6 +61,7 @@ ADDED_TABLES = [
 # (table, column, definition)
 ADDED_COLUMNS = [
    ("comments", "edited", "TIMESTAMP NULL"),
+   ("comments", "parent_id", "INTEGER NULL REFERENCES comments(id)"),
 ]
 
 
