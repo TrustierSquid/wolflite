@@ -1,0 +1,286 @@
+/* ---------- Side navigation ---------- */
+
+/* Wide screens: pinned to the left edge under the navbar, full height, with the
+   same divider line as the navbar. Narrower screens: opened as a drawer from
+   the menu button in the navbar. */
+.side-nav.is-fixed {
+  display: none;
+}
+
+@media (min-width: 1180px) {
+  .side-nav.is-fixed {
+    display: block;
+    position: fixed;
+    top: var(--nav-height);
+    bottom: 0;
+    left: 0;
+    z-index: 40;
+    width: 256px;
+    padding: 0.75rem;
+    overflow-y: auto;
+    border-right: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  /* The menu button is only needed when the side navigation isn't pinned */
+  body:has(.side-nav.is-fixed) .nav-menu-btn {
+    display: none;
+  }
+}
+
+.side-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.side-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-weight: 500;
+  transition: background-color 120ms;
+}
+
+.side-nav-link > i {
+  width: 1.25rem;
+  color: var(--text-muted);
+  font-size: 1.0625rem;
+  text-align: center;
+}
+
+.side-nav-link > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side-nav-link:hover {
+  background: var(--surface-2);
+}
+
+/* Where you are: a solid highlight, accent icon */
+.side-nav-link[aria-current="page"] {
+  background: var(--surface-2);
+  font-weight: 600;
+}
+
+.side-nav-link[aria-current="page"] > i {
+  color: var(--primary);
+}
+
+/* Your dens: picture instead of an icon, plus a crown / shield on dens you run */
+.side-nav-den {
+  padding-top: 0.45rem;
+  padding-bottom: 0.45rem;
+}
+
+.side-nav-den .den-avatar {
+  margin: 0 -0.125rem;
+}
+
+.side-nav-den > .side-nav-role {
+  width: auto;
+  margin-left: auto;
+  color: var(--yellow);
+  font-size: 0.75rem;
+}
+
+.side-nav-den > .side-nav-role.is-mod {
+  color: var(--secondary);
+}
+
+/* Sections (Your dens, Wolflite): divider + collapsible uppercase heading */
+.side-nav-section {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.side-nav-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.side-nav-heading:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.side-nav-heading > i {
+  font-size: 0.75rem;
+}
+
+
+/* Navbar: menu button next to the logo */
+.nav-start {
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.nav-menu-btn {
+  margin-left: -6px;
+  font-size: 1.125rem;
+}
+
+/* Drawer (narrow screens) */
+.side-drawer-backdrop {
+  position: fixed;
+  inset: var(--nav-height) 0 0 0;
+  z-index: 60;
+  background: var(--overlay);
+}
+
+.side-nav.is-drawer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: min(280px, 85vw);
+  padding: 0.75rem;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+  background: var(--bg);
+  box-shadow: var(--shadow-lg);
+}
+
+
+/* ---------- Explore dens, About, Help ---------- */
+
+.den-directory,
+.info-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.info-hero {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.info-hero img {
+  flex-shrink: 0;
+  width: 56px;
+  height: auto;
+}
+
+.info-hero-icon {
+  flex-shrink: 0;
+  color: var(--primary);
+  font-size: 2.5rem;
+}
+
+.info-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  line-height: 1.6;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.info-feature {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1rem 1.25rem;
+}
+
+.info-feature > i {
+  color: var(--primary);
+  font-size: 1.25rem;
+}
+
+.info-feature p {
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 560px) {
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Help: questions that open to show their answer */
+.faq {
+  padding: 0.25rem 0;
+}
+
+.faq-item + .faq-item {
+  border-top: 1px solid var(--card-border);
+}
+
+.faq-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.25rem;
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+}
+
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item summary:hover {
+  color: var(--primary);
+}
+
+.faq-item summary > i {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  transition: transform 150ms;
+}
+
+.faq-item[open] summary > i {
+  transform: rotate(180deg);
+}
+
+.faq-item p {
+  padding: 0 1.25rem 1rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.info-page a:not(.btn),
+.faq-item a {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.info-page a:not(.btn):hover {
+  text-decoration: underline;
+}

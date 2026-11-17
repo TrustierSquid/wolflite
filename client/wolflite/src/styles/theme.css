@@ -44,6 +44,9 @@
   --surface-2: #f4f4f5;
   --surface-3: #e8e8eb;
   --border: #e4e4e7;
+  /* Cards (posts, dens, panels in the feed): their own fill and a quieter border */
+  --card-bg: #ffffff;
+  --card-border: #ececef;
   --text: #18181b;
   --text-muted: #6b6b76;
   --overlay: rgba(0, 0, 0, 0.5);
@@ -81,6 +84,8 @@
     --surface-2: #212125;
     --surface-3: #2b2b30;
     --border: #2c2c31;
+    --card-bg: #131315;
+    --card-border: #1f1f23;
     --text: #f4f4f5;
     --text-muted: #a1a1aa;
     --overlay: rgba(0, 0, 0, 0.7);
@@ -114,6 +119,8 @@
   --surface-2: #212125;
   --surface-3: #2b2b30;
   --border: #2c2c31;
+  --card-bg: #131315;
+  --card-border: #1f1f23;
   --text: #f4f4f5;
   --text-muted: #a1a1aa;
   --overlay: rgba(0, 0, 0, 0.7);
@@ -144,7 +151,9 @@ body {
   font-size: 15px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  /* Never scroll sideways. "clip", not "hidden": hidden turns <body> into its
+     own scroll container, which stops the sticky navbar from sticking. */
+  overflow-x: clip;
 }
 
 button,
@@ -210,8 +219,8 @@ ul {
 }
 
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }

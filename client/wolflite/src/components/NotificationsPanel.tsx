@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import Avatar from "./Avatar";
 import MentionText from "./MentionText";
-import { useCurrentUser } from "../lib/currentUser";
 import { denHref } from "../lib/dens";
 import {
   clearAllNotifications,
@@ -155,20 +154,5 @@ function NotificationItem({ notification }: { notification: AppNotification }) {
         <i className="fa-solid fa-xmark" aria-hidden="true"></i>
       </button>
     </li>
-  );
-}
-
-
-// Puts the notification panel next to the page's content on wide screens
-// (logged in users only). On narrow screens the panel is hidden here and opened
-// from the bell in the navbar instead.
-export function WithNotifications({ children }: { children: ReactNode }) {
-  const user = useCurrentUser();
-
-  return (
-    <div className={`layout${user ? " has-notifications" : ""}`}>
-      {children}
-      {user && <NotificationsPanel className="is-sidebar" />}
-    </div>
   );
 }

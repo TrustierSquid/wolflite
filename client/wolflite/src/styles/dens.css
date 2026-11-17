@@ -519,7 +519,7 @@
 .den-danger {
   margin-top: 0.5rem;
   padding-top: 1rem;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--card-border);
 }
 
 .confirm-box.den-danger {

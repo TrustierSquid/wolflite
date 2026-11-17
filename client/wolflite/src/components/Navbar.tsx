@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import Avatar from "./Avatar";
 import LoginPrompt from "./LoginPrompt";
 import NotificationsPanel from "./NotificationsPanel";
+import SideNav from "./SideNav";
 import { loginHref, signupHref } from "../lib/auth";
 import { useCurrentUser } from "../lib/currentUser";
 import { logout } from "../lib/logout";
@@ -32,15 +33,20 @@ export default function Navbar() {
   const user = useCurrentUser(); // undefined while loading, null for guests
   const { unreadCount } = useNotifications(!!user);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const path = window.location.pathname;
 
-  // Escape closes the notifications sheet
+  // Escape closes the notifications sheet and the side menu
   useEffect(() => {
-    if (!notificationsOpen) return;
-    const onKeyDown = (e: KeyboardEvent) => e.key === "Escape" && setNotificationsOpen(false);
+    if (!notificationsOpen && !menuOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setNotificationsOpen(false);
+      setMenuOpen(false);
+    };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [notificationsOpen]);
+  }, [notificationsOpen, menuOpen]);
   const viewedProfileId = new URLSearchParams(window.location.search).get("id");
 
   // Highlight "Profile" on your own profile and on settings, not on other people's profiles
@@ -97,9 +103,21 @@ export default function Navbar() {
 
   return (
     <header className="nav">
-      <a href="/blog" className="nav-logo" aria-label="Wolflite home">
-        <img src="/static/uploads/wolfLogo.png" alt="" /> <span className="nav-logo-text">WOLF</span>
-      </a>
+      <div className="nav-start">
+        {/* Opens the side navigation as a drawer when it isn't pinned on the left */}
+        <button
+          type="button"
+          className="icon-btn nav-menu-btn"
+          onClick={() => setMenuOpen((open) => !open)}
+          aria-label="Menu"
+          aria-expanded={menuOpen}
+        >
+          <i className={`fa-solid ${menuOpen ? "fa-xmark" : "fa-bars"}`} aria-hidden="true"></i>
+        </button>
+        <a href="/blog" className="nav-logo" aria-label="Wolflite home">
+          <img src="/static/uploads/wolfLogo.png" alt="" /> <span className="nav-logo-text">WOLF</span>
+        </a>
+      </div>
 
       <nav aria-label="Main">
         <ul className="nav-links">
@@ -139,6 +157,17 @@ export default function Navbar() {
       </nav>
 
       <LoginPrompt />
+
+      {/* Side navigation as a slide-in drawer (in <body>, like the notifications sheet) */}
+      {menuOpen &&
+        createPortal(
+          <div className="side-drawer-backdrop" onClick={() => setMenuOpen(false)}>
+            <div onClick={(e) => e.stopPropagation()}>
+              <SideNav variant="drawer" />
+            </div>
+          </div>,
+          document.body
+        )}
 
       {/* Narrow screens: notifications drop down from the bell. Rendered in <body>
           because the navbar's backdrop-filter would trap a fixed-position child. */}

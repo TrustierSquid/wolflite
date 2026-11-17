@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import DenAvatar from "../components/DenAvatar";
 import DenCard from "../components/DenCard";
+import DenDirectory from "../components/DenDirectory";
+import { AboutWolf, HelpPage } from "../components/InfoPages";
 import PostCard from "../components/PostCard";
 import SearchTab from "../components/SearchTab";
 import Status from "../components/Status";
@@ -12,33 +14,39 @@ import { denHref, listDens } from "../lib/dens";
 import type { Den } from "../lib/dens";
 import type { FeedItem } from "../lib/feed";
 
-type Tab = "home" | "discover" | "search";
+// Tabs in the bar, plus views opened from the side navigation
+type Tab = "home" | "discover" | "search" | "dens" | "about" | "help";
+const VIEWS: Tab[] = ["home", "discover", "search", "dens", "about", "help"];
 
 const TABS: { key: Tab; label: string; icon: string; guests: boolean }[] = [
   { key: "home", label: "Home", icon: "fa-house", guests: false },
   { key: "discover", label: "Discover", icon: "fa-compass", guests: true },
   { key: "search", label: "Search", icon: "fa-magnifying-glass", guests: true },
 ];
-const isTab = (value: string | null): value is Tab => TABS.some((t) => t.key === value);
+const isTab = (value: string | null): value is Tab => VIEWS.includes(value as Tab);
 
 // How many dens Discover shows before "Show all"
 const DENS_PREVIEW = 4;
 
 // /blog                Home: posts from the dens you joined (guests get Discover)
 // /blog?tab=discover   Discover: every den and the latest posts from all of them
-// /blog?tab=search&q=  Search: dens and posts (see SearchTab)
+// /blog?tab=search&q=  Search: dens, users and posts (see SearchTab)
+// /blog?tab=dens       Explore dens: every den with a search box (side navigation)
+// /blog?tab=about      About Wolf (side navigation)
+// /blog?tab=help       Help (side navigation)
 export default function FeedPage() {
   const currentUser = useCurrentUser(); // undefined while loading, null for guests
   const requestedTab = new URLSearchParams(window.location.search).get("tab");
   const [chosenTab, setChosenTab] = useState<Tab | null>(isTab(requestedTab) ? requestedTab : null);
 
-  // Guests can see Discover and Search (not Home)
+  // Guests can see everything except Home (they land on Discover)
   const tab: Tab | null =
     currentUser === undefined
       ? null
       : currentUser === null
-        ? chosenTab === "search" ? "search" : "discover"
+        ? chosenTab && chosenTab !== "home" ? chosenTab : "discover"
         : (chosenTab ?? "home");
+  const isFeedTab = tab === "home" || tab === "discover";
 
   const [feed, setFeed] = useState<FeedItem[] | null>(null); // null while loading
   const [dens, setDens] = useState<Den[] | null>(null);
@@ -48,7 +56,7 @@ export default function FeedPage() {
 
   // Home / Discover load a feed and dens; Search loads its own results
   const loadFeed = useCallback(async () => {
-    if (!tab || tab === "search") return;
+    if (!isFeedTab) return;
     try {
       const data = await api(`/post/fetch?feed=${tab}`);
       setFeed(data.feed ?? []);
@@ -56,16 +64,16 @@ export default function FeedPage() {
     } catch (err) {
       setError({ type: "error", text: err instanceof Error ? err.message : "Couldn't load posts" });
     }
-  }, [tab]);
+  }, [tab, isFeedTab]);
 
   const loadDens = useCallback(async () => {
-    if (!tab || tab === "search") return;
+    if (!isFeedTab) return;
     try {
       setDens(await listDens(tab === "home"));
     } catch (err) {
       setError({ type: "error", text: err instanceof Error ? err.message : "Couldn't load dens" });
     }
-  }, [tab]);
+  }, [tab, isFeedTab]);
 
   useEffect(() => {
     setFeed(null);
@@ -118,6 +126,12 @@ export default function FeedPage() {
 
       {tab === "search" ? (
         <SearchTab currentUser={currentUser} />
+      ) : tab === "dens" ? (
+        <DenDirectory currentUser={currentUser} />
+      ) : tab === "about" ? (
+        <AboutWolf />
+      ) : tab === "help" ? (
+        <HelpPage />
       ) : (
       <>
       {currentUser === null && (
@@ -214,7 +228,7 @@ export default function FeedPage() {
 }
 
 
-function EmptyFeed({ tab, joinedAny, onDiscover }: { tab: Exclude<Tab, "search">; joinedAny: boolean; onDiscover: () => void }) {
+function EmptyFeed({ tab, joinedAny, onDiscover }: { tab: "home" | "discover"; joinedAny: boolean; onDiscover: () => void }) {
   if (tab === "discover") {
     return <div className="empty-state">No posts yet. Join a den and start the conversation.</div>;
   }
