@@ -2,6 +2,7 @@ import os
 import re
 import shutil
 import sqlite3
+from urllib.parse import urlencode
 from dotenv import load_dotenv
 from flask import (
     Flask,
@@ -85,12 +86,22 @@ def create_app(test_config=None):
 
     # LOGIN/CREATE USER
 
-    # Endpoints that work without being logged in
-    PUBLIC_ENDPOINTS = {"login", "createUser", "logout", "serve_index", "static"}
+    # Endpoints that work without being logged in. Guests can browse (feeds, dens,
+    # profiles); everything that changes something needs an account.
+    # g.user is still loaded on these when someone is logged in.
+    PUBLIC_ENDPOINTS = {
+        # account
+        "login", "createUser", "logout", "fetchUserData",
+        # pages
+        "serve_index", "serve_blog", "serve_profile", "serve_den",
+        # reading content
+        "post.retrievePosts", "profileInfo.retrieveLoggedInUserPost", "dens.listDens", "dens.getDen",
+    }
 
-    # HTML pages. Logged out visitors get redirected to /login, while API
-    # endpoints answer with a 401 that the frontend can handle.
-    PAGE_ENDPOINTS = {"serve_blog", "serve_profile", "serve_create", "serve_settings"}
+    # HTML pages that need an account. Logged out visitors get redirected to
+    # /login (and come back afterwards), while API endpoints answer with a 401
+    # that the frontend turns into a "log in to continue" prompt.
+    PAGE_ENDPOINTS = {"serve_create", "serve_settings"}
 
     # middleware. Loads the logged in user into g.user for every request.
     # Routes must take the user's id from g.user["id"], NEVER from the request
@@ -99,30 +110,38 @@ def create_app(test_config=None):
     def load_user():
         g.user = None
 
-        if request.endpoint in PUBLIC_ENDPOINTS or request.path.startswith(app.static_url_path):
+        if request.endpoint == "static" or request.path.startswith(app.static_url_path):
             return
 
         user_id = session.get("user_id")
         if user_id is not None:
             g.user = get_db().execute("SELECT * FROM user WHERE id = ?", (user_id,)).fetchone()
+            # The session points at a user that no longer exists
+            if g.user is None:
+                session.clear()
 
-        # No session, or the session points at a user that no longer exists
-        if g.user is None:
-            session.clear()
+        if g.user is None and request.endpoint not in PUBLIC_ENDPOINTS:
             if request.endpoint in PAGE_ENDPOINTS:
-                return redirect("/login")
-            return jsonify({"error": "Not logged in"}), 401
+                return redirect("/login?" + urlencode({"next": request.full_path.rstrip("?")}))
+            return jsonify({"error": "Log in to do that"}), 401
 
 
-    # Fetches currently logged in user data (userid, picture and username. etc)
+    # Fetches currently logged in user data (userid, picture and username. etc).
+    # Guests get {"loggedIn": false}.
     @app.route("/getUserData", methods=(["GET"]))
     def fetchUserData():
+        if g.user is None:
+            return jsonify({"loggedIn": False})
         return jsonify({
+            "loggedIn": True,
             "currentUserName": g.user["username"],
             "currentUserPfPicture": g.user["filename"],
             "joinedDate": g.user["created"],
             "bio": g.user["bio"],
-            "currentUserID": g.user["id"]
+            "currentUserID": g.user["id"],
+            # Appearance saved to the account (None = never chosen)
+            "theme": g.user["theme"],
+            "accent": g.user["accent"]
         })
 
 
@@ -256,8 +275,13 @@ def create_app(test_config=None):
 
     @app.route('/settings')
     def serve_settings():
-        # Create post/poll page
+        # Account settings page
         return send_from_directory(os.path.join(app.static_folder, "dist"), "settings.html")
+
+    @app.route('/den')
+    def serve_den():
+        # One den's page (/den?name=homelab)
+        return send_from_directory(os.path.join(app.static_folder, "dist"), "den.html")
 
 
     # Importing Database configurations
@@ -270,5 +294,8 @@ def create_app(test_config=None):
 
     from .routes import profileInfo
     app.register_blueprint(profileInfo.profile_page)
+
+    from .routes import dens
+    app.register_blueprint(dens.dens_page)
 
     return app

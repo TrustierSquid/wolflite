@@ -13,6 +13,7 @@ const proxiedPaths = [
   '/getUserData',
   '/post',
   '/profileInfo',
+  '/dens', // API only; the /den page itself is served by Vite
   '/static',
 ]
 
@@ -36,7 +37,8 @@ export default defineConfig(({ command }) => ({
         blog: 'blog.html',
         create: 'create.html',
         profile: 'profile.html',
-        settings: 'settings.html'
+        settings: 'settings.html',
+        den: 'den.html'
       }
     }
   }

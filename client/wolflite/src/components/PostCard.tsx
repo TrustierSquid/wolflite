@@ -1,10 +1,13 @@
 import { useState } from "react";
 import Avatar from "./Avatar";
 import CommentSection from "./CommentSection";
+import DenAvatar from "./DenAvatar";
 import DropdownMenu from "./DropdownMenu";
 import type { MenuItem } from "./DropdownMenu";
 import Status from "./Status";
 import { api } from "../lib/api";
+import { isLoginRequired } from "../lib/auth";
+import { denHref } from "../lib/dens";
 import { timeAgo } from "../lib/time";
 
 const VIDEO_FILE = /\.(mp4|mov|webm|avi)$/i;
@@ -13,11 +16,15 @@ const VIDEO_FILE = /\.(mp4|mov|webm|avi)$/i;
   One card for both posts and polls, used by the feed and the profile page.
 
   item          a post or poll from the API (item.isPoll tells which)
-  currentUser   the logged in user ({ id, username, profilePic, ... }) or null while loading
+  currentUser   the logged in user ({ id, username, profilePic, ... }), null for guests,
+                undefined while loading
   onChange      called after a like / vote / comment / close, so the page can reload its data
   onShowVoters  called with the poll when "N votes" is clicked
+  showDen       show which den it was posted in (off on the den's own page)
+
+  Guests see everything; their clicks on like / vote / stash open the login prompt.
 */
-export default function PostCard({ item, currentUser, onChange, onShowVoters }) {
+export default function PostCard({ item, currentUser, onChange, onShowVoters, showDen = true }) {
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [likePop, setLikePop] = useState(false);
@@ -39,7 +46,8 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters }) 
       await request();
       await onChange?.();
     } catch (err) {
-      setError({ type: "error", text: err.message });
+      // Guests get the login prompt instead of an error message
+      if (!isLoginRequired(err)) setError({ type: "error", text: err.message });
     } finally {
       setBusy(false);
     }
@@ -94,9 +102,20 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters }) 
           <a className="post-author" href={`/profile?id=${item.author_id}`}>
             {item.username}
           </a>
-          <time className="post-time" dateTime={new Date(item.created).toISOString()}>
-            {timeAgo(item.created)}
-          </time>
+          <span className="post-sub">
+            {showDen && item.den && (
+              <>
+                <a className="post-den" href={denHref(item.den.name)}>
+                  <DenAvatar name={item.den.name} image={item.den.image} size={16} />
+                  {item.den.name}
+                </a>
+                <span aria-hidden="true">·</span>
+              </>
+            )}
+            <time className="post-time" dateTime={new Date(item.created).toISOString()}>
+              {timeAgo(item.created)}
+            </time>
+          </span>
         </div>
         {item.isStashed && (
           <span className="tag tag-stashed">

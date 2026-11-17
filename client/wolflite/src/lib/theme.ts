@@ -1,7 +1,13 @@
 /*
   Appearance preferences: theme mode (system / light / dark) and accent color.
 
-  Saved per browser in localStorage and applied as attributes on <html>:
+  Saved to the user's account (PUT /profileInfo/appearance, returned by /getUserData),
+  so they follow the account and logged out visitors get the defaults (red, follow the OS).
+  localStorage keeps a copy for the current browser so pages render in the right
+  colors straight away; adoptAccountAppearance() replaces it with the account's
+  values on every page load, and logging out clears it.
+
+  Applied as attributes on <html>:
     data-theme="light" | "dark"   (absent = follow the OS)
     data-accent="blue" | ...      (absent = red, the default)
   The CSS in styles/accents.css and styles/theme.css does the rest.
@@ -95,6 +101,45 @@ export function setAppearance(changes: Partial<Appearance>): Appearance {
 
   applyAppearance(next);
   return next;
+}
+
+/** Back to the defaults (used for guests and on logout). */
+export function resetAppearance(): void {
+  setAppearance(DEFAULT_APPEARANCE);
+}
+
+/** What /getUserData says about the visitor's appearance */
+export interface AccountAppearance {
+  loggedIn: boolean;
+  /** null = never chosen */
+  theme?: string | null;
+  accent?: string | null;
+}
+
+/**
+ * Applies the appearance saved to the account, or the defaults for guests.
+ * Returns the appearance the account should have saved but doesn't yet
+ * (see below), or null when nothing needs saving.
+ */
+export function adoptAccountAppearance(account: AccountAppearance): Appearance | null {
+  if (!account.loggedIn) {
+    resetAppearance();
+    return null;
+  }
+
+  // Accounts that never chose (or chose before appearance was saved to accounts):
+  // keep what this browser has, and let the caller save it to the account
+  if (account.theme == null && account.accent == null) {
+    const current = getAppearance();
+    const isDefault = current.mode === DEFAULT_APPEARANCE.mode && current.accent === DEFAULT_APPEARANCE.accent;
+    return isDefault ? null : current;
+  }
+
+  setAppearance({
+    mode: isThemeMode(account.theme) ? account.theme : DEFAULT_APPEARANCE.mode,
+    accent: isAccent(account.accent) ? account.accent : DEFAULT_APPEARANCE.accent,
+  });
+  return null;
 }
 
 /**

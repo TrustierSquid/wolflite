@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import Avatar from "./Avatar";
+import LoginPrompt from "./LoginPrompt";
+import { loginHref, signupHref } from "../lib/auth";
 import { useCurrentUser } from "../lib/currentUser";
 import { logout } from "../lib/logout";
 
@@ -14,13 +16,16 @@ interface NavItem {
   current?: boolean;
   /** Full accessible name when it should say more than the label */
   ariaLabel?: string;
+  /** Extra class on the <li> */
+  className?: string;
 }
 
 const faIcon = (name: string) => <i className={`fa-solid ${name}`} aria-hidden="true"></i>;
 
 // Top bar: logo on the left, labelled links in the center.
+// Logged in: Profile, Home, Create, Log out. Guests: Home, Log in, Sign up.
 export default function Navbar() {
-  const user = useCurrentUser();
+  const user = useCurrentUser(); // undefined while loading, null for guests
   const path = window.location.pathname;
   const viewedProfileId = new URLSearchParams(window.location.search).get("id");
 
@@ -29,24 +34,38 @@ export default function Navbar() {
     path === "/settings" ||
     (path === "/profile" && (!viewedProfileId || String(user?.id) === viewedProfileId));
 
-  // Profile first; CSS adds a gap between it and the rest
-  const items: NavItem[] = [
-    {
-      // Your picture and username (default picture / "Profile" while loading)
-      label: user?.username ?? "Profile",
-      ariaLabel: user ? `${user.username}, Profile` : "Profile",
-      icon: (
-        <span className="nav-avatar">
-          <Avatar src={user?.profilePic} size={26} />
-        </span>
-      ),
-      href: user ? `/profile?id=${user.id}` : "/profile",
-      current: onOwnProfile,
-    },
-    { label: "Home", icon: faIcon("fa-house"), href: "/blog", current: path === "/blog" },
-    { label: "Create", icon: faIcon("fa-square-plus"), href: "/create", current: path === "/create" },
-    { label: "Log out", icon: faIcon("fa-right-from-bracket"), onClick: logout },
-  ];
+  const home: NavItem = { label: "Home", icon: faIcon("fa-house"), href: "/blog", current: path === "/blog" };
+
+  let items: NavItem[];
+  if (user) {
+    items = [
+      {
+        // Your picture and username. CSS adds a gap between it and the rest.
+        label: user.username,
+        ariaLabel: `${user.username}, Profile`,
+        icon: (
+          <span className="nav-avatar">
+            <Avatar src={user.profilePic} size={26} />
+          </span>
+        ),
+        href: `/profile?id=${user.id}`,
+        current: onOwnProfile,
+        className: "nav-profile",
+      },
+      home,
+      { label: "Create", icon: faIcon("fa-square-plus"), href: "/create", current: path === "/create" },
+      { label: "Log out", icon: faIcon("fa-right-from-bracket"), onClick: logout },
+    ];
+  } else if (user === null) {
+    items = [
+      home,
+      { label: "Log in", icon: faIcon("fa-right-to-bracket"), href: loginHref() },
+      { label: "Sign up", icon: faIcon("fa-user-plus"), href: signupHref(), className: "nav-signup" },
+    ];
+  } else {
+    // Still loading: just Home, so guests don't see a flash of the logged in links
+    items = [home];
+  }
 
   return (
     <header className="nav">
@@ -70,7 +89,7 @@ export default function Navbar() {
             };
 
             return (
-              <li key={item.href ?? item.label}>
+              <li key={item.label} className={item.className}>
                 {item.href ? (
                   <a {...shared} href={item.href} aria-current={item.current ? "page" : undefined}>
                     {content}
@@ -85,6 +104,8 @@ export default function Navbar() {
           })}
         </ul>
       </nav>
+
+      <LoginPrompt />
     </header>
   );
 }

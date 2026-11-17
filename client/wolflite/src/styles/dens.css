@@ -1,0 +1,364 @@
+/* ---------- Dens (communities) ---------- */
+
+/* Den picture: a rounded square, so it never looks like a (round) user picture */
+.den-avatar {
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--surface-2);
+}
+
+/* No picture: the den's first letter on the accent color */
+.den-avatar-letter {
+  display: inline-grid;
+  place-items: center;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+}
+
+/* Den owner badge: yellow, like the comment "Author" badge */
+.tag-owner {
+  background: var(--yellow-soft);
+  color: var(--yellow);
+}
+
+
+/* Post header: "<den> · 2h ago" under the author */
+.post-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.post-den {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  color: var(--text);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.post-den .den-avatar {
+  border-radius: 4px;
+  font-size: 0.625rem !important;
+}
+
+.post-den:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+
+/* Den list (Discover) */
+.discover-dens {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.section-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.discover-dens > .section-title:last-child {
+  margin-top: 0.75rem;
+}
+
+.den-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.show-more {
+  align-self: center;
+}
+
+.den-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+}
+
+.den-card-link {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.den-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.den-card-name {
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.den-card-link:hover .den-card-name {
+  color: var(--primary);
+}
+
+.den-card-stats {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+/* Description: at most two lines */
+.den-card-desc {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.den-card > .btn,
+.den-card > .tag {
+  flex-shrink: 0;
+}
+
+
+/* Home: your dens as chips */
+.den-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.den-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 100%;
+  padding: 0.3rem 0.65rem 0.3rem 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  transition: background-color 120ms, border-color 120ms;
+}
+
+.den-chip:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.den-chip .den-avatar {
+  border-radius: 4px;
+}
+
+.den-chip-new {
+  padding-left: 0.65rem;
+  border-style: dashed;
+  color: var(--text-muted);
+}
+
+
+/* Den page header */
+.den-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.den-header > .den-avatar {
+  border-radius: var(--radius);
+}
+
+.den-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.den-name {
+  font-size: 1.375rem;
+  overflow-wrap: anywhere;
+}
+
+.den-stats {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.den-desc {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.den-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.den-meta a {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.den-meta a:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.den-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.den-edit {
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 480px) {
+  .den-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .den-meta,
+  .den-actions {
+    justify-content: center;
+  }
+
+  .den-edit {
+    text-align: left;
+  }
+}
+
+
+/* Create page: den picker and den form */
+.den-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.den-picker .input {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.hint-error {
+  color: var(--danger);
+}
+
+.input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+.empty-actions {
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+
+/* Guests: "Sign up" in the navbar, welcome banner, comment prompt and the login popup */
+.nav-signup .nav-link {
+  color: var(--primary);
+}
+
+.nav-signup .nav-link:hover .nav-icon {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.welcome-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  /* Solid card; the accent shows only in the border */
+  border-color: var(--primary);
+  background: var(--surface);
+}
+
+.welcome-card img {
+  flex-shrink: 0;
+  width: 48px;
+  height: auto;
+}
+
+.welcome-title {
+  font-size: 1.125rem;
+}
+
+.welcome-text {
+  color: var(--text-muted);
+}
+
+.welcome-text a,
+.comments-login a {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.welcome-text a:hover,
+.comments-login a:hover {
+  text-decoration: underline;
+}
+
+.comments-login {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.login-prompt {
+  width: min(400px, 100%);
+}
+
+.login-prompt-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+@media (max-width: 480px) {
+  .welcome-card {
+    align-items: flex-start;
+  }
+}

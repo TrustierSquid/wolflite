@@ -1,8 +1,13 @@
 import { useState } from "react";
+import { nextPage } from "../lib/auth";
+import { adoptAccountAppearance } from "../lib/theme";
 
-// "/login" shows the login form, "/" shows the create account form
+// "/login" shows the login form, "/" shows the create account form.
+// ?next=/some/page sends the user back there afterwards (e.g. the den they were looking at).
 export default function LoginPage() {
   const isLogin = window.location.pathname === "/login";
+  // Keep ?next= when switching between the two forms
+  const search = window.location.search;
   const [showPassword, setShowPassword] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
@@ -11,7 +16,15 @@ export default function LoginPage() {
     const response = await fetch("/loginUser", { method: "POST", body: form });
     const data = await response.json().catch(() => ({}));
     if (data.success) {
-      window.location.href = "/blog";
+      // Switch to the account's theme / accent before leaving, so the next page
+      // doesn't flash in the default colors
+      try {
+        const account = await fetch("/getUserData").then((r) => r.json());
+        adoptAccountAppearance(account);
+      } catch {
+        // The next page applies it anyway
+      }
+      window.location.href = nextPage();
       return true;
     }
     setError(data.message || "Login failed. Please try again.");
@@ -109,11 +122,15 @@ export default function LoginPage() {
 
         <p className="auth-switch">
           {isLogin ? (
-            <>New to Wolflite? <a href="/">Create an account</a></>
+            <>New to Wolflite? <a href={`/${search}`}>Create an account</a></>
           ) : (
-            <>Already have an account? <a href="/login">Log in</a></>
+            <>Already have an account? <a href={`/login${search}`}>Log in</a></>
           )}
         </p>
+
+        <a className="btn btn-ghost btn-block" href="/blog">
+          <i className="fa-solid fa-compass" aria-hidden="true"></i> Browse without an account
+        </a>
 
         <div className="guest-box">
           Just looking around? Use the guest account:

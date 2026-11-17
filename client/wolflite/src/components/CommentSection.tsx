@@ -5,6 +5,7 @@ import DropdownMenu from "./DropdownMenu";
 import type { MenuItem } from "./DropdownMenu";
 import Status from "./Status";
 import { api } from "../lib/api";
+import { loginHref, signupHref } from "../lib/auth";
 import { timeAgo } from "../lib/time";
 
 const MAX_COMMENT_LENGTH = 500; // same limit as the server
@@ -53,7 +54,8 @@ function postComment(target: CommentTarget, commentBody: string, parentId?: numb
 
 interface CommentSectionProps {
   item: CommentTarget;
-  currentUser: CurrentUser | null;
+  /** null for guests, undefined while loading */
+  currentUser: CurrentUser | null | undefined;
   /** Reloads the page's data after any change */
   onChange?: () => unknown;
 }
@@ -93,6 +95,14 @@ export default function CommentSection({ item, currentUser, onChange }: CommentS
 
   return (
     <div className="comments">
+      {currentUser === null ? (
+        <p className="comments-login">
+          <i className="fa-regular fa-comment" aria-hidden="true"></i>
+          <span>
+            <a href={loginHref()}>Log in</a> or <a href={signupHref()}>create an account</a> to comment.
+          </span>
+        </p>
+      ) : (
       <form className="comment-form" onSubmit={submit}>
         <Avatar src={currentUser?.profilePic} size={32} />
         <input
@@ -107,6 +117,7 @@ export default function CommentSection({ item, currentUser, onChange }: CommentS
           <i className="fa-solid fa-paper-plane" aria-hidden="true"></i> Post
         </button>
       </form>
+      )}
 
       <Status status={error} />
 
@@ -135,7 +146,7 @@ interface CommentThreadProps {
   comment: Comment;
   replies: Comment[];
   target: CommentTarget;
-  currentUser: CurrentUser | null;
+  currentUser: CurrentUser | null | undefined;
   onChange?: () => unknown;
 }
 
@@ -206,7 +217,7 @@ interface ReplyFormProps {
   target: CommentTarget;
   parentId: number;
   initialText: string;
-  currentUser: CurrentUser | null;
+  currentUser: CurrentUser | null | undefined;
   /** Called when the form closes; posted = a reply was sent */
   onDone: (posted: boolean) => unknown;
 }

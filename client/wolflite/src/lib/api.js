@@ -1,6 +1,9 @@
+import { LoginRequiredError, requireLogin } from "./auth";
+
 // Small wrapper around fetch for talking to the Flask API.
 //  - sends `json` as a JSON body, or `body` as-is (FormData for uploads)
-//  - sends the user to /login when the session has expired (401)
+//  - when the visitor isn't logged in (401), opens the "log in to continue"
+//    prompt and throws a LoginRequiredError (check with isLoginRequired)
 //  - throws an Error with the server's message for any other failed request
 /**
  * @param {string} path
@@ -19,13 +22,13 @@ export async function api(path, { method = "GET", json, body } = {}) {
 
   const response = await fetch(path, options);
 
-  if (response.status === 401) {
-    window.location.href = "/login";
-    throw new Error("Not logged in");
-  }
-
   // 204 (no content) and non-JSON responses come back as null
   const data = await response.json().catch(() => null);
+
+  if (response.status === 401) {
+    requireLogin(data?.error);
+    throw new LoginRequiredError(data?.error);
+  }
 
   if (!response.ok) {
     if (response.status === 413) throw new Error("That file is too large (max 50 MB).");

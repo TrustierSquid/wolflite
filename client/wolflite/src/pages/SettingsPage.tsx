@@ -2,16 +2,16 @@ import { useEffect, useState } from "react";
 import Avatar from "../components/Avatar";
 import Status from "../components/Status";
 import { api } from "../lib/api";
-import { useCurrentUser } from "../lib/currentUser";
+import { saveAccountAppearance, useRequiredUser } from "../lib/currentUser";
 import { logout } from "../lib/logout";
-import { ACCENTS, THEME_MODES, getAppearance, setAppearance, syncAppearanceAcrossTabs } from "../lib/theme";
+import { ACCENTS, THEME_MODES, getAppearance, resetAppearance, setAppearance, syncAppearanceAcrossTabs } from "../lib/theme";
 import type { Appearance } from "../lib/theme";
 
 // Same rule the server uses when creating an account
 const USERNAME_RULE = /^[A-Za-z0-9._-]{5,30}$/;
 
 export default function SettingsPage() {
-  const currentUser = useCurrentUser();
+  const currentUser = useRequiredUser();
   // Changes made on this page, applied on top of the loaded user
   const [changes, setChanges] = useState({});
 
@@ -196,13 +196,22 @@ function AppearanceSection() {
   // If the theme is changed in another tab, show the new choice here too
   useEffect(() => syncAppearanceAcrossTabs(setAppearanceState), []);
 
+  const [saveError, setSaveError] = useState<{ type: "error"; text: string } | null>(null);
+
+  // Applies straight away, then saves to the account so it follows you to other devices
   function choose(changes: Partial<Appearance>) {
-    setAppearanceState(setAppearance(changes));
+    const next = setAppearance(changes);
+    setAppearanceState(next);
+    setSaveError(null);
+    saveAccountAppearance(next).catch(() =>
+      setSaveError({ type: "error", text: "Couldn't save to your account. It's only applied on this device for now." })
+    );
   }
 
   return (
     <section className="card settings-section">
-      <SectionHeader title="Appearance" description="Saved on this device. Changes apply instantly." />
+      <SectionHeader title="Appearance" description="Saved to your account. Changes apply instantly." />
+      <Status status={saveError} />
 
       <div className="appearance-group">
         <span className="label" id="theme-label">Theme</span>
@@ -256,6 +265,7 @@ function AccountSection({ user }) {
     setDeleting(true);
     try {
       await api("/profileInfo/deleteProfile", { method: "DELETE" });
+      resetAppearance();
       window.location.href = "/login";
     } catch (err) {
       setStatus({ type: "error", text: err.message });

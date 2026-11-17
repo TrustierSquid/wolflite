@@ -1,6 +1,6 @@
 # Wolflite Documentation
 
-Wolflite is a social blogging platform where users can create posts and polls, interact through likes and comments, and manage their profiles with custom profile pictures. The app features a combined feed of posts and polls and user profiles for community engagement. Upcoming features include communities, allowing users to join groups, share content, and participate in discussions within focused interest areas.
+Wolflite is a self-hostable social platform built around **dens**: topic communities that users create and join. Every post and poll lives in a den. Your Home feed shows the latest from the dens you joined, and Discover shows every den and everything posted in them. Visitors can browse without an account; posting, commenting, liking and joining dens need one.
 
 ## Tech Stack
 - **Frontend:** React + Vite
@@ -10,20 +10,28 @@ Wolflite is a social blogging platform where users can create posts and polls, i
 
 ## Current Features
 
+#### Dens (communities)
+- Create a den with a name, description and picture; the creator owns it
+- Join and leave dens; the owner can edit the description and picture
+- Each den has its own page (`/den?name=homelab`) with its posts
+
 #### User Management
 - User account creation and authentication
+- Guest browsing: feeds, dens and profiles are public; the login prompt appears when a guest tries to interact, and they return to the same page after logging in
 - Custom profile pictures
 - User profile management and settings
 
 #### Content Creation
-- **Post Creation** - Blog-style posts with text and media
+- **Post Creation** - Blog-style posts with text and media, posted in a den you joined
 - **Poll Creation** - Interactive polls with multiple options
 - **Media Support** - Image and video uploads
 
 #### Social Interaction
 - **Likes** - Like posts and polls
-- **Comments** - Comment on posts and polls
-- **Feed** - Posts and polls from every user, newest first
+- **Comments** - Comment on posts and polls, with replies
+- **Stash** - Bookmark any post or poll
+- **Home feed** - Posts and polls from the dens you joined, newest first
+- **Discover** - Every den, and the latest posts from all of them
 - **User Profiles** - View other users' profiles and content
 
 #### Poll System
@@ -32,10 +40,6 @@ Wolflite is a social blogging platform where users can create posts and polls, i
 - Percentage calculations and vote counts
 - Manually closing a poll
 
-### Upcoming Features
-- **Communities** - Interest-based groups
-- **Group Discussions** - Focused conversations
-- **Enhanced Content Sharing** within communities
 
 
 # Getting started for developers
@@ -146,7 +150,9 @@ flask --app wolfr init-db
 ```
 This creates `server/instance/wolfr.sqlite` with the tables from `wolfr/schema.sql`.
 
-> **Warning:** `init-db` drops every table and recreates it, so all local data is deleted. That is also how you apply changes to `schema.sql`: edit the schema, then run `init-db` again.
+> **Warning:** `init-db` drops every table and recreates it, so all local data is deleted. You don't need it to pick up schema changes: on every start the server adds missing tables and columns to an existing database (see `upgrade_db()` in `wolfr/db.py`).
+
+> **Upgrading to dens:** the first start with den support **deletes every existing post and poll** (with their likes, comments, votes, stashes and uploaded media), because every post must belong to a den. User accounts are kept.
 
 #### Run the dev server
 ```

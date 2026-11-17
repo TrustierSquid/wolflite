@@ -6,6 +6,8 @@ DROP TABLE IF EXISTS votes;
 DROP TABLE IF EXISTS comments;
 DROP TABLE IF EXISTS likes;
 DROP TABLE IF EXISTS stashes;
+DROP TABLE IF EXISTS den_members;
+DROP TABLE IF EXISTS dens;
 
 CREATE TABLE user (
    id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -14,7 +16,34 @@ CREATE TABLE user (
    created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
    bio TEXT NULL, -- profile bio
    filename TEXT NULL, --profile picture
-   profileBackground TEXT NULL --coming soon
+   profileBackground TEXT NULL, --coming soon
+   theme TEXT NULL, -- appearance: 'system' | 'light' | 'dark' (NULL = never chosen)
+   accent TEXT NULL -- appearance: accent color id, e.g. 'red' (NULL = never chosen)
+);
+
+
+-- Dens: communities that users create and join. Every post and poll belongs to one.
+-- (Keep dens / den_members in sync with ADDED_TABLES in db.py, which creates them on older databases.)
+CREATE TABLE dens (
+   id INTEGER PRIMARY KEY AUTOINCREMENT,
+   name TEXT UNIQUE NOT NULL COLLATE NOCASE, -- shown as the den's name and used in its URL (/den?name=...)
+   description TEXT NOT NULL DEFAULT '',
+   image TEXT NULL, -- den picture (NULL = letter placeholder)
+   owner_id INTEGER NOT NULL, -- who created it
+   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+   FOREIGN KEY (owner_id) REFERENCES user(id)
+);
+
+-- Who joined which den. The owner is a member too (role 'owner').
+CREATE TABLE den_members (
+   id INTEGER PRIMARY KEY AUTOINCREMENT,
+   den_id INTEGER NOT NULL,
+   user_id INTEGER NOT NULL,
+   role TEXT NOT NULL DEFAULT 'member', -- 'owner' or 'member'
+   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+   FOREIGN KEY (den_id) REFERENCES dens(id),
+   FOREIGN KEY (user_id) REFERENCES user(id),
+   UNIQUE(den_id, user_id)
 );
 
 
@@ -25,7 +54,9 @@ CREATE TABLE posts (
    title TEXT NOT NULL,
    body TEXT NOT NULL,
    filename TEXT,
-   FOREIGN KEY (author_id) REFERENCES user (id)
+   den_id INTEGER NOT NULL, -- the den it was posted in
+   FOREIGN KEY (author_id) REFERENCES user (id),
+   FOREIGN KEY (den_id) REFERENCES dens (id)
 );
 
 
@@ -36,7 +67,9 @@ CREATE TABLE polls (
    question TEXT NOT NULL,
    isOpen BOOLEAN NOT NULL DEFAULT 1,
    archive_at DATETIME,
-   isArchived BOOLEAN NOT NULL DEFAULT 0
+   isArchived BOOLEAN NOT NULL DEFAULT 0,
+   den_id INTEGER NOT NULL, -- the den it was posted in
+   FOREIGN KEY (den_id) REFERENCES dens (id)
 );
 
 CREATE TABLE poll_options (

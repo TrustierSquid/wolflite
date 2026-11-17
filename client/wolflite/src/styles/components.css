@@ -33,7 +33,7 @@
 }
 
 /* Profile comes first, set apart from the other items */
-.nav-links > li:first-child {
+.nav-links > li.nav-profile {
   margin-right: 2.5rem;
 }
 
@@ -133,7 +133,7 @@
     padding: 0;
   }
 
-  .nav-links > li:first-child {
+  .nav-links > li.nav-profile {
     margin-right: 1.5rem;
   }
 }
@@ -143,7 +143,7 @@
     gap: 0;
   }
 
-  .nav-links > li:first-child {
+  .nav-links > li.nav-profile {
     margin-right: 0.75rem;
   }
 

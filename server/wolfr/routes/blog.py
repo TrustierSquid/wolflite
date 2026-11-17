@@ -1,6 +1,6 @@
 import sqlite3
 from flask import Blueprint, g, request, jsonify, redirect, current_app
-from wolfr.db import get_db
+from wolfr.db import get_db, delete_uploads
 import os
 import uuid
 
@@ -8,40 +8,104 @@ import uuid
 blog_page = Blueprint("post", __name__, url_prefix="/post")
 
 
-# Feed: every post and poll, newest first
+# Feed of posts and polls, newest first. Works for guests too.
+#   ?feed=home       posts from the dens the logged in user joined
+#   ?feed=discover   posts from every den (the default)
+#   ?den=<name>      posts from one den
 @blog_page.route("/fetch", methods=["GET"])
 def retrievePosts():
+   den_name = request.args.get("den")
+   if den_name:
+      den = get_db().execute("SELECT id FROM dens WHERE name = ?", (den_name,)).fetchone()
+      if den is None:
+         return jsonify({"error": "That den doesn't exist"}), 404
+      return jsonify({"feed": build_feed_items(den_ids=[den["id"]])}), 200
+
+   if request.args.get("feed") == "home":
+      if g.user is None:
+         return jsonify({"error": "Log in to see your dens"}), 401
+      return jsonify({"feed": build_feed_items(den_ids=joined_den_ids(g.user["id"]))}), 200
+
    return jsonify({"feed": build_feed_items()}), 200
 
 
-# Builds every post and poll with its likes, comments, votes and whether the
-# logged in user has stashed it. Used by the feed and by the profile's stash list.
-def build_feed_items():
+# Ids of the dens a user is a member of
+def joined_den_ids(user_id):
+   rows = get_db().execute("SELECT den_id FROM den_members WHERE user_id = ?", (user_id,)).fetchall()
+   return [row["den_id"] for row in rows]
+
+
+def is_den_member(den_id, user_id):
+   return get_db().execute(
+      "SELECT 1 FROM den_members WHERE den_id = ? AND user_id = ?", (den_id, user_id)
+   ).fetchone() is not None
+
+
+# Builds posts and polls with their den, likes, comments, votes and whether the
+# logged in user (if any) has stashed them. Newest first.
+# Every filter is optional and they combine (AND):
+#   den_ids              only items in these dens
+#   author_id            only items by this user
+#   post_ids / poll_ids  only these items (e.g. stashed or liked ones). Passing
+#                        only one of them returns only that kind.
+# Used by the feeds, den pages and profiles.
+def build_feed_items(den_ids=None, author_id=None, post_ids=None, poll_ids=None):
    db = get_db()
    cursor = db.cursor()
 
    # Which posts / polls the logged in user has stashed, and how many users stashed each
-   stashed_post_ids, stashed_poll_ids = get_stashed_ids(g.user["id"])
+   stashed_post_ids, stashed_poll_ids = get_stashed_ids(g.user["id"] if g.user else None)
    post_stash_counts, poll_stash_counts = get_stash_counts()
 
-   # selecting all regular posts
-   posts = cursor.execute(
-      "SELECT posts.*, user.username, user.filename AS userProfilePic, "
-      "COUNT(likes.id) AS likeCount "
-      "FROM posts "
-      "JOIN user ON posts.author_id = user.id "
-      "LEFT JOIN likes ON likes.post_id = posts.id "
-      "GROUP BY posts.id "
-   ).fetchall()
+   # WHERE clause for the posts / polls query. Only "?" placeholders go into the
+   # SQL text; the values themselves are passed as parameters.
+   def where_clause(table, ids):
+      clauses, params = [], []
+      for column, values in (("den_id", den_ids), ("id", ids)):
+         if values is not None:
+            values = list(values)
+            # "IN (NULL)" matches nothing, for an empty list
+            clauses.append(f"{table}.{column} IN ({','.join('?' * len(values)) or 'NULL'})")
+            params += values
+      if author_id is not None:
+         clauses.append(f"{table}.author_id = ?")
+         params.append(author_id)
+      return ("WHERE " + " AND ".join(clauses)) if clauses else "", params
 
-   # Selecting all polls
-   polls = cursor.execute(
-      "SELECT polls.*, user.username, user.filename AS userProfilePic, "
-      "COUNT(likes.id) AS likeCount "
-      "FROM polls JOIN user ON polls.author_id = user.id "
-      "LEFT JOIN likes ON likes.poll_id = polls.id "
-      "GROUP BY polls.id"
-   ).fetchall()
+   want_posts = not (poll_ids is not None and post_ids is None)
+   want_polls = not (post_ids is not None and poll_ids is None)
+
+   posts = []
+   if want_posts:
+      where, params = where_clause("posts", post_ids)
+      posts = cursor.execute(
+         "SELECT posts.*, user.username, user.filename AS userProfilePic, "
+         "dens.name AS denName, dens.image AS denImage, "
+         "COUNT(likes.id) AS likeCount "
+         "FROM posts "
+         "JOIN user ON posts.author_id = user.id "
+         "JOIN dens ON posts.den_id = dens.id "
+         "LEFT JOIN likes ON likes.post_id = posts.id "
+         f"{where} "
+         "GROUP BY posts.id",
+         params,
+      ).fetchall()
+
+   polls = []
+   if want_polls:
+      where, params = where_clause("polls", poll_ids)
+      polls = cursor.execute(
+         "SELECT polls.*, user.username, user.filename AS userProfilePic, "
+         "dens.name AS denName, dens.image AS denImage, "
+         "COUNT(likes.id) AS likeCount "
+         "FROM polls "
+         "JOIN user ON polls.author_id = user.id "
+         "JOIN dens ON polls.den_id = dens.id "
+         "LEFT JOIN likes ON likes.poll_id = polls.id "
+         f"{where} "
+         "GROUP BY polls.id",
+         params,
+      ).fetchall()
 
    # Get votes for each poll and who voted
    votes = cursor.execute("""
@@ -171,7 +235,8 @@ def build_feed_items():
             "comments": comments_by_post.get(row["id"], []),
             "isPoll": False,
             "isStashed": row["id"] in stashed_post_ids,
-            "stashCount": post_stash_counts.get(row["id"], 0)
+            "stashCount": post_stash_counts.get(row["id"], 0),
+            "den": {"id": row["den_id"], "name": row["denName"], "image": row["denImage"]}
          }
       )
 
@@ -220,7 +285,8 @@ def build_feed_items():
          "likeCount": poll["likeCount"],
          "comments": comments_by_poll.get(poll["id"], []),
          "whoVoted": votes_by_poll.get(poll["id"], []),
-         "likesByPoll": likes_by_poll.get(poll["id"], [])
+         "likesByPoll": likes_by_poll.get(poll["id"], []),
+         "den": {"id": poll["den_id"], "name": poll["denName"], "image": poll["denImage"]}
       })
 
    # Newest first
@@ -308,8 +374,11 @@ def find_own_item(item_id, is_poll):
    return table, None
 
 
-# Ids of the posts and polls a user has stashed: (set of post ids, set of poll ids)
+# Ids of the posts and polls a user has stashed: (set of post ids, set of poll ids).
+# Guests (user_id None) have stashed nothing.
 def get_stashed_ids(user_id):
+   if user_id is None:
+      return set(), set()
    rows = get_db().execute("SELECT post_id, poll_id FROM stashes WHERE user_id = ?", (user_id,)).fetchall()
    return (
       {row["post_id"] for row in rows if row["post_id"] is not None},
@@ -378,24 +447,36 @@ def deleteItem(item_id, is_poll):
    db.commit()
 
    # Remove the uploaded media file too (never the shared default images)
-   if media and media.startswith("/static/uploads/"):
-      filename = os.path.basename(media)
-      defaults = os.listdir(os.path.join(os.path.dirname(os.path.dirname(__file__)), "defaults"))
-      path = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
-      if filename not in defaults and os.path.isfile(path):
-         os.remove(path)
+   delete_uploads([media])
 
    return jsonify({"message": "Deleted"}), 200
 
 
-# Creates a new post
+# Checks that the logged in user can post in a den (it exists and they joined it).
+# Returns an error response, or None when posting is allowed.
+def den_posting_error(den_id):
+   if not isinstance(den_id, int) or isinstance(den_id, bool):
+      return jsonify({"error": "Pick a den to post in"}), 400
+   if get_db().execute("SELECT 1 FROM dens WHERE id = ?", (den_id,)).fetchone() is None:
+      return jsonify({"error": "That den doesn't exist"}), 404
+   if not is_den_member(den_id, g.user["id"]):
+      return jsonify({"error": "Join the den to post in it"}), 403
+   return None
+
+
+# Creates a new post in a den
 @blog_page.route("/create", methods=["POST"])
 def handleImages():
    postTitle = request.form.get("postTitle", "").strip()
    postContent = request.form.get("postContent", "").strip()
+   den_id = request.form.get("denId", type=int)
 
    if not postTitle or not postContent:
       return jsonify({"error": "A post needs a title and a body"}), 400
+
+   error = den_posting_error(den_id)
+   if error:
+      return error
 
    # The media file is optional
    file_url = None
@@ -407,8 +488,8 @@ def handleImages():
 
    db = get_db()
    db.execute(
-      "INSERT INTO posts (author_id, title, body, filename) VALUES (?, ?, ?, ?)",
-      (g.user["id"], postTitle, postContent, file_url),
+      "INSERT INTO posts (author_id, title, body, filename, den_id) VALUES (?, ?, ?, ?, ?)",
+      (g.user["id"], postTitle, postContent, file_url, den_id),
    )
    db.commit()
 
@@ -418,42 +499,40 @@ def handleImages():
 
 
 
-# User creating a poll
-@blog_page.route("/poll/create", methods=(["POST"]))
+# Creates a poll in a den
+# Body: {"question": "...", "options": ["...", ...], "denId": 1}
+@blog_page.route("/poll/create", methods=["POST"])
 def submitPoll():
-    db = get_db()
+   data = request.get_json(silent=True) or {}
+   question = str(data.get("question") or "").strip()
+   options = [str(option).strip() for option in (data.get("options") or []) if str(option).strip()]
+   den_id = data.get("denId")
 
-    if request.method == "POST":
-        try:
-            # Contains the Poll Question and the poll options
-            data = request.get_json()
-            question = data["question"]
-            options = data["options"]
-            cursor = db.cursor()
+   if not question:
+      return jsonify({"error": "A poll needs a question"}), 400
+   if len(options) < 2:
+      return jsonify({"error": "A poll needs at least two options"}), 400
 
+   error = den_posting_error(den_id)
+   if error:
+      return error
 
-            cursor.execute(
-                "INSERT INTO polls (author_id, question) VALUES (?, ?)",
-                (g.user[0], question),
-            )
+   db = get_db()
+   cursor = db.execute(
+      "INSERT INTO polls (author_id, question, den_id) VALUES (?, ?, ?)",
+      (g.user["id"], question, den_id),
+   )
+   # Grabbing the poll id to insert the options with the corresponding poll
+   poll_id = cursor.lastrowid
 
-            # Grabbing the poll id to insert the options with the corresponding poll
-            poll_id = cursor.lastrowid
+   for option in options:
+      db.execute(
+         "INSERT INTO poll_options (poll_id, option_text, users_voted) VALUES (?, ?, ?)",
+         (poll_id, option, 0),
+      )
+   db.commit()
 
-            db.commit()
-            for option in options:
-                cursor.execute(
-                  "INSERT INTO poll_options (poll_id, option_text, users_voted) VALUES (?, ?, ?)",
-                  (poll_id, option, 0),
-                )
-
-            db.commit()
-
-            return {"success": 200}
-        except sqlite3.IntegrityError:
-            return jsonify({"message": "something went wrong"})
-
-    return {"success": 200}
+   return jsonify({"success": True}), 201
 
 
 
@@ -485,13 +564,13 @@ def trackUserFeedback():
          # Find the previous option the user voted for
          prev_vote = cursor.execute(
             "SELECT option_id FROM votes WHERE user_id = ? AND poll_id = ?",
-            (g.user[0], poll_ID)
+            (g.user["id"], poll_ID)
          ).fetchone()
 
          # Delete the previous vote
          cursor.execute(
             "DELETE FROM votes WHERE user_id = ? AND poll_id = ?",
-            (g.user[0], poll_ID)
+            (g.user["id"], poll_ID)
          )
 
          # Decrement users_voted for the previous option if it exists
@@ -505,7 +584,7 @@ def trackUserFeedback():
          cursor.execute("""
             INSERT INTO votes (user_id, poll_id, option_id)
             VALUES (?, ?, ?)
-         """, (g.user[0], poll_ID, option_ID))
+         """, (g.user["id"], poll_ID, option_ID))
 
          cursor.execute(
             "UPDATE poll_options SET users_voted = users_voted + 1 WHERE id = ?;", (option_ID,)

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Wolflite | Den</title>
+    <link rel="icon" type="image/png" href="/src/assets/imgs/wolfLogo.png" />
+    <!-- Apply the saved theme and accent before anything renders (no flash of the wrong colors).
+         Keys must match src/lib/theme.ts -->
+    <script>
+      try {
+        var theme = localStorage.getItem("wolflite-theme");
+        if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+        var accent = localStorage.getItem("wolflite-accent");
+        if (accent && /^[a-z]+$/.test(accent)) document.documentElement.dataset.accent = accent;
+      } catch (e) {}
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script src="https://kit.fontawesome.com/6ab760c0b1.js" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/den.tsx"></script>
+  </body>
+</html>

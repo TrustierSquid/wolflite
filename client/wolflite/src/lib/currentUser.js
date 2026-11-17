@@ -1,5 +1,15 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
+import { loginHref } from "./auth";
+import { adoptAccountAppearance } from "./theme";
+
+/**
+ * Saves the theme mode / accent color to the logged in user's account.
+ * @param {{ mode?: string, accent?: string }} appearance
+ */
+export function saveAccountAppearance({ mode, accent }) {
+  return api("/profileInfo/appearance", { method: "PUT", json: { theme: mode, accent } });
+}
 
 // The logged in user is requested once per page load and shared by every
 // component that asks for it (navbar, feed, profile...), instead of each
@@ -14,37 +24,68 @@ import { api } from "./api";
  * @property {string | null} bio
  */
 
-/** @type {Promise<CurrentUser> | null} */
+/** @type {Promise<CurrentUser | null> | null} */
 let currentUserRequest = null;
 
-/** @returns {Promise<CurrentUser>} */
+/**
+ * The logged in user, or null for guests (not logged in).
+ * @returns {Promise<CurrentUser | null>}
+ */
 export function fetchCurrentUser() {
   if (!currentUserRequest) {
-    currentUserRequest = api("/getUserData").then((data) => ({
-      id: data.currentUserID,
-      username: data.currentUserName,
-      profilePic: data.currentUserPfPicture,
-      joinedDate: data.joinedDate,
-      bio: data.bio,
-    }));
+    currentUserRequest = api("/getUserData").then((data) => {
+      // Theme / accent follow the account; guests get the defaults
+      const unsaved = adoptAccountAppearance(data ?? { loggedIn: false });
+      if (unsaved) saveAccountAppearance(unsaved).catch((error) => console.log(error));
+
+      return data?.loggedIn
+        ? {
+            id: data.currentUserID,
+            username: data.currentUserName,
+            profilePic: data.currentUserPfPicture,
+            joinedDate: data.joinedDate,
+            bio: data.bio,
+          }
+        : null;
+    });
   }
   return currentUserRequest;
 }
 
-// React hook: returns the logged in user, or null while it is loading.
-/** @returns {CurrentUser | null} */
+// React hook. Returns:
+//   undefined     while loading
+//   null          for guests (not logged in)
+//   CurrentUser   for the logged in user
+/** @returns {CurrentUser | null | undefined} */
 export function useCurrentUser() {
-  const [user, setUser] = useState(/** @type {CurrentUser | null} */ (null));
+  const [user, setUser] = useState(/** @type {CurrentUser | null | undefined} */ (undefined));
 
   useEffect(() => {
     let active = true;
     fetchCurrentUser()
       .then((loadedUser) => active && setUser(loadedUser))
-      .catch((error) => console.log(error));
+      .catch((error) => {
+        console.log(error);
+        if (active) setUser(null);
+      });
     return () => {
       active = false;
     };
   }, []);
+
+  return user;
+}
+
+// For pages that only make sense with an account (create, settings): same as
+// useCurrentUser, but sends guests to the login page (and back here afterwards).
+// The server already redirects these pages; this covers the Vite dev server.
+/** @returns {CurrentUser | null | undefined} */
+export function useRequiredUser() {
+  const user = useCurrentUser();
+
+  useEffect(() => {
+    if (user === null) window.location.replace(loginHref());
+  }, [user]);
 
   return user;
 }

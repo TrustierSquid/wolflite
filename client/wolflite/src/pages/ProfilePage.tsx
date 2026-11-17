@@ -4,6 +4,7 @@ import PostCard from "../components/PostCard";
 import Status from "../components/Status";
 import VotersModal from "../components/VotersModal";
 import { api } from "../lib/api";
+import { loginHref } from "../lib/auth";
 import { useCurrentUser } from "../lib/currentUser";
 import { formatDate } from "../lib/time";
 
@@ -47,6 +48,11 @@ export default function ProfilePage() {
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
+
+  // "/profile" without an id means "my profile", which guests don't have
+  useEffect(() => {
+    if (!profileId && currentUser === null) window.location.replace(loginHref());
+  }, [profileId, currentUser]);
 
   const closeVoters = useCallback(() => setVotersPoll(null), []);
 
