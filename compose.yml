@@ -1,10 +1,18 @@
-version: '3.8'
+# Production: Wolflite + the Cloudflare tunnel.
+#
+# The image is built by GitHub Actions and pulled from GitHub's registry, so the
+# server doesn't need the source code or Node. Deploys run (from GitHub, over
+# Tailscale):  docker compose pull wolflite && docker compose up -d
+# See docs/deployment.md.
+#
+# To build the image locally instead:  docker compose build wolflite
 
 services:
   wolflite:
+    image: ghcr.io/trustiersquid/wolflite:${WOLFLITE_TAG:-latest}
     build:
-      context: ./server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: server/Dockerfile
     ports:
       - "8000:8000"
     environment:
@@ -12,6 +20,7 @@ services:
       - DB_KEY=${DB_KEY}
       - MAX_UPLOAD_MB=${MAX_UPLOAD_MB:-50}
     volumes:
+      # Live data lives on the server, outside the image: survives every deploy
       - ./data:/app/instance
       - ./uploads:/app/static/uploads
     restart: unless-stopped

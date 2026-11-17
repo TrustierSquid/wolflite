@@ -213,18 +213,15 @@ npm run lint        # ESLint
 
 In production, Flask (through Gunicorn) serves both the API and the built React pages on a single port.
 
-#### 1. Build the frontend
-The Docker image does not build the frontend itself yet, so build it first. The output goes to `server/static/dist`:
-```
-cd client/wolflite
-npm run build
-```
+**Deploys are automatic:** every push to `main` is tested, built into a Docker image and deployed to the server over Tailscale by GitHub Actions. Setup and everyday use: [docs/deployment.md](docs/deployment.md).
 
-#### 2. Set up `.env`
-Same file as in development (see step 1 above). Docker Compose reads `DB_KEY`, plus `TUNNEL_TOKEN` for the Cloudflare tunnel.
+The rest of this section is for running the production image by hand (e.g. to try it locally).
 
-#### 3. Build and run
-From the project root (with [Docker Desktop](https://www.docker.com/products/docker-desktop/) running on Windows/Mac):
+#### 1. Set up `.env`
+Same file as in development (see step 1 above). Docker Compose reads `DB_KEY`, `MAX_UPLOAD_MB`, plus `TUNNEL_TOKEN` for the Cloudflare tunnel.
+
+#### 2. Build and run
+From the project root (with [Docker Desktop](https://www.docker.com/products/docker-desktop/) running on Windows/Mac). The image builds the frontend itself, so there's no separate `npm run build`:
 ```
 docker compose up -d --build
 ```
