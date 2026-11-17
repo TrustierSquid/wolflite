@@ -57,6 +57,9 @@ def build_feed_items(den_ids=None, author_id=None, post_ids=None, poll_ids=None)
    stashed_post_ids, stashed_poll_ids = get_stashed_ids(g.user["id"] if g.user else None)
    post_stash_counts, poll_stash_counts = get_stash_counts()
 
+   # Dens the logged in user owns / moderates: they can delete any post and comment there
+   moderated = moderated_den_ids(g.user["id"] if g.user else None)
+
    # WHERE clause for the posts / polls query. Only "?" placeholders go into the
    # SQL text; the values themselves are passed as parameters.
    def where_clause(table, ids):
@@ -236,7 +239,8 @@ def build_feed_items(den_ids=None, author_id=None, post_ids=None, poll_ids=None)
             "isPoll": False,
             "isStashed": row["id"] in stashed_post_ids,
             "stashCount": post_stash_counts.get(row["id"], 0),
-            "den": {"id": row["den_id"], "name": row["denName"], "image": row["denImage"]}
+            "den": {"id": row["den_id"], "name": row["denName"], "image": row["denImage"]},
+            "canModerate": row["den_id"] in moderated
          }
       )
 
@@ -286,7 +290,8 @@ def build_feed_items(den_ids=None, author_id=None, post_ids=None, poll_ids=None)
          "comments": comments_by_poll.get(poll["id"], []),
          "whoVoted": votes_by_poll.get(poll["id"], []),
          "likesByPoll": likes_by_poll.get(poll["id"], []),
-         "den": {"id": poll["den_id"], "name": poll["denName"], "image": poll["denImage"]}
+         "den": {"id": poll["den_id"], "name": poll["denName"], "image": poll["denImage"]},
+         "canModerate": poll["den_id"] in moderated
       })
 
    # Newest first
@@ -359,19 +364,56 @@ def addLike(item_id, is_poll):
    return jsonify({"success": 200})
 
 
-# Looks up a post or poll that the logged in user wants to change.
-# Returns (table, error_response): the error is set when the item doesn't exist
-# or belongs to someone else.
-def find_own_item(item_id, is_poll):
-   # Table name comes from this whitelist, never from user input
-   table = "polls" if is_poll.lower() == "true" else "posts"
+# Den roles: 'owner' (created it), 'moderator' (picked by the owner) or 'member'.
+# Owners and moderators can moderate: delete posts / comments in the den and remove members.
+MODERATOR_ROLES = ("owner", "moderator")
 
-   item = get_db().execute(f"SELECT author_id FROM {table} WHERE id = ?", (item_id,)).fetchone()
-   if item is None:
-      return table, (jsonify({"error": "Not found"}), 404)
-   if item["author_id"] != g.user["id"]:
-      return table, (jsonify({"error": "You can only change your own posts"}), 403)
-   return table, None
+
+# A user's role in a den, or None if they aren't in it (or are a guest)
+def den_role(den_id, user_id):
+   if user_id is None:
+      return None
+   row = get_db().execute(
+      "SELECT role FROM den_members WHERE den_id = ? AND user_id = ?", (den_id, user_id)
+   ).fetchone()
+   return row["role"] if row else None
+
+
+def can_moderate(den_id, user_id):
+   return den_role(den_id, user_id) in MODERATOR_ROLES
+
+
+# Ids of the dens a user owns or moderates
+def moderated_den_ids(user_id):
+   if user_id is None:
+      return set()
+   rows = get_db().execute(
+      "SELECT den_id FROM den_members WHERE user_id = ? AND role IN ('owner', 'moderator')", (user_id,)
+   ).fetchall()
+   return {row["den_id"] for row in rows}
+
+
+# Deletes posts / polls and everything attached to them (likes, comments, votes,
+# poll options, stashes). Doesn't commit. Returns the URLs of their uploaded media,
+# to delete with delete_uploads() once the commit succeeded.
+def delete_items(post_ids=(), poll_ids=()):
+   db = get_db()
+   media = []
+
+   for post_id in post_ids:
+      row = db.execute("SELECT filename FROM posts WHERE id = ?", (post_id,)).fetchone()
+      if row and row["filename"]:
+         media.append(row["filename"])
+      for table in ("likes", "comments", "stashes"):
+         db.execute(f"DELETE FROM {table} WHERE post_id = ?", (post_id,))
+      db.execute("DELETE FROM posts WHERE id = ?", (post_id,))
+
+   for poll_id in poll_ids:
+      for table in ("votes", "poll_options", "likes", "comments", "stashes"):
+         db.execute(f"DELETE FROM {table} WHERE poll_id = ?", (poll_id,))
+      db.execute("DELETE FROM polls WHERE id = ?", (poll_id,))
+
+   return media
 
 
 # Ids of the posts and polls a user has stashed: (set of post ids, set of poll ids).
@@ -422,32 +464,26 @@ def stashItem(item_id, is_poll):
    return jsonify({"isStashed": stashed}), 200
 
 
-# Permanently deletes a post / poll and everything attached to it
+# Permanently deletes a post / poll and everything attached to it.
+# Allowed for its author, and for the owner / moderators of the den it's in.
 @blog_page.route("/delete/<int:item_id>/<is_poll>", methods=["DELETE"])
 def deleteItem(item_id, is_poll):
-   table, error = find_own_item(item_id, is_poll)
-   if error:
-      return error
+   # Table name comes from this whitelist, never from user input
+   is_poll = is_poll.lower() == "true"
+   table = "polls" if is_poll else "posts"
 
    db = get_db()
-   if table == "polls":
-      db.execute("DELETE FROM votes WHERE poll_id = ?", (item_id,))
-      db.execute("DELETE FROM poll_options WHERE poll_id = ?", (item_id,))
-      db.execute("DELETE FROM likes WHERE poll_id = ?", (item_id,))
-      db.execute("DELETE FROM comments WHERE poll_id = ?", (item_id,))
-      db.execute("DELETE FROM stashes WHERE poll_id = ?", (item_id,))
-      media = None
-   else:
-      media = db.execute("SELECT filename FROM posts WHERE id = ?", (item_id,)).fetchone()["filename"]
-      db.execute("DELETE FROM likes WHERE post_id = ?", (item_id,))
-      db.execute("DELETE FROM comments WHERE post_id = ?", (item_id,))
-      db.execute("DELETE FROM stashes WHERE post_id = ?", (item_id,))
+   item = db.execute(f"SELECT author_id, den_id FROM {table} WHERE id = ?", (item_id,)).fetchone()
+   if item is None:
+      return jsonify({"error": "Not found"}), 404
+   if item["author_id"] != g.user["id"] and not can_moderate(item["den_id"], g.user["id"]):
+      return jsonify({"error": "You can only delete your own posts, or posts in dens you moderate"}), 403
 
-   db.execute(f"DELETE FROM {table} WHERE id = ?", (item_id,))
+   media = delete_items(poll_ids=[item_id]) if is_poll else delete_items(post_ids=[item_id])
    db.commit()
 
    # Remove the uploaded media file too (never the shared default images)
-   delete_uploads([media])
+   delete_uploads(media)
 
    return jsonify({"message": "Deleted"}), 200
 
@@ -645,8 +681,9 @@ def postComment():
    return jsonify({"success": True}), 200
 
 
-# Loads a comment plus the author of the post / poll it belongs to.
-# Returns (comment, item_author_id), or (None, None) if the comment doesn't exist.
+# Loads a comment plus the post / poll it belongs to (its author_id and den_id).
+# Returns (comment, item), or (None, None) if the comment doesn't exist.
+# item is None if the post / poll is gone.
 def find_comment(comment_id):
    db = get_db()
    comment = db.execute(
@@ -656,11 +693,11 @@ def find_comment(comment_id):
       return None, None
 
    if comment["poll_id"] is not None:
-      item = db.execute("SELECT author_id FROM polls WHERE id = ?", (comment["poll_id"],)).fetchone()
+      item = db.execute("SELECT author_id, den_id FROM polls WHERE id = ?", (comment["poll_id"],)).fetchone()
    else:
-      item = db.execute("SELECT author_id FROM posts WHERE id = ?", (comment["post_id"],)).fetchone()
+      item = db.execute("SELECT author_id, den_id FROM posts WHERE id = ?", (comment["post_id"],)).fetchone()
 
-   return comment, (item["author_id"] if item else None)
+   return comment, item
 
 
 # Edits a comment. Only the person who wrote it can edit it.
@@ -691,15 +728,21 @@ def editComment(comment_id):
 
 
 # Deletes a comment (and its replies, if it starts a thread). Allowed for the person
-# who wrote it, and for the author of the post / poll it is on (so authors can
-# moderate their own posts).
+# who wrote it, the author of the post / poll it is on (so authors can moderate
+# their own posts), and the owner / moderators of the den.
 @blog_page.route("/comment/<int:comment_id>", methods=["DELETE"])
 def deleteComment(comment_id):
-   comment, item_author_id = find_comment(comment_id)
+   comment, item = find_comment(comment_id)
    if comment is None:
       return jsonify({"error": "Comment not found"}), 404
-   if g.user["id"] not in (comment["author_id"], item_author_id):
-      return jsonify({"error": "You can only delete your own comments or comments on your posts"}), 403
+
+   user_id = g.user["id"]
+   allowed = (
+      comment["author_id"] == user_id
+      or (item is not None and (item["author_id"] == user_id or can_moderate(item["den_id"], user_id)))
+   )
+   if not allowed:
+      return jsonify({"error": "You can only delete your own comments, comments on your posts, or comments in dens you moderate"}), 403
 
    db = get_db()
    db.execute("DELETE FROM comments WHERE id = ? OR parent_id = ?", (comment_id, comment_id))

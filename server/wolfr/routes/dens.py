@@ -2,7 +2,7 @@ import re
 import sqlite3
 from flask import Blueprint, g, request, jsonify
 from wolfr.db import get_db, delete_uploads
-from wolfr.routes.blog import save_upload, IMAGE_EXTENSIONS
+from wolfr.routes.blog import save_upload, IMAGE_EXTENSIONS, MODERATOR_ROLES, delete_items
 
 # Dens are the communities of Wolflite: users create them, join them and post in them.
 # All endpoints are prefixed with /dens (e.g /dens/list)
@@ -20,9 +20,9 @@ DEN_QUERY = """
       (SELECT COUNT(*) FROM den_members WHERE den_members.den_id = dens.id) AS memberCount,
       (SELECT COUNT(*) FROM posts WHERE posts.den_id = dens.id)
          + (SELECT COUNT(*) FROM polls WHERE polls.den_id = dens.id) AS postCount,
-      EXISTS(
-         SELECT 1 FROM den_members WHERE den_members.den_id = dens.id AND den_members.user_id = ?
-      ) AS isMember
+      (
+         SELECT role FROM den_members WHERE den_members.den_id = dens.id AND den_members.user_id = ?
+      ) AS myRole
    FROM dens
    LEFT JOIN user ON dens.owner_id = user.id
 """
@@ -45,8 +45,12 @@ def den_json(row):
       "ownerProfilePic": row["ownerProfilePic"],
       "memberCount": row["memberCount"],
       "postCount": row["postCount"],
-      "isMember": bool(row["isMember"]),
+      # The logged in user's role: 'owner', 'moderator', 'member', or None (not in it / guest)
+      "myRole": row["myRole"],
+      "isMember": row["myRole"] is not None,
       "isOwner": current_user_id() is not None and row["owner_id"] == current_user_id(),
+      # Owners and moderators can delete posts / comments and remove members
+      "canModerate": row["myRole"] in MODERATOR_ROLES,
    }
 
 
@@ -83,7 +87,7 @@ def getDen(name):
    return jsonify({"den": den_json(row)}), 200
 
 
-# Everyone in a den: the owner first, then the rest in the order they joined.
+# Everyone in a den: the owner, then moderators, then members (each in the order they joined).
 # Works for guests.
 @dens_page.route("/<int:den_id>/members", methods=["GET"])
 def listMembers(den_id):
@@ -97,7 +101,8 @@ def listMembers(den_id):
       FROM den_members
       JOIN user ON den_members.user_id = user.id
       WHERE den_members.den_id = ?
-      ORDER BY den_members.role = 'owner' DESC, den_members.created, den_members.id
+      ORDER BY CASE den_members.role WHEN 'owner' THEN 0 WHEN 'moderator' THEN 1 ELSE 2 END,
+         den_members.created, den_members.id
       """,
       (den_id,),
    ).fetchall()
@@ -230,3 +235,107 @@ def leaveDen(den_id):
    db.commit()
 
    return jsonify({"den": den_json(find_den(den_id))}), 200
+
+
+# What the logged in user can do to another member of a den. Returns an error
+# response, or None when allowed.
+#   owner      can remove moderators and members
+#   moderator  can remove members
+#   nobody     can remove the owner or themselves (leaving is separate)
+def removal_error(den, target_role, target_id):
+   my_role = den["myRole"]
+   if my_role not in MODERATOR_ROLES:
+      return jsonify({"error": "Only the den's owner and moderators can remove members"}), 403
+   if target_role is None:
+      return jsonify({"error": "That user isn't in this den"}), 404
+   if target_id == g.user["id"]:
+      return jsonify({"error": "You can't remove yourself. Leave the den instead."}), 400
+   if target_role == "owner":
+      return jsonify({"error": "The owner can't be removed"}), 403
+   if target_role == "moderator" and my_role != "owner":
+      return jsonify({"error": "Only the owner can remove moderators"}), 403
+   return None
+
+
+def member_role(den_id, user_id):
+   row = get_db().execute(
+      "SELECT role FROM den_members WHERE den_id = ? AND user_id = ?", (den_id, user_id)
+   ).fetchone()
+   return row["role"] if row else None
+
+
+# Removes someone from a den. Their posts stay in the den.
+@dens_page.route("/<int:den_id>/members/<int:user_id>", methods=["DELETE"])
+def removeMember(den_id, user_id):
+   den = find_den(den_id)
+   if den is None:
+      return jsonify({"error": "That den doesn't exist"}), 404
+
+   error = removal_error(den, member_role(den_id, user_id), user_id)
+   if error:
+      return error
+
+   db = get_db()
+   db.execute("DELETE FROM den_members WHERE den_id = ? AND user_id = ?", (den_id, user_id))
+   db.commit()
+
+   return jsonify({"den": den_json(find_den(den_id))}), 200
+
+
+# Makes a member a moderator, or a moderator a regular member. Only the owner can.
+# Body: {"role": "moderator" | "member"}
+@dens_page.route("/<int:den_id>/members/<int:user_id>/role", methods=["PUT"])
+def changeMemberRole(den_id, user_id):
+   den = find_den(den_id)
+   if den is None:
+      return jsonify({"error": "That den doesn't exist"}), 404
+   if den["owner_id"] != g.user["id"]:
+      return jsonify({"error": "Only the den's owner can choose moderators"}), 403
+
+   role = (request.get_json(silent=True) or {}).get("role")
+   if role not in ("moderator", "member"):
+      return jsonify({"error": "Role must be 'moderator' or 'member'"}), 400
+
+   current = member_role(den_id, user_id)
+   if current is None:
+      return jsonify({"error": "That user isn't in this den"}), 404
+   if current == "owner":
+      return jsonify({"error": "The owner's role can't change"}), 400
+
+   db = get_db()
+   db.execute("UPDATE den_members SET role = ? WHERE den_id = ? AND user_id = ?", (role, den_id, user_id))
+   db.commit()
+
+   return jsonify({"role": role}), 200
+
+
+# Deletes a den with all of its posts and polls (and their likes, comments,
+# votes, stashes and media), its members and its picture. Only the owner can.
+# Body: {"confirmName": "<the den's name>"} as a safety check against accidental calls.
+@dens_page.route("/<int:den_id>", methods=["DELETE"])
+def deleteDen(den_id):
+   den = find_den(den_id)
+   if den is None:
+      return jsonify({"error": "That den doesn't exist"}), 404
+   if den["owner_id"] != g.user["id"]:
+      return jsonify({"error": "Only the den's owner can delete it"}), 403
+
+   confirm = str((request.get_json(silent=True) or {}).get("confirmName") or "")
+   if confirm.lower() != den["name"].lower():
+      return jsonify({"error": "Type the den's name to confirm"}), 400
+
+   db = get_db()
+   post_ids = [row["id"] for row in db.execute("SELECT id FROM posts WHERE den_id = ?", (den_id,))]
+   poll_ids = [row["id"] for row in db.execute("SELECT id FROM polls WHERE den_id = ?", (den_id,))]
+   try:
+      media = delete_items(post_ids, poll_ids)
+      db.execute("DELETE FROM den_members WHERE den_id = ?", (den_id,))
+      db.execute("DELETE FROM dens WHERE id = ?", (den_id,))
+      db.commit()
+   except sqlite3.Error:
+      db.rollback()
+      raise
+
+   delete_uploads(media + [den["image"]])
+
+   return jsonify({"message": "Deleted"}), 200

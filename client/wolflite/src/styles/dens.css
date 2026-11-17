@@ -25,6 +25,12 @@
   color: var(--yellow);
 }
 
+/* Den moderator badge: the purple secondary brand color */
+.tag-moderator {
+  background: var(--secondary-soft);
+  color: var(--secondary);
+}
+
 
 /* Post header: "<den> · 2h ago" under the author */
 .post-sub {
@@ -296,10 +302,19 @@
   margin: 1.5rem auto;
 }
 
-.member {
+/* A member link plus (for owners / moderators) its ⋮ menu */
+.member-row {
   display: flex;
   align-items: center;
+  gap: 0.25rem;
+}
+
+.member {
+  display: flex;
+  flex: 1;
+  align-items: center;
   gap: 0.625rem;
+  min-width: 0;
   padding: 0.5rem;
   border-radius: var(--radius-sm);
 }
@@ -377,6 +392,17 @@
   margin-top: 0.5rem;
 }
 
+/* "Delete den", set apart below the edit form's buttons */
+.den-danger {
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.confirm-box.den-danger {
+  border-top: 1px solid var(--danger);
+}
+
 @media (max-width: 480px) {
   .den-header {
     flex-direction: column;
@@ -389,7 +415,8 @@
     justify-content: center;
   }
 
-  .den-edit {
+  .den-edit,
+  .den-danger {
     text-align: left;
   }
 }

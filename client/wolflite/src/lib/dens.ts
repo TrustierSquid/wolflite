@@ -1,5 +1,13 @@
 import { api } from "./api";
 
+/**
+ * Roles in a den:
+ *   owner      created it; edits / deletes it, picks moderators, removes anyone
+ *   moderator  deletes posts and comments in the den, removes regular members
+ *   member     everyone else who joined
+ */
+export type DenRole = "owner" | "moderator" | "member";
+
 /** A den (community) as the /dens API returns it */
 export interface Den {
   id: number;
@@ -18,6 +26,10 @@ export interface Den {
   /** Whether the logged in user joined it (always false for guests) */
   isMember: boolean;
   isOwner: boolean;
+  /** The logged in user's role here, or null when they aren't in it (or are a guest) */
+  myRole: DenRole | null;
+  /** Owner or moderator: can delete posts / comments and remove members */
+  canModerate: boolean;
 }
 
 /** The den info attached to every post / poll in a feed */
@@ -56,7 +68,7 @@ export interface DenMember {
   id: number;
   username: string;
   profilePic: string | null;
-  role: "owner" | "member";
+  role: DenRole;
   /** When they joined */
   joined: string;
 }
@@ -65,6 +77,22 @@ export interface DenMember {
 export async function listMembers(den: Pick<Den, "id">): Promise<DenMember[]> {
   const data = await api(`/dens/${den.id}/members`);
   return data.members ?? [];
+}
+
+/** Removes someone from a den (owner: anyone but themselves; moderators: regular members). Returns the updated den. */
+export async function removeMember(den: Pick<Den, "id">, userId: number): Promise<Den> {
+  const data = await api(`/dens/${den.id}/members/${userId}`, { method: "DELETE" });
+  return data.den;
+}
+
+/** Owner only: make a member a moderator, or a moderator a regular member */
+export async function setMemberRole(den: Pick<Den, "id">, userId: number, role: "moderator" | "member") {
+  await api(`/dens/${den.id}/members/${userId}/role`, { method: "PUT", json: { role } });
+}
+
+/** Owner only: deletes the den and everything posted in it. confirmName must be the den's name. */
+export async function deleteDen(den: Pick<Den, "id">, confirmName: string) {
+  await api(`/dens/${den.id}`, { method: "DELETE", json: { confirmName } });
 }
 
 export const pluralize = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;

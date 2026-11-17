@@ -3,13 +3,13 @@ import type { ChangeEvent, FormEvent } from "react";
 import Avatar from "../components/Avatar";
 import DenAvatar from "../components/DenAvatar";
 import { JoinButton } from "../components/DenCard";
-import MembersModal from "../components/MembersModal";
+import MembersModal, { RoleTag } from "../components/MembersModal";
 import PostCard from "../components/PostCard";
 import Status from "../components/Status";
 import VotersModal from "../components/VotersModal";
 import { api } from "../lib/api";
 import { useCurrentUser } from "../lib/currentUser";
-import { MAX_DEN_DESCRIPTION, getDen, pluralize } from "../lib/dens";
+import { MAX_DEN_DESCRIPTION, deleteDen, getDen, pluralize } from "../lib/dens";
 import type { Den } from "../lib/dens";
 import type { FeedItem } from "../lib/feed";
 import { formatDate } from "../lib/time";
@@ -135,6 +135,7 @@ export default function DenPage() {
 
               <div className="den-actions">
                 <JoinButton den={den} onChange={setDen} small />
+                {den.myRole === "moderator" && <RoleTag role="moderator" />}
                 {den.isMember && (
                   <a className="btn btn-primary btn-sm" href={`/create?den=${encodeURIComponent(den.name)}`}>
                     <i className="fa-solid fa-pen-to-square" aria-hidden="true"></i> New post
@@ -180,7 +181,9 @@ export default function DenPage() {
       )}
 
       {votersPoll && <VotersModal poll={votersPoll} onClose={closeVoters} />}
-      {showMembers && <MembersModal den={den} onClose={closeMembers} />}
+      {showMembers && (
+        <MembersModal den={den} currentUserId={currentUser?.id} onClose={closeMembers} onDenChange={setDen} />
+      )}
     </main>
   );
 }
@@ -238,6 +241,7 @@ function EditDenForm({ den, onSaved, onCancel }: EditDenFormProps) {
   const shownImage = removeImage ? null : (previewUrl ?? den.image);
 
   return (
+    <>
     <form className="form den-edit" onSubmit={save}>
       <div className="field">
         <span className="label">Picture</span>
@@ -290,5 +294,79 @@ function EditDenForm({ den, onSaved, onCancel }: EditDenFormProps) {
         </button>
       </div>
     </form>
+
+    {/* Outside the edit form, so Enter in its box doesn't submit the form */}
+    <DeleteDen den={den} />
+    </>
+  );
+}
+
+
+// Owner only: deletes the den and everything in it, after typing its name
+function DeleteDen({ den }: { den: Den }) {
+  const [confirming, setConfirming] = useState(false);
+  const [typed, setTyped] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [status, setStatus] = useState<StatusMessage | null>(null);
+
+  const matches = typed.trim().toLowerCase() === den.name.toLowerCase();
+
+  async function remove() {
+    setDeleting(true);
+    setStatus(null);
+    try {
+      await deleteDen(den, typed.trim());
+      window.location.href = "/blog";
+    } catch (err) {
+      setStatus({ type: "error", text: errorText(err) });
+      setDeleting(false);
+    }
+  }
+
+  if (!confirming) {
+    return (
+      <div className="den-danger">
+        <button type="button" className="btn btn-danger btn-sm" onClick={() => setConfirming(true)}>
+          <i className="fa-solid fa-trash" aria-hidden="true"></i> Delete den
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="confirm-box den-danger">
+      <p>
+        Delete <strong>{den.name}</strong>? Every post, poll and comment in it is deleted too, and all{" "}
+        {pluralize(den.memberCount, "member")} lose it. This can't be undone.
+      </p>
+      <div className="field">
+        <label className="label" htmlFor="delete-den-name">Type <strong>{den.name}</strong> to confirm</label>
+        <input
+          id="delete-den-name"
+          className="input"
+          value={typed}
+          onChange={(e) => setTyped(e.target.value)}
+          autoComplete="off"
+          autoFocus
+        />
+      </div>
+      <Status status={status} />
+      <div className="button-row">
+        <button type="button" className="btn btn-danger-solid btn-sm" onClick={remove} disabled={!matches || deleting}>
+          {deleting ? "Deleting…" : "Yes, delete this den"}
+        </button>
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          onClick={() => {
+            setConfirming(false);
+            setTyped("");
+          }}
+          disabled={deleting}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
   );
 }

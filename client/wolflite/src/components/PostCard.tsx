@@ -75,7 +75,9 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters, sh
   }
 
   function deleteItem() {
-    if (!window.confirm(`Delete this ${kind}? This can't be undone.`)) return;
+    // Den owners / moderators can delete other people's posts: say whose it is
+    const whose = isOwner ? `this ${kind}` : `${item.username}'s ${kind}`;
+    if (!window.confirm(`Delete ${whose}? This can't be undone.`)) return;
     run(() => api(`/post/delete/${item.id}/${item.isPoll}`, { method: "DELETE" }));
   }
 
@@ -88,7 +90,8 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters, sh
         : { label: "Stash", icon: "fa-bookmark", onSelect: toggleStash }
     );
   }
-  if (isOwner) {
+  // Your own posts, and anything in a den you own / moderate (item.canModerate)
+  if (isOwner || item.canModerate) {
     menuItems.push({ label: "Delete", icon: "fa-trash", onSelect: deleteItem, danger: true });
   }
 
