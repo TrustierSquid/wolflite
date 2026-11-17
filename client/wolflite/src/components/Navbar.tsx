@@ -115,12 +115,13 @@ export default function Navbar() {
           <i className={`fa-solid ${menuOpen ? "fa-xmark" : "fa-bars"}`} aria-hidden="true"></i>
         </button>
         <a href="/blog" className="nav-logo" aria-label="Wolflite home">
-          <img src="/static/uploads/wolfLogo.png" alt="" /> <span className="nav-logo-text">WOLF</span>
+          <img src="/static/uploads/wolfLogo.png" alt="" /> <span className="nav-logo-text">WOLFLITE</span>
         </a>
       </div>
 
       <nav aria-label="Main">
-        <ul className="nav-links">
+        {/* Guests (and while loading) have no profile item, so their links are centered */}
+        <ul className={`nav-links${user ? "" : " is-centered"}`}>
           {items.map((item) => {
             const content = (
               <span className="nav-icon">

@@ -131,7 +131,7 @@ export default function SideNav({ variant = "fixed" }: SideNavProps) {
         <li>
           <a className="side-nav-link" href="/blog?tab=about" aria-current={onFeed("about") ? "page" : undefined}>
             <i className="fa-solid fa-circle-info" aria-hidden="true"></i>
-            <span>About Wolf</span>
+            <span>About Wolflite</span>
           </a>
         </li>
         <li>
