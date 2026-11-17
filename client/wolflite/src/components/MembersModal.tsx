@@ -18,6 +18,13 @@ interface MembersModalProps {
   onDenChange: (den: Den) => void;
 }
 
+// The popup lists members in these sections, in this order
+const ROLE_SECTIONS: { role: DenMember["role"]; title: string; icon: string }[] = [
+  { role: "owner", title: "Owner", icon: "fa-crown" },
+  { role: "moderator", title: "Moderators", icon: "fa-shield-halved" },
+  { role: "member", title: "Members", icon: "fa-users" },
+];
+
 const errorText = (err: unknown) => (err instanceof Error ? err.message : "Something went wrong");
 
 // Popup listing everyone in a den (owner, moderators, members), with a search box.
@@ -134,23 +141,35 @@ export default function MembersModal({ den, currentUserId, onClose, onDenChange 
           ) : shown.length === 0 ? (
             <p className="members-empty">No members match “{query.trim()}”.</p>
           ) : (
-            <ul>
-              {shown.map((member) => (
-                <li key={member.id} className="member-row">
-                  <a className="member" href={`/profile?id=${member.id}`}>
-                    <Avatar src={member.profilePic} size={36} />
-                    <span className="member-info">
-                      <span className="member-name">{member.username}</span>
-                      <span className="member-joined">
-                        {member.role === "owner" ? "Created the den" : "Joined"} {formatDate(member.joined)}
-                      </span>
-                    </span>
-                    <RoleTag role={member.role} />
-                  </a>
-                  <DropdownMenu items={actionsFor(member)} label={`Options for ${member.username}`} size="small" />
-                </li>
-              ))}
-            </ul>
+            // Separate sections: Owner, Moderators, Members (empty sections are left out)
+            ROLE_SECTIONS.map(({ role, title, icon }) => {
+              const group = shown.filter((member) => member.role === role);
+              if (group.length === 0) return null;
+              return (
+                <section key={role} className="member-section" aria-labelledby={`members-${role}`}>
+                  <h3 id={`members-${role}`} className={`member-section-title member-section-${role}`}>
+                    <i className={`fa-solid ${icon}`} aria-hidden="true"></i> {title}
+                    <span className="member-section-count">{group.length}</span>
+                  </h3>
+                  <ul>
+                    {group.map((member) => (
+                      <li key={member.id} className="member-row">
+                        <a className="member" href={`/profile?id=${member.id}`}>
+                          <Avatar src={member.profilePic} size={36} />
+                          <span className="member-info">
+                            <span className="member-name">{member.username}</span>
+                            <span className="member-joined">
+                              {member.role === "owner" ? "Created the den" : "Joined"} {formatDate(member.joined)}
+                            </span>
+                          </span>
+                        </a>
+                        <DropdownMenu items={actionsFor(member)} label={`Options for ${member.username}`} size="small" />
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              );
+            })
           )}
         </div>
       </div>

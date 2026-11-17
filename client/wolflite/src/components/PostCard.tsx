@@ -112,8 +112,14 @@ export default function PostCard({ item, currentUser, onChange, onShowVoters, sh
             </a>
             {/* Posted by the owner of the den it's in */}
             {item.isDenOwner && (
-              <span className="tag tag-owner tag-den-owner" title={`Owner of ${item.den?.name ?? "this den"}`}>
+              <span className="tag tag-owner tag-den-role" title={`Owner of ${item.den?.name ?? "this den"}`}>
                 <i className="fa-solid fa-crown" aria-hidden="true"></i> Den Owner
+              </span>
+            )}
+            {/* Posted by one of the den's moderators */}
+            {item.isDenModerator && (
+              <span className="tag tag-moderator tag-den-role" title={`Moderator of ${item.den?.name ?? "this den"}`}>
+                <i className="fa-solid fa-shield-halved" aria-hidden="true"></i> Moderator
               </span>
             )}
           </span>

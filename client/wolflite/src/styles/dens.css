@@ -25,7 +25,7 @@
   color: var(--yellow);
 }
 
-/* "Den Owner" next to the author's name on posts by the den's owner */
+/* "Den Owner" / "Moderator" next to the author's name on posts in their den */
 .post-author-row {
   display: flex;
   flex-wrap: wrap;
@@ -35,7 +35,7 @@
 }
 
 /* (.post-header .tag pushes the "Stashed" tag right; this one stays by the name) */
-.post-header .tag-den-owner {
+.post-header .tag-den-role {
   margin-left: 0;
   padding: 0.05rem 0.45rem;
   font-size: 0.75rem;
@@ -392,6 +392,37 @@
 
 .member-list .loader {
   margin: 1.5rem auto;
+}
+
+/* Owner / Moderators / Members sections */
+.member-section + .member-section {
+  margin-top: 0.75rem;
+}
+
+.member-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Section icons in the role badge colors */
+.member-section-owner > i {
+  color: var(--yellow);
+}
+
+.member-section-moderator > i {
+  color: var(--secondary);
+}
+
+.member-section-count {
+  font-weight: 600;
+  letter-spacing: 0;
 }
 
 /* A member link plus (for owners / moderators) its ⋮ menu */

@@ -61,6 +61,12 @@ def build_feed_items(den_ids=None, author_id=None, post_ids=None, poll_ids=None)
    # Dens the logged in user owns / moderates: they can delete any post and comment there
    moderated = moderated_den_ids(g.user["id"] if g.user else None)
 
+   # (den id, user id) of every den moderator, for the "Moderator" badge on their posts
+   den_moderators = {
+      (row["den_id"], row["user_id"])
+      for row in db.execute("SELECT den_id, user_id FROM den_members WHERE role = 'moderator'")
+   }
+
    # WHERE clause for the posts / polls query. Only "?" placeholders go into the
    # SQL text; the values themselves are passed as parameters.
    def where_clause(table, ids):
@@ -247,7 +253,9 @@ def build_feed_items(den_ids=None, author_id=None, post_ids=None, poll_ids=None)
             "den": {"id": row["den_id"], "name": row["denName"], "image": row["denImage"]},
             "canModerate": row["den_id"] in moderated,
             # Posted by the den's owner (shown with a "Den Owner" badge)
-            "isDenOwner": row["author_id"] == row["denOwnerId"]
+            "isDenOwner": row["author_id"] == row["denOwnerId"],
+            # Posted by one of the den's moderators ("Moderator" badge)
+            "isDenModerator": (row["den_id"], row["author_id"]) in den_moderators
          }
       )
 
@@ -300,7 +308,9 @@ def build_feed_items(den_ids=None, author_id=None, post_ids=None, poll_ids=None)
          "den": {"id": poll["den_id"], "name": poll["denName"], "image": poll["denImage"]},
          "canModerate": poll["den_id"] in moderated,
          # Posted by the den's owner (shown with a "Den Owner" badge)
-         "isDenOwner": poll["author_id"] == poll["denOwnerId"]
+         "isDenOwner": poll["author_id"] == poll["denOwnerId"],
+         # Posted by one of the den's moderators ("Moderator" badge)
+         "isDenModerator": (poll["den_id"], poll["author_id"]) in den_moderators
       })
 
    # Newest first
